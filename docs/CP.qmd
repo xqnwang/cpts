@@ -8,14 +8,16 @@ editor: visual
 bibliography: references.bib
 ---
 
-# Conformal prediction
+# CP: Conformal prediction
 
 Methods for distribution-free prediction.
 
 **Assumption: exchangeability**
 
 -   The **data** $Z_i = (X_i, Y_i)$ are assumed to be exchangeable (for example, i.i.d.).
+    -   Definition [@vovk2005; @shafer2008]. Suppose that for any collection of $N$ values, the $N!$ different orderings are equally likely. Then we say that $Z_1, \ldots, Z_N$ are exchangeable. The exchangeability assumption is slightly weaker than the i.i.d. assumption.
 -   The **algorithm** which maps data to a fitted model $\widehat{\mu}: \mathcal{X} \rightarrow \mathbb{R}$ is assumed to treat the data points symmetrically.
+    -   For example, OLS versus WLS.
 
 ## Split conformal prediction
 
@@ -98,7 +100,7 @@ $$
 \mathbb{P}\left(\forall h \in\{1, \ldots, H\} \cdot y_{t+h} \in\left[\hat{y}_{t+h}-\hat{\varepsilon}_h, \hat{y}_{t+h}+\hat{\varepsilon}_h\right]\right) \geq 1-\alpha .
 $$
 
-# Conformal prediction beyond exchangeability
+# NexCP: Conformal prediction beyond exchangeability
 
 @barber2023
 
@@ -162,6 +164,153 @@ So, if $\tilde{w}_{n+1}=\frac{1}{w_1+\cdots+w_n+1}$ is small (the effective samp
 *THEOREM:*
 
 $\mathbb{P}\left\{Y_{n+1} \in \widehat{C}_n\left(X_{n+1}\right)\right\} \geq 1-2 \alpha-\sum_{i=1}^n \tilde{w}_i \cdot \mathrm{d}_{\mathrm{TV}}\left(R_{\text {jack }+}(Z), R_{\text {jack }+}\left(Z^i\right)\right)$
+
+# WCP: Conformal prediction under covariate shift
+
+@tibshirani2019
+
+A weighted version of conformal prediction, using a quantile of a suitably weighted empirical distribution of nonconformity scores.
+
+## Setup/assumption - Covariate shift
+
+Focus on settings in which the data $\left(X_i, Y_i\right), i=1, \ldots, n+1$ are no longer exchangeable. Specifically,
+
+$$
+\begin{aligned}
+\left(X_i, Y_i\right) \stackrel{\text { i.i.d. }}{\sim} P&=P_X \times P_{Y \mid X}, \quad i=1, \ldots, n, \\
+\left(X_{n+1}, Y_{n+1}\right) \sim \widetilde{P}&=\widetilde{P}_X \times P_{Y \mid X}, \text { independently. }
+\end{aligned}
+$$ {#eq-cs}
+
+the test and training covariate distributions differ, but the likelihood ratio between the two distributions, $\mathrm{d} \widetilde{P}_X / \mathrm{d} P_X$, must be known exactly or well approximated for correct coverage.
+
+## Methodology
+
+**Prediction set:**
+
+-   CP: $\widehat{C}_n\left(X_{n+1}\right)=\widehat{\mu}\left(X_{n+1}\right) \pm \mathrm{Q}_{1-\alpha}\left(\sum_{i=1}^n \frac{1}{n+1} \cdot \delta_{R_i}+\frac{1}{n+1} \cdot \delta_{+\infty}\right)$.
+-   NexCP: $\widehat{C}_n\left(X_{n+1}\right)=\widehat{\mu}\left(X_{n+1}\right) \pm \mathrm{Q}_{1-\alpha}\left(\sum_{i=1}^n \tilde{w}_i \cdot \delta_{R_i}+\tilde{w}_{n+1} \cdot \delta_{+\infty}\right)$.
+    -   weights $w$ are fixed
+
+    -   $\tilde{w}_i=\frac{w_i}{w_1+\cdots+w_n+1}, i=1, \ldots, n$ and $\tilde{w}_{n+1}=\frac{1}{w_1+\cdots+w_n+1}$
+-   WCP: $\widehat{C}_n\left(X_{n+1}\right)=\widehat{\mu}\left(X_{n+1}\right) \pm \mathrm{Q}_{1-\alpha}\left(\sum_{i=1}^n p_i^w(x) \delta_{R_i}+p_{n+1}^w(x) \delta_{\infty}\right)$.
+    -   $w = \mathrm{d} \widetilde{P}_X / \mathrm{d} P_X$ or $w \propto \mathrm{d} \widetilde{P}_X / \mathrm{d} P_X$
+    -   $p_i^w(x)=\frac{w\left(X_i\right)}{\sum_{j=1}^n w\left(X_j\right)+w(x)}, i=1, \ldots, n,$ and $p_{n+1}^w(x)=\frac{w(x)}{\sum_{j=1}^n w\left(X_j\right)+w(x)}$
+
+The **weight function** $\hat{w}$ can be estimated using logistic regression, random forests, etc.
+
+*THEOREM:*
+
+Assume data from the model @eq-cs. Assume $\widetilde{P}_X$ is absolutely continuous with respect to $P_X$, and denote $w = \mathrm{d} \widetilde{P}_X / \mathrm{d} P_X$. For any score function $S$, and any $\alpha \in (0,1)$, define for $x \in \mathbb{R}^d$. Then
+
+$$
+\mathbb{P}\left\{Y_{n+1} \in \widehat{C}_n\left(X_{n+1}\right)\right\} \geq 1-\alpha.
+$$
+
+## Comparison to NexCP
+
+1.  Assumption
+    -   WCP: covariate shift
+    -   NexCP: do not make any assumption on the joint distribution of the $n + 1$ points
+2.  Weights
+    -   WCP: a function of the data point $(X_i,Y_i)$ to compensate for the **known** distribution shift.
+    -   NexCP: required to be fixed, can compensate for **unknown** violations of the exchangeability assumption, as long as the violations are **small** (to ensure a low coverage gap).
+3.  Nonsymmetric algorithm
+    -   WCP: No.
+    -   NexCP: Yes.
+4.  For exchangeable data
+    -   WCP: does not have any coverage guarantee.
+    -   NexCP: retains exact coverage.
+
+# ACP: Adaptive conformal inference under distribution shift
+
+@gibbs2021
+
+-   No assumptions on the data-generating distribution.
+
+-   Modelling the distribution shift as a learning problem in a single parameter whose optimal value is varying over time and must be continuously re-estimated.
+
+-   Adjust significance level $\alpha$ based on rolling coverage of $Y_t$ .
+
+## Methodology
+
+Work with score function $S(\cdot)$ and quantile function $\hat{Q}(\cdot)$.
+
+**Some facts:**
+
+-   If the distribution of the data is shifting over time, both functions should be regularly re-estimated to align with the most recent observations.
+
+-   The realized miscoverage rate $M_t(\alpha)$ also varies over time and may not be equal or close to $\alpha$.
+
+**Assumptions:**
+
+Assume that there may be an alternative value $\alpha^{*} \in [0,1]$ such that $M_t(\alpha^*)\cong\alpha$.
+
+Assume that with probability one, $\hat{Q}_t(\cdot)$ is continuous, non-decreasing and such that $\hat{Q}_t(0)=-\infty$ and $\hat{Q}_t(1)=\infty$.
+
+**Adaptive conformal inference:**
+
+-   Under assumptions, $M_t(\cdot)$ will be non-decreasing on $[0,1]$ with $M_t(0)=0$ and $M_t(1)=1$.
+
+-   Define $\alpha_t^*:=\sup \left\{\beta \in[0,1]: M_t(\beta) \leq \alpha\right\}$, then $M_t\left(\alpha_t^*\right)=\alpha$.
+
+-   Use a simple **update process** to perform the calibration.
+
+    -   Intuition: after examining the empirical miscoverage frequency of the previous prediction sets, decreasing (increasing) estimate of $\alpha_t^*$ if the prediction sets were historically under-covering (over-covering) $Y_t$.
+
+    -   Let $\alpha_1=\alpha$, consider the **update**
+
+        $$
+        \alpha_{t+1}:=\alpha_t+\gamma\left(\alpha-\operatorname{err}_t\right) 
+        $$
+
+        OR
+
+        $$
+        \alpha_{t+1}=\alpha_t+\gamma\left(\alpha-\sum_{s=1}^t w_s \operatorname{err}_s\right),
+        $$
+
+        where $\gamma>0$ is a fixed step size parameter whose choice gives a tradeoff between adaptability and stability.
+
+        So the distribution is allowed to shift continuously over time.
+
+*THEOREM:*
+
+With probability one we have that for all $T \in \mathbb{N}$,
+
+$$
+\left|\frac{1}{T} \sum_{t=1}^T e r r_t-\alpha\right| \leq \frac{\max \left\{\alpha_1, 1-\alpha_1\right\}+\gamma}{T \gamma} .
+$$
+
+In particular, $\lim _{T \rightarrow \infty} \frac{1}{T} \sum_{t=1}^T err_t \stackrel{\text { a.s. }}{=} \alpha$.
+
+# Others
+
+## LCP: Localized conformal prediction
+
+@guan2022
+
+The **weight** on data point $i$ is determined as **a function of the distance** $\|X_i - X_{n+1}\|_2$, to enable predictive coverage that holds **locally** (in neighborhoods of $X$ space, that is, an approximation of prediction that holds conditional on the value of $X_{n+1}$).
+
+## EnbPI: predictive inference method around ensemble estimators
+
+@xu2021
+
+-   For Dynamic time series
+
+-   Ensemble point forecasts + update residuals
+
+## SPCI: Sequential Predictive Conformal Inference
+
+@xu2023
+
+-   Adaptively re-estimate the conditional quantile of non-conformity scores, upon leveraging the temporal dependency among residuals. Random Forest for quantile regression is used.
+
+## Conformal PID Control for Time Series Prediction
+
+@angelopoulos2023
+
+PID: proportional-integral-derivative
 
 # References
 
