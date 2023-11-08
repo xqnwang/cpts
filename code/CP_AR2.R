@@ -6,7 +6,7 @@ source("R/ICP_update.R")
 
 # Simulation series AR(2)
 set.seed(0)
-series <- arima.sim(n = 500, list(ar = c(0.8897, -0.4858)), sd = sqrt(0.2))
+series <- arima.sim(n = 5000, list(ar = c(0.8897, -0.4858)), sd = sqrt(0.2))
 autoplot(series) +
   ggtitle("AR(2) process") +
   xlab("Time") +
@@ -19,17 +19,22 @@ series <- as.numeric(series)
 #------------------------------------------------------------
 # Transfer series to data frame
 p <- 2
-i <- 1:400
+i <- 1:1000
 foo <- function(k) c(series[k:(k+length(series)-p-1)])
 dat <- sapply(1:(p+1), foo) |> data.frame() |> rev()
 colnames(dat) <- c("y", "x1", "x2")
 dat_tr <- dat[i, ]; x <- dat[i, -1]; y <- dat[i, 1]; n <- length(y)
 dat_te <- dat[-i, ]; x0 <- dat[-i, -1]; y0 <- dat[-i, 1]; n0 <- length(y0)
 
+cov.split <- len.split <- data.frame("CP" = rep(as.double(NA), n0),
+                                     "WCP.LR" = rep(as.double(NA), n0),
+                                     "WCP.RF" = rep(as.double(NA), n0),
+                                     "NexCP" = rep(as.double(NA), n0))
 #------
 # SCP
 out.SCP <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5)
-mean(out.SCP$lo <= y0 & y0 <= out.SCP$up)
+cov.split$CP <- (out.SCP$lo <= y0 & y0 <= out.SCP$up)
+len.split$CP <- out.SCP$up - out.SCP$lo
 
 #------
 # WCP - Weights estimated with logistic regression
@@ -40,7 +45,8 @@ prob.glm <- predict(obj.glm, type = "response")
 wts.glm <- prob.glm / (1-prob.glm)
 
 out.WCP.LR <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5, w = wts.glm)
-mean(out.WCP.LR$lo <= y0 & y0 <= out.WCP.LR$up)
+cov.split$WCP.LR <- (out.WCP.LR$lo <= y0 & y0 <= out.WCP.LR$up)
+len.split$WCP.LR <- out.WCP.LR$up - out.WCP.LR$lo
 
 #------
 # WCP - Weights estimated with random forest
@@ -50,52 +56,201 @@ prob.rf <- pmax(pmin(prob.rf, 0.99), 0.01)
 wts.rf <- prob.rf / (1-prob.rf)
 
 out.WCP.RF <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5, w = wts.rf)
-mean(out.WCP.RF$lo <= y0 & y0 <= out.WCP.RF$up)
+cov.split$WCP.RF <- (out.WCP.RF$lo <= y0 & y0 <= out.WCP.RF$up)
+len.split$WCP.RF <- out.WCP.RF$up - out.WCP.RF$lo
 
 #------
 # NexCP - Weights on the test set are all equal to 1
 wts.exp <- c(0.99^(n+1-((1:n))), rep(1, n0))
 
 out.NexCP <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5, w = wts.exp)
-mean(out.NexCP$lo <= y0 & y0 <= out.NexCP$up)
+cov.split$NexCP <- (out.NexCP$lo <= y0 & y0 <= out.NexCP$up)
+len.split$NexCP <- out.NexCP$up - out.NexCP$lo
 
-# library(conformalInference)
-# my.lm.funs = lm.funs()
-# out <- conformal.pred.split(x, y,as.matrix(x0), w=wts.exp, split=1:200,
-#                      train.fun=my.lm.funs$train,
-#                      predict.fun=my.lm.funs$predict)
-# mean(out$lo <= y0 & y0 <= out$up)
-
+save(cov.split, len.split, file = "data/AR2_split.rda")
 
 #------------------------------------------------------------
 # ICP with sliding training and calibration sets
 #------------------------------------------------------------
-nfit <- 100
-ncal <- 100
+nfit <- 500
+ncal <- 500
 series0 <- series[(nfit+ncal+1):length(series)]
+m0 <- length(series0)
+
+cov.update <- len.update <- data.frame("AR" = rep(as.double(NA), m0),
+                                       "CP" = rep(as.double(NA), m0),
+                                       "NexCP" = rep(as.double(NA), m0),
+                                       "ACP" = rep(as.double(NA), m0))
+#------
+# AR
+out_AR <- AR2.update(series, nfit = nfit, ncal = ncal, alpha = 0.1)
+cov.update$AR <- (out_AR$lo <= series0 & series0 <= out_AR$up)
+len.update$AR <- out_AR$up - out_AR$lo
+
 #------
 # SCP
-out_SCP <- ICP.update(series, nfit = 100, ncal = 100, alpha = 0.1)
-mean(out_SCP$lo <= series0 & series0 <= out_SCP$up)
+out_SCP <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1)
+cov.update$CP <- (out_SCP$lo <= series0 & series0 <= out_SCP$up)
+len.update$CP <- out_SCP$up - out_SCP$lo
 
 #------
 # WCP - Weights estimated with logistic regression
-out_WCP.LR <- ICP.update(series, nfit = 100, ncal = 100, alpha = 0.1, w = c(0,0,wts.glm))
-mean(out_WCP.LR$lo <= series0 & series0 <= out_WCP.LR$up)
+# out_WCP.LR <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1, weight = "GLM")
+# mean(out_WCP.LR$lo <= series0 & series0 <= out_WCP.LR$up)
 
 #------
 # WCP - Weights estimated with random forest
-out_WCP.RF <- ICP.update(series, nfit = 100, ncal = 100, alpha = 0.1, w = c(0,0,wts.rf))
-mean(out_WCP.RF$lo <= series0 & series0 <= out_WCP.RF$up)
+# out_WCP.RF <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1, weight = "RF")
+# mean(out_WCP.RF$lo <= series0 & series0 <= out_WCP.RF$up)
 
 #------
 # NexCP - Weights on the test set are all equal to 1
-out_NexCP <- ICP.update(series, nfit = 100, ncal = 100, alpha = 0.1, w = wts.exp)
-mean(out_NexCP$lo <= series0 & series0 <= out_NexCP$up)
+out_NexCP <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1,
+                        weight = "Exp", base = 0.99)
+cov.update$NexCP <- (out_NexCP$lo <= series0 & series0 <= out_NexCP$up)
+len.update$NexCP <- out_NexCP$up - out_NexCP$lo
 
 #------
 # ACP - Adaptively update alpha
-out_ACP <- ICP.update(series, nfit = 100, ncal = 100, alpha = 0.1,
+out_ACP <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1,
                       updateAlpha = TRUE, gamma = 0.005, updateMethod = "Simple")
-mean(out_ACP$lo <= series0 & series0 <= out_ACP$up)
+cov.update$ACP <- (out_ACP$lo <= series0 & series0 <= out_ACP$up)
+len.update$ACP <- out_ACP$up - out_ACP$lo
 
+save(cov.update, len.update, file = "data/AR2_update.rda")
+
+
+#------------------------------------------------------------
+# Coverage and width
+#------------------------------------------------------------
+rm(list = ls())
+library(zoo)
+library(tidyr)
+library(reshape2)
+library(ggplot2)
+library(ggpubr)
+k = 500
+
+#------
+# Split
+load("data/AR2_split.rda")
+
+cov.split.mean <- apply(cov.split, 2, function(x) rollmean(x = x, k = k))
+cov.split.mean <- data.frame(x = 1:nrow(cov.split.mean), cov.split.mean)
+cov.split.mean.df <- pivot_longer(cov.split.mean, cols = 2:5)
+
+len.split.mean <- apply(len.split, 2, function(x) rollmean(x = x, k = k))
+len.split.mean <- data.frame(x = 1:nrow(len.split.mean), len.split.mean)
+len.split.mean.df <- pivot_longer(len.split.mean, cols = 2:5)
+
+len.split.median <- apply(len.split, 2, function(x) rollmedian(x = x, k = k+1))
+len.split.median <- data.frame(x = 1:nrow(len.split.median), len.split.median)
+len.split.median.df <- pivot_longer(len.split.median, cols = 2:5)
+
+lcl.split <- ggplot(data = cov.split.mean.df, aes(x = x, y = value, colour = name)) +
+  geom_line() +
+  geom_hline(yintercept=apply(cov.split, 2, mean), 
+             linetype='dashed', 
+             color=c('blue', 'yellow', 'orange', 'green')) +
+  scale_color_manual(
+    values = c(
+      CP="blue",
+      WCP.LR="yellow",
+      WCP.RF="orange",
+      NexCP="green")) +
+  labs(title = "Local Coverage Level",
+       x = "Time", y = "",
+       fill = "Method") +
+  theme(legend.position = "bottom")
+  
+
+mw.split <- ggplot(data = len.split.mean.df, aes(x = x, y = value, colour = name)) +
+  geom_line() +
+  scale_color_manual(
+    values = c(
+      CP="blue",
+      WCP.LR="yellow",
+      WCP.RF="orange",
+      NexCP="green")) +
+  labs(title = "Mean Width",
+       x = "Time", y = "",
+       fill = "Method") +
+  theme(legend.position = "bottom")
+
+mdw.split <- ggplot(data = len.split.median.df, aes(x = x, y = value, colour = name)) +
+  geom_line() +
+  scale_color_manual(
+    values = c(
+      CP="blue",
+      WCP.LR="yellow",
+      WCP.RF="orange",
+      NexCP="green")) +
+  labs(title = "Median Width",
+       x = "Time", y = "",
+       fill = "Method") +
+  theme(legend.position = "bottom")
+
+ggarrange(lcl.split, mw.split, mdw.split,
+          ncol = 1, nrow = 3,
+          common.legend = TRUE, legend = "bottom")
+
+#------
+# Update
+load("data/AR2_update.rda")
+cov.update.mean <- apply(cov.update, 2, function(x) rollmean(x = x, k = k))
+cov.update.mean <- data.frame(x = 1:nrow(cov.update.mean), cov.update.mean)
+cov.update.mean.df <- pivot_longer(cov.update.mean, cols = 2:5)
+
+len.update.mean <- apply(len.update, 2, function(x) rollmean(x = x, k = k))
+len.update.mean <- data.frame(x = 1:nrow(len.update.mean), len.update.mean)
+len.update.mean.df <- pivot_longer(len.update.mean, cols = 2:5)
+
+len.update.median <- apply(len.update, 2, function(x) rollmedian(x = x, k = k+1))
+len.update.median <- data.frame(x = 1:nrow(len.update.median), len.update.median)
+len.update.median.df <- pivot_longer(len.update.median, cols = 2:5)
+
+lcl.update <- ggplot(data = cov.update.mean.df, aes(x = x, y = value, colour = name)) +
+  geom_line() +
+  geom_hline(yintercept=apply(cov.update, 2, mean), 
+             linetype='dashed', 
+             color=c('gray', 'blue', 'green', 'red')) +
+  scale_color_manual(
+    values = c(
+      AR="gray",
+      CP="blue",
+      NexCP="green",
+      ACP="red")) +
+  labs(title = "Local Coverage Level",
+       x = "Time", y = "",
+       fill = "Method") +
+  theme(legend.position = "bottom")
+
+mw.update <- ggplot(data = len.update.mean.df, aes(x = x, y = value, colour = name)) +
+  geom_line() +
+  scale_color_manual(
+    values = c(
+      AR="gray",
+      CP="blue",
+      NexCP="green",
+      ACP="red")) +
+  labs(title = "Mean Width",
+       x = "Time", y = "",
+       fill = "Method") +
+  theme(legend.position = "bottom")
+
+mdw.update <- ggplot(data = len.update.median.df, aes(x = x, y = value, colour = name)) +
+  geom_line() +
+  scale_color_manual(
+    values = c(
+      AR="gray",
+      CP="blue",
+      NexCP="green",
+      ACP="red")) +
+  labs(title = "Median Width",
+       x = "Time", y = "",
+       fill = "Method") +
+  theme(legend.position = "bottom")
+
+ggarrange(lcl.update, mw.update, mdw.update,
+          ncol = 1, nrow = 3,
+          common.legend = TRUE, legend = "bottom")
