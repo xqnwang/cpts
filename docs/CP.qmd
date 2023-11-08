@@ -8,6 +8,22 @@ editor: visual
 bibliography: references.bib
 ---
 
+```{r}
+#| label: load
+#| cache: false
+#| echo: false
+#| message: false
+#| warning: false
+# Load all required packages
+
+library(forecast)
+library(zoo)
+library(tidyr)
+library(reshape2)
+library(ggplot2)
+library(ggpubr)
+```
+
 # CP: Conformal prediction
 
 Methods for distribution-free prediction.
@@ -311,6 +327,140 @@ The **weight** on data point $i$ is determined as **a function of the distance**
 @angelopoulos2023
 
 PID: proportional-integral-derivative
+
+# Simulation
+
+## Setup
+
+Simulate a time series $y$ with length $T=5000$ from an AR(2) model with $\phi_1 = 0.8$, $\phi_2=-0.5$, and $\sigma^2 = 1$.
+
+Only consider one-step-ahead forecasting, i.e., $h=1$.
+
+```{r}
+#| label: fig-ar2
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 7
+#| fig-height: 3
+#| fig-cap: Simulated time series from an AR(2) model.
+
+load("../data/AR2data.rda")
+autoplot(series) +
+  ggtitle("AR(2) process") +
+  xlab("Time") +
+  ylab("") +
+  theme_bw()
+```
+
+## Split conformal prediction with fixed training set
+
+### Details
+
+Let $n$ be the number of data used to fit an AR(2) model, and $m$ be the number of data in the calibration set.
+
+-   Step 1. Rearrange the time series as $Z_i = (X_i, Y_i)$, where $X_i = y_{i:(i+1)}$ and $Y_i=y_{i+2}$, $i=1,2,\ldots,T-2$.
+
+-   Step 2. Train an AR(2) model $\hat{\mu}$ based on training set with length $n$, $Z_{tr} = (Z_1,Z_2,\ldots,Z_{n})$.
+
+-   Step 3. Calculate nonconformity scores (absolute residuals) based on calibration set with length $m$, i.e., $R_i = |Y_i - \hat{\mu}(X_i)|$, $i=n+1,n+2,\ldots,n+m$.
+
+-   Step 4. Generate PI on test set. $\hat{C_{m}}(X_{i}) = \hat{\mu}(X_{i}) \pm \mathrm{Q}_{1-\alpha}\left(\sum_{j=n+1}^{n+m} w_j \cdot \delta_{R_j}+ w_{i} \cdot \delta_{+\infty}\right)$ for $i=n+m+i,\ldots,T-2$.
+
+### Results
+
+Let $n=m=500$ and fit the AR(2) model using the `lm` function.
+
+Consider methods: CP, WCP.LR, WCP.RF, NexCP with $\alpha=0.1$.
+
+```{r}
+#| label: fig-ar2fix
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 7
+#| fig-height: 10
+#| fig-cap: Local coverage frequencies and width for split conformal prediction methods with fixed training set (k=500).
+
+load("../data/AR2_split_plot.rda")
+ggarrange(lcl.split, mw.split, mdw.split,
+          ncol = 1, nrow = 3,
+          common.legend = TRUE, legend = "bottom")
+```
+
+Issues:
+
+-   PIs have constant width over the test set. We can generate PIs with varying local width by using a function to perform training on the absolute residuals i.e., to produce an estimator of $\operatorname{E}(R|X)$.
+
+-   When generating weights via GLM or RF in WCP method, we need to use all data from the test set, which is not reasonable.
+
+-   Regression-based model.
+
+## Split conformal prediction with rolling training set
+
+### Details
+
+Let $n$ be the number of observations used to fit an AR(2) model, and $m$ be the number of observations in the calibration set.
+
+For $i=n+1,n+2,…,T$:
+
+-   Step 1. Fit an AR(2) model $\hat{\mu}_{i-1}$ based on observations $y_{(i-n):(i-1)}$, generate one-step-ahead forecast $\hat{y}_{i}$.
+
+-   When $i > n+m$:
+
+    -   Step 2. Calculate weights for the updated calibration set with length $m$ and the updated test set with length 1 using different methods. Here WCP can not be applied because we only have a test set with length equal to one.
+
+    -   Step 3. Generate PI on test set. $\hat{y}_i \pm \mathrm{Q}_{1-\alpha}\left(\sum_{j=i-m}^{i-1} w_i \cdot \delta_{R_j}+ w_{i} \cdot \delta_{+\infty}\right)$.
+
+    -   Setp 4 for ACP. Update $\alpha$ based on the recent empirical miscoverage frequency.
+
+-   Step 5. Calculate nonconformity scores (absolute residuals) $R_i = |y_i - \hat{y}_{i}|$.
+
+### Results
+
+Let $n=m=500$ and fit AR(2) models using the `Arima` function with setting `order = c(2,0,0), include.mean = TRUE, method = "CSS"` to make it comparable with the previous result.
+
+Consider methods: AR, CP, NexCP, ACP with $\alpha=0.1$.
+
+```{r}
+#| label: fig-ar2roll
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 7
+#| fig-height: 10
+#| fig-cap: Local coverage frequencies and width for split conformal prediction methods with rolling training set and calibration set (k=500).
+
+load("../data/AR2_update_plot.rda")
+ggarrange(lcl.update, mw.update, mdw.update,
+          ncol = 1, nrow = 3,
+          common.legend = TRUE, legend = "bottom")
+```
+
+Features:
+
+-   The fitted model is updating over time.
+
+-   PIs have changing width over the test set.
+
+-   Other non-regression-based models can be considered.
+
+-   Time-consuming because of the rolling window approach.
+
+# To do list
+
+-   Theoretical proof.
+
+-   Other data-dependent weight.
+
+-   Papers from other journals such as IJF.
+
+-   Multi-step ahead forecasting.
+
+-   Hierarchical time series.
 
 # References
 
