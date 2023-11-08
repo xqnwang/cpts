@@ -1,5 +1,6 @@
 ICP.update <- function(series, nfit, ncal, alpha = 0.1,
-                       w = NULL, updateAlpha = FALSE, gamma = 0.005,
+                       weight = c("Equal", "Exp", "GLM", "RF"), base = 0.99,
+                       updateAlpha = FALSE, gamma = 0.005,
                        updateMethod = c("Simple", "Momentum"), momentumBW = 0.95) {
   # Set up data
   y <- series
@@ -11,8 +12,7 @@ ICP.update <- function(series, nfit, ncal, alpha = 0.1,
     stop("series length must be larger than nfit+ncal")
   
   # Check the weights
-  if (is.null(w))
-    w <- rep(1, T)
+  weight <- match.arg(weight)
   
   # Check gamma - step size parameter
   if (is.null(gamma) || (gamma <= 0)) 
@@ -41,11 +41,35 @@ ICP.update <- function(series, nfit, ncal, alpha = 0.1,
     
     # Get forecasts on test set
     if (t > (nfit+ncal)) {
+      if (weight == "Equal") {
+        recentWeights <- rep(1, ncal+1)
+      } else if (weight == "Exp") {
+        if (is.null(base)) base <- 0.99
+        recentWeights <- c(0.99^(ncal+1-((1:ncal))), 1)
+      } else if (weight %in% c("GLM", "RF")) {
+        foo <- function(k) {
+          partseries <- series[(t-ncal-nfit+1):t]
+          c(partseries[k:(k+ncal)])
+        }
+        zy <- as.factor(c(rep(0, ncal), 1))
+        zx <- sapply(1:nfit, foo) |> as.matrix()
+        
+        if (weight == "GLM") {
+          obj.glm <- glm(zy ~ zx, family = "binomial")
+          prob.glm <- predict(obj.glm, type = "response")
+          recentWeights <- prob.glm / (1-prob.glm)
+        } else if (weight == "RF") {
+          obj.rf <- randomForest::randomForest(zx, zy)
+          prob.rf <- predict(obj.rf, type = "prob")[,2]
+          prob.rf <- pmax(pmin(prob.rf, 0.99), 0.01)
+          recentWeights <- prob.rf / (1-prob.rf)
+        }
+      }
+      
       recentScores <- scores[(t-nfit-ncal):(t-nfit-1)]
-      recentWeights <- w[(t-ncal):(t-1)]
       q <- weighted.quantile(c(recentScores, Inf), 
                              prob = 1-alphat, 
-                             w = c(recentWeights, w[t]),
+                             w = recentWeights,
                              sorted = FALSE)
       predSeq[t-nfit-ncal] <- pred
       loSeq[t-nfit-ncal] <- pred - q
@@ -73,4 +97,21 @@ ICP.update <- function(series, nfit, ncal, alpha = 0.1,
   } else {
     return(list(pred = predSeq, lo = loSeq, up = upSeq, alpha = alphaSeq))
   }
+}
+
+AR2.update <- function(series, nfit, ncal, alpha = 0.1) {
+  y <- series
+  T <- length(y)
+  
+  predSeq <- loSeq <- upSeq <- rep(0, T-nfit-ncal)
+  for (t in (nfit+ncal+1):length(series)) {
+    out <- forecast::Arima(y[(t-nfit):(t-1)], order = c(2,0,0),
+                           include.mean = TRUE, method = "CSS")
+    fc <- forecast::forecast(out, h = 1, level = 1-alpha)
+    predSeq[t-nfit-ncal] <- as.vector(fc$mean)
+    loSeq[t-nfit-ncal] <- as.vector(fc$lower)
+    upSeq[t-nfit-ncal] <- as.vector(fc$upper)
+  }
+  
+  return(list(pred = predSeq, lo = loSeq, up = upSeq))
 }
