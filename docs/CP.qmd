@@ -452,11 +452,11 @@ Features:
 
 # To do list
 
--   Theoretical proof.
-
 -   Other data-dependent weight.
 
 -   Papers from other journals such as IJF.
+
+-   Theoretical proof.
 
 -   Multi-step ahead forecasting.
 
