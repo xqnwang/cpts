@@ -1,6 +1,7 @@
 # Data
-.rds
-.csv
+*.rda
+*.rds
+*.csv
 
 # History files
 .Rhistory
