@@ -380,7 +380,7 @@ The $h$-step-ahead forecast is generated based on $h$-step-ahead non-conformity 
 
 @akinshin2023
 
--   The goal is to estimate the distribution at the tail of a time series.
+-   The goal is to estimate the distribution at the tail of a time series, which reflects the latest state of the underlying system.
 
 **Desired properties of the weighted quantile estimators:**
 
@@ -402,51 +402,80 @@ The $h$-step-ahead forecast is generated based on $h$-step-ahead non-conformity 
     \lim _{\varepsilon_i \rightarrow 0} Q^*\left(\left\{x_1, x_2, \ldots, x_n\right\},\left\{w_1+\varepsilon_1, w_2+\varepsilon_2, \ldots, w_n+\varepsilon_n\right\}, p\right) \rightarrow \mathrm{Q}^*\left(\left\{x_1, x_2, \ldots, x_n\right\},\left\{w_1, w_2, \ldots, w_n\right\}, p\right).
     $$
 
-1.  Some popular R implementations of weighted quantiles show violations of Requirement R3.
+**Some issues:**
 
-2.  In order to satisfy Requirement R2, the sample size needs adjustments. Consider using Kish's effective sample size given by
+1.  Some popular R implementations of weighted quantiles show **violations of Requirement R3**.
+
+    ```{r}
+    #| label: weighted.quantile
+    #| eval: false
+    x <- c(0, 1, 100)
+    wA <- c(1, 0.00000, 1)
+    wB <- c(1, 0.00001, 1)
+    message(modi::weighted.quantile(x, wA, 0.5), " | ",
+            modi::weighted.quantile(x, wB, 0.5))
+    ## 100 | 1
+    message(laeken::weightedQuantile(x, wA, 0.5), " | ",
+            laeken::weightedQuantile(x, wB, 0.5))
+    ## 100 | 1
+    message(MetricsWeighted::weighted_quantile(x, wA, 0.5), " | ",
+            MetricsWeighted::weighted_quantile(x, wB, 0.5))
+    ## 100 | 1
+    message(spatstat.geom::weighted.quantile(x, wA, 0.5), " | ",
+            spatstat.geom::weighted.quantile(x, wB, 0.5))
+    ## 1 | 0.499999999994449
+    message(matrixStats::weightedMedian(x, wA), " | ",
+            matrixStats::weightedMedian(x, wB))
+    ## 50 | 1.00000000000003
+    ```
+
+2.  In order to satisfy Requirement R2, the sample size needs adjustments. Consider using Kish's **effective sample size** given by
 
     $$
     n^*(\mathbf{w})=\frac{\left(\sum_{i=1}^n w_i\right)^2}{\sum_{i=1}^n w_i^2}=\frac{1}{\sum_{i=1}^n \bar{w}_i^2},
     $$
 
-    where $\mathbf{w}$ is the vector of non-negative weight coefficients, $\bar{\mathbf{w}}$ is the vector of normalized weights where $\bar{w}_i=\frac{w_i}{\sum_{i=1}^{n}w_i}$.
+    where $\mathbf{w}$ is the vector of non-negative weight coefficients, $\bar{\mathbf{w}}$ is the vector of normalized weights where $\bar{w}_i=\frac{w_i}{\sum_{i=1}^{n}w_i}$. So $n^*(\{1,1,1\})=3$ and $n^*(\{1,1,1,0,0\})=3$.
 
 **Method 1: Weighted Harrell--Davis quantile estimator**
 
 -   a linear combination of all order statistics.
 
--   pros: provide higher statistical efficiency in the cases of light-tailed distributions.
+-   **pros:** provide higher statistical efficiency in the cases of light-tailed distributions.
 
--   cons: not robust (its breakdown point is zero).
+-   **cons:** not robust (its breakdown point is zero).
 
-The weighted Harrell--Davis quantile estimator is defined as
+    The weighted Harrell--Davis quantile estimator is defined as
 
-$$
-\mathrm{Q}_{\mathrm{HD}}^*(\mathbf{x}, \mathbf{w}, p)=\sum_{i=1}^n W_{\mathrm{HD}, i}^* \cdot x_{(i)}, \quad W_{\mathrm{HD}, i}^*=I_{t_i^*}\left(\alpha^*, \beta^*\right)-I_{t_{i-1}^*}\left(\alpha^*, \beta^*\right),
-$$
+    $$
+    \mathrm{Q}_{\mathrm{HD}}^*(\mathbf{x}, \mathbf{w}, p)=\sum_{i=1}^n W_{\mathrm{HD}, i}^* \cdot x_{(i)}, \quad W_{\mathrm{HD}, i}^*=I_{t_i^*}\left(\alpha^*, \beta^*\right)-I_{t_{i-1}^*}\left(\alpha^*, \beta^*\right),
+    $$
 
-where $\alpha^*=\left(n^*+1\right) p$, $\beta^*=\left(n^*+1\right)(1-p)$, $t_i^*=s_i(\bar{\mathbf{w}})$, $I_{t_i^*}\left(\alpha^*, \beta^*\right)$ is the regularized incomplete beta function. For all $p\in(0;1)$, $\mathrm{Q}_{\mathrm{HD}}^*(\mathbf{x}, \mathbf{w}, p)$ satisfies R1, R2, and R3.
+    where $\alpha^*=\left(n^*+1\right) p$, $\beta^*=\left(n^*+1\right)(1-p)$, $t_i^*=s_i(\bar{\mathbf{w}})$ is the partial sum of normalized weight coefficients, $I_{t_i^*}\left(\alpha^*, \beta^*\right)$ is the CDF of the beta distribution $\text{Beta}(\alpha, \beta)$. $W_{\mathrm{HD}, i}^*$ can be considered as probabilities of observing the target quantile at the given position. See details from Examples 7 and 8.
+
+    For all $p\in(0;1)$, $\mathrm{Q}_{\mathrm{HD}}^*(\mathbf{x}, \mathbf{w}, p)$ satisfies R1, R2, and R3.
 
 **Method 2: Weighted trimmed Harrell--Davis quantile estimator**
 
--   a trimmed modification.
+-   **a trimmed modification** of the HD method.
 
 -   idea: since most of the linear coefficients $W_{\mathrm{HD}, i}^*$ are pretty small, they do not have a noticeable impact on efficiency, but they significantly reduce the breakdown point.
 
--   pros: allow customizing trade-off between robustness and efficiency
+-   pros: allow customizing trade-off between robustness and efficiency.
 
-For $p \in (0;1)$, the weighted trimmed Harrell--Davis quantile estimator based on the beta distribution highest density interval $[L^*; R^*]$ of the given size $D^*$ (the rule of thumb: $D^*=1/\sqrt{n^*}$) is defined as
+-   cons: use the rule of thumb to decide $[L^*;R^*]$.
 
-$$
-\mathrm{Q}_{\mathrm{THD}}^*(\mathbf{x}, \mathbf{w}, p)=\sum_{i=1}^n W_{\mathrm{THD}, i}^* \cdot x_{(i)}, \quad W_{\mathrm{THD}, i}^*=F_{\mathrm{THD}}^*\left(t_i^*\right)-F_{\mathrm{THD}}^*\left(t_{i-1}^*\right), \quad t_i^*=s_i(\overline{\mathbf{w}}),
-$$
+    For $p \in (0;1)$, the weighted trimmed Harrell--Davis quantile estimator based on the beta distribution highest density interval $[L^*; R^*]$ of the given size $D^*$ (the rule of thumb: $D^*=1/\sqrt{n^*}$) is defined as
 
-where
+    $$
+    \mathrm{Q}_{\mathrm{THD}}^*(\mathbf{x}, \mathbf{w}, p)=\sum_{i=1}^n W_{\mathrm{THD}, i}^* \cdot x_{(i)}, \quad W_{\mathrm{THD}, i}^*=F_{\mathrm{THD}}^*\left(t_i^*\right)-F_{\mathrm{THD}}^*\left(t_{i-1}^*\right), \quad t_i^*=s_i(\overline{\mathbf{w}}),
+    $$
 
-$$
-F_{\mathrm{THD}}^*(t)= \begin{cases}0 & \text { for } t<L^*, \\\left(I_t\left(\alpha^*, \beta^*\right)-I_{L^*}\left(\alpha^*, \beta^*\right)\right) /\left(I_{R^*}\left(\alpha^*, \beta^*\right)-I_{L^*}\left(\alpha^*, \beta^*\right)\right) & \text { for } L^* \leq t \leq R^*, \\1 & \text { for } R^*<t .\end{cases}
-$$
+    where
+
+    $$
+    F_{\mathrm{THD}}^*(t)= \begin{cases}0 & \text { for } t<L^*, \\\left(I_t\left(\alpha^*, \beta^*\right)-I_{L^*}\left(\alpha^*, \beta^*\right)\right) /\left(I_{R^*}\left(\alpha^*, \beta^*\right)-I_{L^*}\left(\alpha^*, \beta^*\right)\right) & \text { for } L^* \leq t \leq R^*, \\1 & \text { for } R^*<t .\end{cases}
+    $$
 
 **Method 3: Weighted traditional quantile estimators**
 
@@ -458,30 +487,30 @@ $$
 
 -   Pros: extremely robust, not so efficient.
 
-$$
-\begin{array}{lll}
-\multicolumn{3}{c}{\text{Table: The Hyndman \& Fan (1996) taxonomy of quantile estimators.}} \\
-\hline 
-\text { Type } & \mathrm{h} & \text { Equation } \\\hline 1 & n p & x_{(\lceil h\rceil)} \\
-2 & n p+1 / 2 & \left(x_{(\lceil h-1 / 2\rceil)}+x_{(\lceil h+1 / 2\rceil)}\right) / 2 \\
-3 & n p & x_{(\lfloor h\rceil)} \\
-4 & n p & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
-5 & n p+1 / 2 & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
-6 & (n+1) p & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
-7 & (n-1) p+1 & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
-8 & (n+1 / 3) p+1 / 3 & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
-9 & (n+1 / 4) p+3 / 8 & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
-\hline
-\end{array}
-$$
+    $$
+    \begin{array}{lll}
+    \multicolumn{3}{c}{\text{Table: The Hyndman \& Fan (1996) taxonomy of quantile estimators.}} \\
+    \hline 
+    \text { Type } & \mathrm{h} & \text { Equation } \\\hline 1 & n p & x_{(\lceil h\rceil)} \\
+    2 & n p+1 / 2 & \left(x_{(\lceil h-1 / 2\rceil)}+x_{(\lceil h+1 / 2\rceil)}\right) / 2 \\
+    3 & n p & x_{(\lfloor h\rceil)} \\
+    4 & n p & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
+    5 & n p+1 / 2 & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
+    6 & (n+1) p & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
+    7 & (n-1) p+1 & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
+    8 & (n+1 / 3) p+1 / 3 & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
+    9 & (n+1 / 4) p+3 / 8 & x_{(\lfloor h\rfloor)}+(h-\lfloor h\rfloor)\left(x_{(\lceil h\rceil)}-x_{(\lfloor h\rfloor)}\right) \\
+    \hline
+    \end{array}
+    $$
 
-These estimators can be rewritten in a form that matches the definition of $\mathrm{Q}_{\mathrm{THD}}^*$ given by
+    These estimators can be rewritten in a form that matches the definition of $\mathrm{Q}_{\mathrm{THD}}^*$ given by
 
-$$
-Q_k^*(\mathbf{x}, \mathbf{w}, p)=\sum_{i=1}^{n} W_{F_k^*, i}^* \cdot x_{(i)}, \quad W_{F_k^*, i}^*=F_k^*\left(t_i^*\right)-F_k^*\left(t_{i-1}^*\right), \quad t_i^*=s_i(\bar{\mathbf{w}}),
-$$
+    $$
+    Q_k^*(\mathbf{x}, \mathbf{w}, p)=\sum_{i=1}^{n} W_{F_k^*, i}^* \cdot x_{(i)}, \quad W_{F_k^*, i}^*=F_k^*\left(t_i^*\right)-F_k^*\left(t_{i-1}^*\right), \quad t_i^*=s_i(\bar{\mathbf{w}}),
+    $$
 
-where
+    where
 
 $$
 F_k^*(t)=\left\{\begin{array}{llrr}0 & \text { for } & t<(h^*-1)/n^*, & \\t n^*-h^*+1 & \text { for } & \left(h^*-1\right) / n^* \leq t \leq h^*/n^*, \\1 & \text { for } & t > h^* / n^*. \end{array}\right.
