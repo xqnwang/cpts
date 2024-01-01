@@ -14,10 +14,6 @@ ICP.update <- function(series, nfit, ncal, alpha = 0.1,
   # Check the weights
   weight <- match.arg(weight)
   
-  # Check gamma - step size parameter
-  if (is.null(gamma) || (gamma <= 0)) 
-    gamma <- 0.005
-  
   # Alpha update method
   updateMethod <- match.arg(updateMethod)
   
@@ -30,7 +26,7 @@ ICP.update <- function(series, nfit, ncal, alpha = 0.1,
   }
   
   for (t in (nfit+1):T) {
-    # Fit AR model and compute new conformity score
+    # Fit AR model and get point forecasts
     out <- forecast::Arima(y[(t-nfit):(t-1)], order = c(2,0,0),
                            include.mean = TRUE, method = "CSS")
     fc <- forecast::forecast(out, h = 1)
@@ -39,7 +35,7 @@ ICP.update <- function(series, nfit, ncal, alpha = 0.1,
     # Compute conformity score
     scores[t-nfit] <- abs(y[t] - pred)
     
-    # Get forecasts on test set
+    # Implement conformal prediction on test set
     if (t > (nfit+ncal)) {
       if (weight == "Equal") {
         recentWeights <- rep(1, ncal+1)
@@ -76,6 +72,10 @@ ICP.update <- function(series, nfit, ncal, alpha = 0.1,
       upSeq[t-nfit-ncal] <- pred + q
       
       if (updateAlpha) {
+        # Check gamma - step size parameter
+        if (is.null(gamma) || (gamma <= 0)) 
+          gamma <- 0.005
+        
         # Compute errt
         errSeq[t-nfit-ncal] <- as.numeric(scores[t-nfit] > quantile(recentScores, 1-alphat))
         

@@ -313,7 +313,7 @@ In particular, $\lim _{T \rightarrow \infty} \frac{1}{T} \sum_{t=1}^T err_t \sta
 The proposed conformal PID controller is given by
 
 $$
-q_{t+1}=\underbrace{\eta \left(\operatorname{err}_t-\alpha\right)}_{\mathrm{P}}+\underbrace{r_t\left(\sum_{i=1}^t\left(\operatorname{err}_i-\alpha\right)\right)}_{\mathrm{I}}+\underbrace{g_t^{\prime}}_{\mathrm{D}},
+q_{t+1}=\underbrace{\eta g_t}_{\mathrm{P}}+\underbrace{r_t\left(\sum_{i=1}^t g_i\right)}_{\mathrm{I}}+\underbrace{g_t^{\prime}}_{\mathrm{D}},
 $$
 
 where $g_t=err_t-\alpha$.
@@ -325,6 +325,16 @@ The goal is to achieve **long-run coverage** in time, i.e., $\frac{1}{T} \sum_{t
 -   I: Error integration. $r_t$ should be a saturation function to achieve long-run coverage.
 
 -   D: Scorecasting (forward-looking). It trains a second model to predict the quantile of the next score.
+
+Reparametrize the PID formula to produce a sequence of quantile estimates $q_t$, $t \in N$ used in the prediction sets:
+
+let $\hat{q}_{t+1}$ be any function of the past: $x_i, y_i, q_i$, for $i \leq t$, then update
+
+$$
+q_{t+1}=\underbrace{\hat{q}_{t+1}}_{\text{scorecaster}}+\underbrace{r_t\left(\sum_{i=1}^t\left(\operatorname{err}_i-\alpha\right)\right)}_{\text{integrator}},
+$$
+
+which is generally useful and is the main focus of the paper.
 
 The applications only consider one-step-ahead forecast.
 
