@@ -3,7 +3,7 @@ weighted.quantile <- function(x, w = NULL, p,
                               qrule = c("math", "school", "shahvaish",
                                         "hf1", "hf2", "hf3",
                                         "hf4", "hf5", "hf6", "hf7", "hf8", "hf9")){
-  if (is.null(w)) w <- rep(1, length(x))
+  if (is.null(w)) w <- rep(1, length(x))/length(x)
   
   # Remove zero weights and corresponding elements
   if (any(zero <- (w == 0))){
@@ -12,6 +12,7 @@ weighted.quantile <- function(x, w = NULL, p,
   }
   
   if (qrule %in% c("math", "hf1")){
+    # the method commonly used in conformal prediction papers
     qdata <- qs(x, w, p)
     if (qdata$wlow == 0) qdata$qlow else qdata$qup
   } else if (qrule %in% c("school", "hf2")){
