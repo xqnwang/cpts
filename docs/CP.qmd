@@ -484,7 +484,13 @@ For $i=n+1,n+2,…,T$:
 
 Let $n=m=500$ and fit AR(2) models using the `Arima` function with setting `order = c(2,0,0), include.mean = TRUE, method = "CSS"` to make it comparable with the previous result.
 
-Consider methods: AR, CP, NexCP, ACP with $\alpha=0.1$.
+Consider methods: AR, CP, NexCP, ACP, PID with $\alpha=0.1$.
+
+For the PID method:
+
+-   The AR(2) models are trained using `nfit` observations through a rolling window strategy, as with the other methods.
+-   Theta method is used as the scorecaster to forecast the conformity scores. An expanding window strategy is used if `ncast = NULL`; a rolling window strategy is used if `ncast != NULL` (here we use rolling windows with `ncast = ncal` for comparison with other methods).
+-   The first `nburnin` outputs are removed to have output of equal length. (`nburnin` is equal to `ncal` in other methods.)
 
 ```{r}
 #| label: fig-ar2roll
@@ -505,23 +511,23 @@ ggarrange(lcl.update, mw.update, mdw.update,
 Features:
 
 -   The fitted model is updating over time.
-
 -   PIs have changing width over the test set.
-
 -   Other non-regression-based models can be considered.
-
--   Time-consuming because of the rolling window approach.
+-   Time-consuming because of the rolling window approach (but is still very quick for this simulation).
 
 # To do list
 
--   Generalize the existing methods and get a general function for implementation.
-    -   Symmetric/asymmetric scores.
-    -   Expanding/rolling window strategy.
-    -   Include weights in PID.
--   Multi-step ahead forecasting.
--   Theoretical proof.
--   Other data-dependent weight.
--   Hierarchical time series?
+-   [ ] Generalize the existing methods and get a general function for implementation.
+    -   [ ] Symmetric/asymmetric scores.
+    -   [ ] Expanding/rolling window strategy.
+    -   [ ] Include weights in PID.
+    -   [ ] Handle seasonal time series and specify methods used for forecasting and scorecasting.
+-   [ ] Multi-step ahead forecasting.
+    -   [ ] Correlation between multi step ahead residuals.
+    -   [ ] Similar strategy as PID.
+-   [ ] Theoretical proof.
+-   [ ] Other data-dependent weight.
+-   [ ] Hierarchical time series?
 
 # References
 

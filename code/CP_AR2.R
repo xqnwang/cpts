@@ -3,6 +3,7 @@ library(randomForest)
 source("R/base.R")
 source("R/ICP_split.R")
 source("R/ICP_update.R")
+source("R/PID_update.R")
 
 # Simulation series AR(2)
 set.seed(0)
@@ -81,7 +82,8 @@ m0 <- length(series0)
 cov.update <- len.update <- data.frame("AR" = rep(as.double(NA), m0),
                                        "CP" = rep(as.double(NA), m0),
                                        "NexCP" = rep(as.double(NA), m0),
-                                       "ACP" = rep(as.double(NA), m0))
+                                       "ACP" = rep(as.double(NA), m0),
+                                       "PID" = rep(as.double(NA), m0))
 #------
 # AR
 out_AR <- AR2.update(series, nfit = nfit, ncal = ncal, alpha = 0.1)
@@ -118,6 +120,15 @@ out_ACP <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1,
 cov.update$ACP <- (out_ACP$lo <= series0 & series0 <= out_ACP$up)
 len.update$ACP <- out_ACP$up - out_ACP$lo
 
+#------
+# PID - Quantile tracking + error integration + scorecasting
+out_PID <- PID.update(series, nfit = nfit, nburnin = ncal, alpha = 0.1,
+                      integrate = TRUE,
+                      scorecast = TRUE, ncast = ncal, # use expanding window for scorecaster if ncast = NULL
+                      lr = 0.1, Csat = 1, KI = 200)
+cov.update$PID <- (out_PID$lo <= series0 & series0 <= out_PID$up)
+len.update$PID <- out_PID$up - out_PID$lo
+
 save(cov.update, len.update, file = "data/AR2_update.rda")
 
 
@@ -135,18 +146,19 @@ k = 500
 #------
 # Split
 load("data/AR2_split.rda")
+if (NCOL(cov.split) == NCOL(len.split)) m <- NCOL(cov.split)
 
 cov.split.mean <- apply(cov.split, 2, function(x) rollmean(x = x, k = k))
 cov.split.mean <- data.frame(x = 1:nrow(cov.split.mean), cov.split.mean)
-cov.split.mean.df <- pivot_longer(cov.split.mean, cols = 2:5)
+cov.split.mean.df <- pivot_longer(cov.split.mean, cols = 2:(m+1))
 
 len.split.mean <- apply(len.split, 2, function(x) rollmean(x = x, k = k))
 len.split.mean <- data.frame(x = 1:nrow(len.split.mean), len.split.mean)
-len.split.mean.df <- pivot_longer(len.split.mean, cols = 2:5)
+len.split.mean.df <- pivot_longer(len.split.mean, cols = 2:(m+1))
 
 len.split.median <- apply(len.split, 2, function(x) rollmedian(x = x, k = k+1))
 len.split.median <- data.frame(x = 1:nrow(len.split.median), len.split.median)
-len.split.median.df <- pivot_longer(len.split.median, cols = 2:5)
+len.split.median.df <- pivot_longer(len.split.median, cols = 2:(m+1))
 
 lcl.split <- ggplot(data = cov.split.mean.df, aes(x = x, y = value, colour = name)) +
   geom_line() +
@@ -191,25 +203,27 @@ ggarrange(lcl.split, mw.split, mdw.split,
 #------
 # Update
 load("data/AR2_update.rda")
+if (NCOL(cov.update) == NCOL(len.update)) m <- NCOL(cov.update)
+
 cov.update.mean <- apply(cov.update, 2, function(x) rollmean(x = x, k = k))
 cov.update.mean <- data.frame(x = 1:nrow(cov.update.mean), cov.update.mean)
-cov.update.mean.df <- pivot_longer(cov.update.mean, cols = 2:5)
+cov.update.mean.df <- pivot_longer(cov.update.mean, cols = 2:(m+1))
 
 len.update.mean <- apply(len.update, 2, function(x) rollmean(x = x, k = k))
 len.update.mean <- data.frame(x = 1:nrow(len.update.mean), len.update.mean)
-len.update.mean.df <- pivot_longer(len.update.mean, cols = 2:5)
+len.update.mean.df <- pivot_longer(len.update.mean, cols = 2:(m+1))
 
 len.update.median <- apply(len.update, 2, function(x) rollmedian(x = x, k = k+1))
 len.update.median <- data.frame(x = 1:nrow(len.update.median), len.update.median)
-len.update.median.df <- pivot_longer(len.update.median, cols = 2:5)
+len.update.median.df <- pivot_longer(len.update.median, cols = 2:(m+1))
 
 lcl.update <- ggplot(data = cov.update.mean.df, aes(x = x, y = value, colour = name)) +
   geom_line() +
   geom_hline(yintercept=apply(cov.update, 2, mean), 
-             linetype='dashed', color=c('gray', 'blue', 'green', 'red')) +
+             linetype='dashed', color=c('gray', 'blue', 'green', 'red', "purple")) +
   scale_color_manual(
-    values = c(AR="gray", CP="blue", NexCP="green", ACP="red"),
-    breaks=c('AR', 'CP', 'NexCP', 'ACP')) +
+    values = c(AR="gray", CP="blue", NexCP="green", ACP="red", PID="purple"),
+    breaks=c('AR', 'CP', 'NexCP', 'ACP', 'PID')) +
   labs(title = "Local Coverage Level",
        x = "Time", y = "",
        fill = "Method") +
@@ -219,8 +233,8 @@ lcl.update <- ggplot(data = cov.update.mean.df, aes(x = x, y = value, colour = n
 mw.update <- ggplot(data = len.update.mean.df, aes(x = x, y = value, colour = name)) +
   geom_line() +
   scale_color_manual(
-    values = c(AR="gray", CP="blue", NexCP="green", ACP="red"),
-    breaks=c('AR', 'CP', 'NexCP', 'ACP')) +
+    values = c(AR="gray", CP="blue", NexCP="green", ACP="red", PID="purple"),
+    breaks=c('AR', 'CP', 'NexCP', 'ACP', 'PID')) +
   labs(title = "Mean Width",
        x = "Time", y = "",
        fill = "Method") +
@@ -230,8 +244,8 @@ mw.update <- ggplot(data = len.update.mean.df, aes(x = x, y = value, colour = na
 mdw.update <- ggplot(data = len.update.median.df, aes(x = x, y = value, colour = name)) +
   geom_line() +
   scale_color_manual(
-    values = c(AR="gray", CP="blue", NexCP="green", ACP="red"),
-    breaks=c('AR', 'CP', 'NexCP', 'ACP')) +
+    values = c(AR="gray", CP="blue", NexCP="green", ACP="red", PID="purple"),
+    breaks=c('AR', 'CP', 'NexCP', 'ACP', 'PID')) +
   labs(title = "Median Width",
        x = "Time", y = "",
        fill = "Method") +
