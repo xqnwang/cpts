@@ -10,7 +10,7 @@ PID.update <- function(series, nfit, nburnin = 100, alpha = 0.1,
     stop("series length must be larger than nfit+nburnin")
   
   # Initialize data storage variables
-  predSeq <- loSeq <- upSeq <- rep(0, T - nfit)
+  predSeq <- loSeq <- upSeq <- rep(0, T - nfit - nburnin)
   scores <- errs <- qs <- qts <- integrators <- scorecasts <- rep(0, T - nfit)
   
   for (t in (nfit + 1):T) {
@@ -42,7 +42,7 @@ PID.update <- function(series, nfit, nburnin = 100, alpha = 0.1,
     }
     
     # Update the next quantile
-    if (t <= (T - 1)) {
+    if (t_lr <= (T - nfit - 1)) {
       grad <- ifelse(errs[t_lr], -(1-alpha), alpha)
       qts[t_lr + 1] <- qts[t_lr] - lr_t * grad # set q_1 = 0
       integrators[t_lr + 1] <- ifelse(integrate, integrator, 0)
@@ -51,12 +51,14 @@ PID.update <- function(series, nfit, nburnin = 100, alpha = 0.1,
     }
     
     # Get forecasts and PIs
-    lo <- pred - qs[t_lr]
-    up <- pred + qs[t_lr]
-    
-    predSeq[t_lr] <- pred
-    loSeq[t_lr] <- min(lo, up)
-    upSeq[t_lr] <- max(lo, up)
+    if (t_lr > nburnin) {
+      lo <- pred - qs[t_lr]
+      up <- pred + qs[t_lr]
+      
+      predSeq[t_lr - nburnin] <- pred
+      loSeq[t_lr - nburnin] <- min(lo, up)
+      upSeq[t_lr - nburnin] <- max(lo, up)
+    }
   }
   return(list(pred = predSeq, lo = loSeq, up = upSeq))
 }
