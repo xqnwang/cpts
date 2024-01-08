@@ -2,6 +2,7 @@
 *.rda
 *.rds
 *.csv
+refs/*
 
 # History files
 .Rhistory
