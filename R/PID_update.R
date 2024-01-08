@@ -1,5 +1,6 @@
 PID.update <- function(series, nfit, nburnin = 100, alpha = 0.1,
-                       integrate = TRUE, scorecast = TRUE,
+                       integrate = TRUE,
+                       scorecast = TRUE, ncast = NULL,
                        lr = 0.1, Csat = 1, KI = 200) {
   # Set up data
   y <- series
@@ -36,7 +37,11 @@ PID.update <- function(series, nfit, nburnin = 100, alpha = 0.1,
     
     # Train scorecaster if necessary
     if (scorecast && (nburnin <= t_lr) && (t_lr < (T - nfit))) {
-      curr_scores <- scores[1:t_lr] # use expanding window for scorecaster
+      if (is.null(ncast) | (ncast > nburnin)) {
+        curr_scores <- scores[1:t_lr] # use expanding window for scorecaster
+      } else {
+        curr_scores <- scores[(t_lr - ncast + 1):t_lr] # use rolling window for scorecaster, normally set it to nburnin
+      }
       model <- forecast::thetaf(curr_scores, h = 1)
       scorecasts[t_lr + 1] <- as.numeric(model$mean)
     }
