@@ -87,7 +87,31 @@ It corresponds to Type 1[@hyndman1996]. The mathematical inverse $\tilde{F}^{-1}
     ## 50 | 1.00000000000003
     ```
 
-2.  In order to satisfy R2, the sample size needs adjustments. Consider using **Kish's effective sample size** given by
+2.  In order to satisfy R2, the sample size needs adjustments.
+
+    ```{r}
+    #| label: R_package_examples1
+    #| eval: false
+
+    non_zero <- wA != 0
+    message(modi::weighted.quantile(x, wA, 0.5), " | ",
+            modi::weighted.quantile(x[non_zero], wA[non_zero], 0.5))
+    ## 100 | 50
+    message(laeken::weightedQuantile(x, wA, 0.5), " | ",
+            laeken::weightedQuantile(x[non_zero], wA[non_zero], 0.5))
+    ## 100 | 100
+    message(MetricsWeighted::weighted_quantile(x, wA, 0.5), " | ",
+            MetricsWeighted::weighted_quantile(x[non_zero], wA[non_zero], 0.5))
+    ## 100 | 100
+    message(spatstat.geom::weighted.quantile(x, wA, 0.5), " | ",
+            spatstat.geom::weighted.quantile(x[non_zero], wA[non_zero], 0.5))
+    ## 1 | 0
+    message(matrixStats::weightedMedian(x, wA), " | ",
+            matrixStats::weightedMedian(x[non_zero], wA[non_zero]))
+    ## 50 | 50
+    ```
+
+    Consider using **Kish's effective sample size** given by
 
     $$
     n^*(\mathbf{w})=\frac{\left(\sum_{i=1}^n w_i\right)^2}{\sum_{i=1}^n w_i^2}=\frac{1}{\sum_{i=1}^n \bar{w}_i^2},
@@ -173,18 +197,18 @@ It corresponds to Type 1[@hyndman1996]. The mathematical inverse $\tilde{F}^{-1}
     where
 
     $$
-    F_k^*(t)=\left\{\begin{array}{llrr}0 & \text { for } & t<(h^*-1)/n^*, & \\t n^*-h^*+1 & \text { for } & \left(h^*-1\right) / n^* \leq t \leq h^*/n^*, \\1 & \text { for } & t > h^* / n^*. \end{array}\right.
+    F_k^*(t)=\left\{\begin{array}{llrr}0 & \text { for } & t<(h^*-1)/n^*, & \\t n^*-h^*+1 & \text { for } & \left(h^*-1\right) / n^* \leq t \leq h^*/n^*, \\1 & \text { for } & t > h^* / n^*, \end{array}\right.
     $$
 
-    So, instead of Beta distribution, uniform distribution is used to define the required PDF and CDF.
+    where $h^*$ is calculated based on $p^*$ rather than $p$. So, instead of Beta distribution, uniform distribution is suggested in the paper to define the required PDF and CDF.
 
 ## Summary
 
-The methods tend to be too smooth as they tend to use more order statistics (more than two) for linear combination to get the weighted quantile.
+-   The methods tend to be too smooth as they tend to use more order statistics (more than two) for linear combination to get the weighted quantile.
 
-Regarding conformal prediction, we normally calculate $\mathrm{Q}_{1-\alpha}\left(\sum_{i=1}^n \tilde{w}_i \cdot \delta_{R_i}+\tilde{w}_{n+1} \cdot \delta_{+\infty}\right)$ in which the maximum is Inf, then the resulting weighted quantile tends to return Inf as well.
+-   Regarding conformal prediction, we normally calculate $\mathrm{Q}_{1-\alpha}\left(\sum_{i=1}^n \tilde{w}_i \cdot \delta_{R_i}+\tilde{w}_{n+1} \cdot \delta_{+\infty}\right)$ in which the maximum is Inf, then the resulting weighted quantile tends to return Inf as well.
 
-We also tried to remove Inf from the calculation of the required quantile, the average coverage is still biased compared to nominal coverage, which is the same case when employing the weighted quantile method commonly used in conformal prediction papers.
+-   We also tried to remove Inf from the calculation of the required quantile, the average coverage is still biased compared to nominal coverage, which is the same case when employing the weighted quantile method commonly used in conformal prediction papers.
 
 # The survey package
 
@@ -379,7 +403,7 @@ $$
 The following two identities hold in the unweighted case:
 
 $$
-n = \frac{1}{w_{(k)}}\\
+n = \frac{1}{w_{(k)}} \text{ and }
 k = nW_{(k)} = \frac{W_{(k)}}{w_{(k)}}.
 $$
 
@@ -417,7 +441,7 @@ To satisfy the property that $\hat{Q}_{X,i}(0.5)$ should be equal to the sample 
 1.  Estimate the sample size using Kish's effective sample size.
 2.  Construct a modified dataset with replications proportional to weights \-\-- Introduce flat regions.
 
-The weighted quantiles now match the unweighted quantiles much more closely.
+The weighted quantiles now match the unweighted quantiles much more closely. I think this strategy helps a lot.
 
 # Comparison
 
@@ -431,31 +455,47 @@ wE <- c(1, 1, 1)
 wA <- c(1, 0, 1); non_zero <- wA != 0
 wB <- c(1, 0.00001, 1)
 
+kess <- function(w) sum(w) ^ 2 / sum(w ^ 2)
+p <- 0.9
+
 # R1: consistency with existing quantile estimators
 sapply(1:9, function(type){
-  c(quantile_equal = quantile(x, probs = 0.5, type),
-    survey = weighted.quantile.qrule(x, w = wE, p = 0.5, type),
-    ggdist = ggdist::weighted_quantile(x, weights = wE, probs = 0.5, type))
+  c(quantile_equal = quantile(x, probs = p, type),
+    survey = weighted.quantile.qrule(x, w = wE, p = p, type),
+    ggdist = ggdist::weighted_quantile(x, weights = wE,
+                                       probs = p, type),
+    ggdist_kess = ggdist::weighted_quantile(x, weights = wE,
+                                            probs = p, type, n = kess))
 }, simplify = TRUE, USE.NAMES = TRUE) |> t()
+## If Kish's effective sample size is not used in ggdist, R1 is violated.
 
 # R2: zero weight support
 sapply(1:9, function(type){
-  c(survey = weighted.quantile.qrule(x, w = wA, p = 0.5, type),
-    survey_nozero = weighted.quantile.qrule(x[non_zero], w = wA[non_zero], p = 0.5, type),
-    ggdist = ggdist::weighted_quantile(x, weights = wA, probs = 0.5, type),
-    ggdist_nozero = ggdist::weighted_quantile(x[non_zero], weights = wA[non_zero], probs = 0.5, type))
+  c(survey = weighted.quantile.qrule(x, w = wA, p = p, type),
+    survey_nozero = weighted.quantile.qrule(x[non_zero], w = wA[non_zero], p = p, type),
+    ggdist = ggdist::weighted_quantile(x, weights = wA, probs = p, type),
+    ggdist_nozero = ggdist::weighted_quantile(x[non_zero], weights = wA[non_zero],
+                                              probs = p, type),
+    ggdist_kess = ggdist::weighted_quantile(x, weights = wA, probs = p, type, n = kess),
+    ggdist_nozero_kess = ggdist::weighted_quantile(x[non_zero], weights = wA[non_zero],
+                                                   probs = p, type, n = kess))
 }, simplify = TRUE, USE.NAMES = TRUE) |> t()
 
 # R3: stability
+p <- 0.5
 sapply(1:9, function(type){
-  c(survey_wA = weighted.quantile.qrule(x, w = wA, p = 0.5, type),
-    survey_wB = weighted.quantile.qrule(x, w = wB, p = 0.5, type),
-    ggdist_wA = ggdist::weighted_quantile(x, weights = wA, probs = 0.5, type),
-    ggdist_wB = ggdist::weighted_quantile(x, weights = wB, probs = 0.5, type))
+  c(survey_wA = weighted.quantile.qrule(x, w = wA, p = p, type),
+    survey_wB = weighted.quantile.qrule(x, w = wB, p = p, type),
+    ggdist_wA = ggdist::weighted_quantile(x, weights = wA, probs = p, type),
+    ggdist_wB = ggdist::weighted_quantile(x, weights = wB, probs = p, type),
+    ggdist_wA_kess = ggdist::weighted_quantile(x, weights = wA, probs = p, type, n = kess),
+    ggdist_wB_kess = ggdist::weighted_quantile(x, weights = wB, probs = p, type, n = kess))
 }, simplify = TRUE, USE.NAMES = TRUE) |> t()
 ```
 
 The stability property is not satisfied in either the survey or ggdist packages, but it is not common for neighboring ordered statistics (conformity scores) to differ significantly in CP problems.
+
+**Maybe we can try to propose some locally smooth method to address it.**
 
 ## Non-weighted VS weighted quantiles
 
@@ -557,6 +597,10 @@ continuous_quantile_plot(8, X, w)
 continuous_quantile_plot(9, X, w)
 ```
 
+The **survey** and **ggdist** packages use different strategies for defining $p_k$ for continuous quantiles (Types 4-9), the quantile outputs are slightly different, but still always within the reasonable bounds.
+
+**Which strategy makes more theoretical sense? We should explore this further.**
+
 ## Impact of Inf
 
 ```{r}
@@ -578,7 +622,8 @@ tibble(x, w, W) |> tail(10)
 # 90% weighted quantile for a set including Inf
 sapply(1:9, function(type){
   c(survey = weighted.quantile.qrule(x, w = w, p = 0.9, type),
-    ggdist = ggdist::weighted_quantile(x, weights = w, probs = 0.9, type))
+    ggdist = ggdist::weighted_quantile(x, weights = w, probs = 0.9, type),
+    ggdist_kess = ggdist::weighted_quantile(x, weights = w, probs = 0.9, type, n = kess))
 }, simplify = TRUE, USE.NAMES = TRUE) |> t()
 
 # Harrell-Davis quantile estimator & Type7 in Akinshin (2023)
@@ -590,19 +635,20 @@ paste(cNORM::weighted.quantile.harrell.davis(x, 0.9, w), "|",
 
 -   The `weighted_quantile` function in the **ggdist** R package seems to be a good choice in the context of conformal prediction.
 
--   To satisfy the property that $\hat{Q}_{X,i}(0.5)$ is equal to the sample median, we may suggest using **Kish\'s effective sample size** to create flat regions and make the output quantiles match the unweighted quantiles more closely.
+-   To satisfy the property that $\hat{Q}_{X,i}(0.5)$ is equal to the sample median, we suggest using **Kish's effective sample size** to create flat regions and make the output quantiles match the unweighted quantiles more closely. Using Kish's effective sample size is more likely to return quantile estimator satisfying the R1 consistency property.
 
     ```{r}
     #| label: kess
     #| eval: false
 
-    kess <- function(w) sum(w) ^ 2 / sum(w ^ 2)
+    # Function to calculate Kish's effective sample size
+    kess <- function(w) sum(w)^2 / sum(w^2)
     ```
 
 ```{=html}
 <!-- -->
 ```
--   **Type8** may be a good choice as it gives median-unbiased estimates in the equal weight settings.
+-   **Type 8** may be a good choice as it gives median-unbiased estimates in the equal weight settings, even if all types may give the same result for large sample size.
 
 # References
 
