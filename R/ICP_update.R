@@ -15,6 +15,10 @@ ICP.update <- function(series, nfit, ncal, alpha = 0.1,
   # Check the weights
   weight <- match.arg(weight)
   
+  # Check gamma - step size parameter
+  if (updateAlpha && (is.null(gamma) || (gamma <= 0)))
+    gamma <- 0.005
+  
   # Alpha update method
   updateMethod <- match.arg(updateMethod)
   
@@ -83,12 +87,14 @@ ICP.update <- function(series, nfit, ncal, alpha = 0.1,
       upSeq[t-nfit-ncal] <- pred + q
       
       if (updateAlpha) {
-        # Check gamma - step size parameter
-        if (is.null(gamma) || (gamma <= 0)) 
-          gamma <- 0.005
-        
         # Compute errt
-        errSeq[t-nfit-ncal] <- as.numeric(scores[t-nfit] > quantile(recentScores, 1-alphat))
+        if (alphat >= 1) {
+          errSeq[t-nfit-ncal] <- 1
+        } else if (alphat <= 0) {
+          errSeq[t-nfit-ncal] <- 0
+        } else {
+          errSeq[t-nfit-ncal] <- as.numeric(scores[t-nfit] > quantile(recentScores, 1-alphat))
+        }
         
         # Update alphat
         alphaSeq[t-nfit-ncal] <- alphat
