@@ -1,7 +1,8 @@
 ICP.update <- function(series, nfit, ncal, alpha = 0.1,
                        weight = c("Equal", "Exp", "GLM", "RF"), base = 0.99,
                        updateAlpha = FALSE, gamma = 0.005,
-                       updateMethod = c("Simple", "Momentum"), momentumBW = 0.95) {
+                       updateMethod = c("Simple", "Momentum"), momentumBW = 0.95,
+                       kess = FALSE, type = 1) {
   # Set up data
   y <- series
   T <- length(y)
@@ -16,6 +17,13 @@ ICP.update <- function(series, nfit, ncal, alpha = 0.1,
   
   # Alpha update method
   updateMethod <- match.arg(updateMethod)
+  
+  # Kish's effective sample size
+  if (kess) {
+    kess <- function(w) sum(w)^2 / sum(w^2)
+  } else {
+    kess <- NULL
+  }
   
   # Initialize data storage variables
   predSeq <- loSeq <- upSeq <- rep(0, T-nfit-ncal)
@@ -63,10 +71,13 @@ ICP.update <- function(series, nfit, ncal, alpha = 0.1,
       }
       
       recentScores <- scores[(t-nfit-ncal):(t-nfit-1)]
-      q <- weighted.quantile(c(recentScores, Inf), 
-                             prob = 1-alphat, 
-                             w = recentWeights,
-                             sorted = FALSE)
+      q <- ggdist::weighted_quantile(x = c(recentScores, Inf), probs = 1-alphat,
+                                     weights = recentWeights,
+                                     n = kess, type = type)
+      # q <- weighted.quantile(c(recentScores, Inf),
+      #                        prob = 1-alphat,
+      #                        w = recentWeights,
+      #                        sorted = FALSE)
       predSeq[t-nfit-ncal] <- pred
       loSeq[t-nfit-ncal] <- pred - q
       upSeq[t-nfit-ncal] <- pred + q

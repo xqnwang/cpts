@@ -1,4 +1,5 @@
-ICP.split <- function(data, x0, alpha = 0.1, rho = 0.5, split = NULL, w = NULL) {
+ICP.split <- function(data, x0, alpha = 0.1, rho = 0.5, split = NULL, w = NULL,
+                      kess = FALSE, type = 1) {
   
   # Set up data
   n <- nrow(data)
@@ -8,6 +9,13 @@ ICP.split <- function(data, x0, alpha = 0.1, rho = 0.5, split = NULL, w = NULL) 
   # Check the weights
   if (is.null(w)) 
     w <- rep(1, n+n0)
+  
+  # Kish's effective sample size
+  if (kess) {
+    kess <- function(w) sum(w)^2 / sum(w^2)
+  } else {
+    kess <- NULL
+  }
   
   # Check rho
   if (is.null(rho) || length(rho) != 1 || !is.numeric(rho) || rho <= 0 || rho >= 1) 
@@ -37,8 +45,11 @@ ICP.split <- function(data, x0, alpha = 0.1, rho = 0.5, split = NULL, w = NULL) 
   pred <- as.vector(predict(out, x0))
   
   for (i in 1:n0) {
-    q <- weighted.quantile(c(res, Inf), prob = 1-alpha, 
-                           w = c(w[i2], w[n+i]), sorted = FALSE)
+    q <- ggdist::weighted_quantile(x = c(res, Inf), probs = 1-alpha,
+                                   weights = c(w[i2], w[n+i]),
+                                   n = kess, type = type)
+    # q <- weighted.quantile(c(res, Inf), prob = 1-alpha, 
+    #                        w = c(w[i2], w[n+i]), sorted = FALSE)
     lo[i] <- pred[i] - q
     up[i] <- pred[i] + q
   }
