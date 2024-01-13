@@ -4,7 +4,6 @@ format:
   pdf:
     number-sections: true
     link-citations: true
-editor: visual
 bibliography: references.bib
 ---
 
@@ -70,6 +69,8 @@ It corresponds to Type 1[@hyndman1996]. The mathematical inverse $\tilde{F}^{-1}
     x <- c(0, 1, 100)
     wA <- c(1, 0.00000, 1)
     wB <- c(1, 0.00001, 1)
+    message(quantile(c(0, 100), 0.5))
+    ## 50
     message(modi::weighted.quantile(x, wA, 0.5), " | ",
             modi::weighted.quantile(x, wB, 0.5))
     ## 100 | 1
@@ -452,15 +453,15 @@ The weighted quantiles now match the unweighted quantiles much more closely. I t
 
 x <- c(0, 1, 100)
 wE <- c(1, 1, 1)
-wA <- c(1, 0, 1); non_zero <- wA != 0
+wA <- c(1, 0, 1); nz <- wA != 0
 wB <- c(1, 0.00001, 1)
 
-kess <- function(w) sum(w) ^ 2 / sum(w ^ 2)
+kess <- function(w) sum(w)^2 / sum(w^2)
 p <- 0.9
 
 # R1: consistency with existing quantile estimators
 sapply(1:9, function(type){
-  c(quantile_equal = quantile(x, probs = p, type),
+  c(quantile = quantile(x, probs = p, type),
     survey = weighted.quantile.qrule(x, w = wE, p = p, type),
     ggdist = ggdist::weighted_quantile(x, weights = wE,
                                        probs = p, type),
@@ -471,26 +472,28 @@ sapply(1:9, function(type){
 
 # R2: zero weight support
 sapply(1:9, function(type){
-  c(survey = weighted.quantile.qrule(x, w = wA, p = p, type),
-    survey_nozero = weighted.quantile.qrule(x[non_zero], w = wA[non_zero], p = p, type),
+  c(quantile = quantile(x[nz], probs = p, type),
+    survey = weighted.quantile.qrule(x, w = wA, p = p, type),
+    survey_nz = weighted.quantile.qrule(x[nz], w = wA[nz], p = p, type),
     ggdist = ggdist::weighted_quantile(x, weights = wA, probs = p, type),
-    ggdist_nozero = ggdist::weighted_quantile(x[non_zero], weights = wA[non_zero],
-                                              probs = p, type),
+    ggdist_nz = ggdist::weighted_quantile(x[nz], weights = wA[nz],
+                                          probs = p, type),
     ggdist_kess = ggdist::weighted_quantile(x, weights = wA, probs = p, type, n = kess),
-    ggdist_nozero_kess = ggdist::weighted_quantile(x[non_zero], weights = wA[non_zero],
-                                                   probs = p, type, n = kess))
+    ggdist_nz_kess = ggdist::weighted_quantile(x[nz], weights = wA[nz],
+                                               probs = p, type, n = kess))
 }, simplify = TRUE, USE.NAMES = TRUE) |> t()
 
 # R3: stability
 p <- 0.5
 sapply(1:9, function(type){
-  c(survey_wA = weighted.quantile.qrule(x, w = wA, p = p, type),
+  c(quantile = quantile(x[nz], probs = p, type),
+    survey_wA = weighted.quantile.qrule(x, w = wA, p = p, type),
     survey_wB = weighted.quantile.qrule(x, w = wB, p = p, type),
     ggdist_wA = ggdist::weighted_quantile(x, weights = wA, probs = p, type),
     ggdist_wB = ggdist::weighted_quantile(x, weights = wB, probs = p, type),
     ggdist_wA_kess = ggdist::weighted_quantile(x, weights = wA, probs = p, type, n = kess),
     ggdist_wB_kess = ggdist::weighted_quantile(x, weights = wB, probs = p, type, n = kess))
-}, simplify = TRUE, USE.NAMES = TRUE) |> t()
+}, simplify = TRUE, USE.NAMES = TRUE) |> t() |> round(2)
 ```
 
 The stability property is not satisfied in either the survey or ggdist packages, but it is not common for neighboring ordered statistics (conformity scores) to differ significantly in CP problems.
@@ -645,9 +648,6 @@ paste(cNORM::weighted.quantile.harrell.davis(x, 0.9, w), "|",
     kess <- function(w) sum(w)^2 / sum(w^2)
     ```
 
-```{=html}
-<!-- -->
-```
 -   **Type 8** may be a good choice as it gives median-unbiased estimates in the equal weight settings, even if all types may give the same result for large sample size.
 
 # References
