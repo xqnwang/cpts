@@ -16,6 +16,10 @@ autoplot(series) +
 save(series, file = "data/AR2data.rda")
 series <- as.numeric(series)
 
+# Setup for weighted quantiles
+kess <- FALSE
+type <- 1
+
 #------------------------------------------------------------
 # ICP with fixed training and calibration sets
 #------------------------------------------------------------
@@ -34,7 +38,8 @@ cov.split <- len.split <- data.frame("CP" = rep(as.double(NA), n0),
                                      "NexCP" = rep(as.double(NA), n0))
 #------
 # SCP
-out.SCP <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5)
+out.SCP <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5,
+                     kess = kess, type = type)
 cov.split$CP <- (out.SCP$lo <= y0 & y0 <= out.SCP$up)
 len.split$CP <- out.SCP$up - out.SCP$lo
 
@@ -46,7 +51,8 @@ obj.glm <- glm(zy ~ zx, family = "binomial")
 prob.glm <- predict(obj.glm, type = "response")
 wts.glm <- prob.glm / (1-prob.glm)
 
-out.WCP.LR <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5, w = wts.glm)
+out.WCP.LR <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5, w = wts.glm,
+                        kess = kess, type = type)
 cov.split$WCP.LR <- (out.WCP.LR$lo <= y0 & y0 <= out.WCP.LR$up)
 len.split$WCP.LR <- out.WCP.LR$up - out.WCP.LR$lo
 
@@ -57,7 +63,8 @@ prob.rf <- predict(obj.rf, type = "prob")[,2]
 prob.rf <- pmax(pmin(prob.rf, 0.99), 0.01)
 wts.rf <- prob.rf / (1-prob.rf)
 
-out.WCP.RF <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5, w = wts.rf)
+out.WCP.RF <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5, w = wts.rf,
+                        kess = kess, type = type)
 cov.split$WCP.RF <- (out.WCP.RF$lo <= y0 & y0 <= out.WCP.RF$up)
 len.split$WCP.RF <- out.WCP.RF$up - out.WCP.RF$lo
 
@@ -65,7 +72,8 @@ len.split$WCP.RF <- out.WCP.RF$up - out.WCP.RF$lo
 # NexCP - Weights on the test set are all equal to 1
 wts.exp <- c(0.99^(n+1-((1:n))), rep(1, n0))
 
-out.NexCP <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5, w = wts.exp)
+out.NexCP <- ICP.split(dat_tr, x0, alpha = 0.1, rho = 0.5, w = wts.exp,
+                       kess = kess, type = type)
 cov.split$NexCP <- (out.NexCP$lo <= y0 & y0 <= out.NexCP$up)
 len.split$NexCP <- out.NexCP$up - out.NexCP$lo
 
@@ -92,7 +100,8 @@ len.update$AR <- out_AR$up - out_AR$lo
 
 #------
 # SCP
-out_SCP <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1)
+out_SCP <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1,
+                      kess = kess, type = type)
 cov.update$CP <- (out_SCP$lo <= series0 & series0 <= out_SCP$up)
 len.update$CP <- out_SCP$up - out_SCP$lo
 
@@ -109,14 +118,16 @@ len.update$CP <- out_SCP$up - out_SCP$lo
 #------
 # NexCP - Weights on the test set are all equal to 1
 out_NexCP <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1,
-                        weight = "Exp", base = 0.99)
+                        weight = "Exp", base = 0.99,
+                        kess = kess, type = type)
 cov.update$NexCP <- (out_NexCP$lo <= series0 & series0 <= out_NexCP$up)
 len.update$NexCP <- out_NexCP$up - out_NexCP$lo
 
 #------
 # ACP - Adaptively update alpha
 out_ACP <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1,
-                      updateAlpha = TRUE, gamma = 0.005, updateMethod = "Simple")
+                      updateAlpha = TRUE, gamma = 0.005, updateMethod = "Simple",
+                      kess = kess, type = type)
 cov.update$ACP <- (out_ACP$lo <= series0 & series0 <= out_ACP$up)
 len.update$ACP <- out_ACP$up - out_ACP$lo
 
@@ -141,7 +152,7 @@ library(tidyr)
 library(reshape2)
 library(ggplot2)
 library(ggpubr)
-k = 500
+k <- 500
 
 #------
 # Split
