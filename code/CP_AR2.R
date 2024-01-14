@@ -92,6 +92,7 @@ cov.update <- len.update <- data.frame("AR" = rep(as.double(NA), m0),
                                        "NexCP" = rep(as.double(NA), m0),
                                        "ACP" = rep(as.double(NA), m0),
                                        "PID" = rep(as.double(NA), m0))
+
 #------
 # AR
 out_AR <- AR2.update(series, nfit = nfit, ncal = ncal, alpha = 0.1)
@@ -104,16 +105,6 @@ out_SCP <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1,
                       kess = kess, type = type)
 cov.update$CP <- (out_SCP$lo <= series0 & series0 <= out_SCP$up)
 len.update$CP <- out_SCP$up - out_SCP$lo
-
-#------
-# WCP - Weights estimated with logistic regression
-# out_WCP.LR <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1, weight = "GLM")
-# mean(out_WCP.LR$lo <= series0 & series0 <= out_WCP.LR$up)
-
-#------
-# WCP - Weights estimated with random forest
-# out_WCP.RF <- ICP.update(series, nfit = nfit, ncal = ncal, alpha = 0.1, weight = "RF")
-# mean(out_WCP.RF$lo <= series0 & series0 <= out_WCP.RF$up)
 
 #------
 # NexCP - Weights on the test set are all equal to 1
@@ -136,15 +127,47 @@ len.update$ACP <- out_ACP$up - out_ACP$lo
 Tg <- 5000
 delta <- 0.01
 Csat <- 2 / pi * (ceiling(log(Tg) * delta) - 1 / log(Tg))
-KI <- mean(series)
+KI <- 2
 out_PID <- PID.update(series, nfit = nfit, nburnin = ncal, alpha = 0.1,
-                      integrate = TRUE,
-                      scorecast = TRUE, ncast = ncal, # use expanding window for scorecaster if ncast = NULL
+                      integrate = TRUE, scorecast = TRUE, ncast = ncal, # use expanding window for scorecaster if ncast = NULL
                       lr = 0.1, Csat = Csat, KI = KI)
 cov.update$PID <- (out_PID$lo <= series0 & series0 <= out_PID$up)
 len.update$PID <- out_PID$up - out_PID$lo
 
 save(cov.update, len.update, file = "data/AR2_update.rda")
+
+
+#------
+# PID analysis
+Tg <- 5000
+delta <- 0.01
+Csat <- 2 / pi * (ceiling(log(Tg) * delta) - 1 / log(Tg))
+KI <- 2
+for (lr in c(0.01, 0.1)) {
+  lr_ch <- gsub('\\.', '', lr)
+  cov.PID <- len.PID <- data.frame("PID" = rep(as.double(NA), m0),
+                                   "P" = rep(as.double(NA), m0),
+                                   "PI" = rep(as.double(NA), m0))
+  PID <- PID.update(series, nfit = nfit, nburnin = ncal, alpha = 0.1,
+                    integrate = TRUE, scorecast = TRUE, ncast = ncal,
+                    lr = lr, Csat = Csat, KI = KI)
+  cov.PID$PID <- (PID$lo <= series0 & series0 <= PID$up)
+  len.PID$PID <- PID$up - PID$lo
+  
+  PI <- PID.update(series, nfit = nfit, nburnin = ncal, alpha = 0.1,
+                   integrate = TRUE, scorecast = FALSE, ncast = ncal,
+                   lr = lr, Csat = Csat, KI = KI)
+  cov.PID$PI <- (PI$lo <= series0 & series0 <= PI$up)
+  len.PID$PI <- PI$up - PI$lo
+  
+  P <- PID.update(series, nfit = nfit, nburnin = ncal, alpha = 0.1,
+                  integrate = FALSE, scorecast = FALSE, ncast = ncal,
+                  lr = lr, Csat = Csat, KI = KI)
+  cov.PID$P <- (P$lo <= series0 & series0 <= P$up)
+  len.PID$P <- P$up - P$lo
+  
+  save(cov.PID, len.PID, file = paste0("data/AR2_PID_",lr_ch, ".rda"))
+}
 
 
 #------------------------------------------------------------
@@ -156,12 +179,12 @@ library(tidyr)
 library(reshape2)
 library(ggplot2)
 library(ggpubr)
-k <- 500
 
 #------
 # Split
 load("data/AR2_split.rda")
 if (NCOL(cov.split) == NCOL(len.split)) m <- NCOL(cov.split)
+k <- 500
 
 cov.split.mean <- apply(cov.split, 2, function(x) rollmean(x = x, k = k))
 cov.split.mean <- data.frame(x = 1:nrow(cov.split.mean), cov.split.mean)
@@ -219,6 +242,7 @@ ggarrange(lcl.split, mw.split, mdw.split,
 # Update
 load("data/AR2_update.rda")
 if (NCOL(cov.update) == NCOL(len.update)) m <- NCOL(cov.update)
+k <- 500
 
 cov.update.mean <- apply(cov.update, 2, function(x) rollmean(x = x, k = k))
 cov.update.mean <- data.frame(x = 1:nrow(cov.update.mean), cov.update.mean)
@@ -271,3 +295,190 @@ save(lcl.update, mw.update, mdw.update, file = "data/AR2_update_plot.rda")
 ggarrange(lcl.update, mw.update, mdw.update,
           ncol = 1, nrow = 3,
           common.legend = TRUE, legend = "bottom")
+
+#------
+# PID analysis
+k <- 500
+for (lr in c(0.01, 0.1)){
+  lr_ch <- gsub('\\.', '', lr)
+  load_file_name <- paste0("data/AR2_PID_", lr_ch, ".rda")
+  load(load_file_name)
+  if (NCOL(cov.PID) == NCOL(len.PID)) m <- NCOL(cov.PID)
+  
+  cov.PID.mean <- apply(cov.PID, 2, function(x) rollmean(x = x, k = k))
+  cov.PID.mean <- data.frame(x = 1:nrow(cov.PID.mean), cov.PID.mean)
+  cov.PID.mean.df <- pivot_longer(cov.PID.mean, cols = 2:(m+1))
+  
+  len.PID.mean <- apply(len.PID, 2, function(x) rollmean(x = x, k = k))
+  len.PID.mean <- data.frame(x = 1:nrow(len.PID.mean), len.PID.mean)
+  len.PID.mean.df <- pivot_longer(len.PID.mean, cols = 2:(m+1))
+  
+  len.PID.median <- apply(len.PID, 2, function(x) rollmedian(x = x, k = k+1))
+  len.PID.median <- data.frame(x = 1:nrow(len.PID.median), len.PID.median)
+  len.PID.median.df <- pivot_longer(len.PID.median, cols = 2:(m+1))
+  
+  lcl.PID <- ggplot(data = cov.PID.mean.df |> filter(name == "PID"),
+                    aes(x = x, y = value, colour = name)) +
+    geom_line() +
+    geom_hline(yintercept = mean(cov.PID$PID), 
+               linetype = 'dashed', color = "purple") +
+    scale_color_manual(
+      values = c(PID = "purple"),
+      breaks = c('PID')) +
+    scale_y_continuous(limits = c(0.88, 0.94), breaks = seq(0.88, 0.94, 0.01)) +
+    labs(title = paste("PID:", "lr =", lr),
+         x = "", y = "Local Coverage Level",
+         fill = "Method") +
+    theme_bw() +
+    theme(legend.position = "none",
+          plot.title = element_text(hjust = 0.5))
+  
+  lcl.PI <- ggplot(data = cov.PID.mean.df |> filter(name == "PI"),
+                   aes(x = x, y = value, colour = name)) +
+    geom_line() +
+    geom_hline(yintercept = mean(cov.PID$PI), 
+               linetype = 'dashed', color = "violet") +
+    scale_color_manual(
+      values = c(PI = "violet"),
+      breaks = c('PI')) +
+    scale_y_continuous(limits = c(0.88, 0.94), breaks = seq(0.88, 0.94, 0.01)) +
+    labs(title = paste("PI:", "lr =", lr),
+         x = "", y = "",
+         fill = "Method") +
+    theme_bw() +
+    theme(legend.position = "none",
+          plot.title = element_text(hjust = 0.5))
+  
+  lcl.P <- ggplot(data = cov.PID.mean.df |> filter(name == "P"),
+                  aes(x = x, y = value, colour = name)) +
+    geom_line() +
+    geom_hline(yintercept = mean(cov.PID$P), 
+               linetype = 'dashed', color = "pink") +
+    scale_color_manual(
+      values = c(P = "pink"),
+      breaks = c('P')) +
+    scale_y_continuous(limits = c(0.88, 0.94), breaks = seq(0.88, 0.94, 0.01)) +
+    labs(title = paste("P:", "lr =", lr),
+         x = "", y = "",
+         fill = "Method") +
+    theme_bw() +
+    theme(legend.position = "none",
+          plot.title = element_text(hjust = 0.5))
+  
+  mw.PID <- ggplot(data = len.PID.mean.df |> filter(name == "PID"),
+                   aes(x = x, y = value, colour = name)) +
+    geom_line() +
+    scale_color_manual(
+      values = c(PID = "purple"),
+      breaks = c('PID')) +
+    scale_y_continuous(limits = c(2.9, 3.9), breaks = seq(2.9, 3.9, 0.2)) +
+    labs(title = "",
+         x = "", y = "Mean Width",
+         fill = "Method") +
+    theme_bw() +
+    theme(legend.position = "none")
+  
+  mw.PI <- ggplot(data = len.PID.mean.df |> filter(name == "PI"),
+                  aes(x = x, y = value, colour = name)) +
+    geom_line() +
+    scale_color_manual(
+      values = c(PI = "violet"),
+      breaks = c('PI')) +
+    scale_y_continuous(limits = c(2.9, 3.9), breaks = seq(2.9, 3.9, 0.2)) +
+    labs(title = "",
+         x = "", y = "",
+         fill = "Method") +
+    theme_bw() +
+    theme(legend.position = "none")
+  
+  mw.P <- ggplot(data = len.PID.mean.df |> filter(name == "P"),
+                 aes(x = x, y = value, colour = name)) +
+    geom_line() +
+    scale_color_manual(
+      values = c(P = "pink"),
+      breaks = c('P')) +
+    scale_y_continuous(limits = c(2.9, 3.9), breaks = seq(2.9, 3.9, 0.2)) +
+    labs(title = "",
+         x = "", y = "",
+         fill = "Method") +
+    theme_bw() +
+    theme(legend.position = "none")
+  
+  mdw.PID <- ggplot(data = len.PID.median.df |> filter(name == "PID"),
+                    aes(x = x, y = value, colour = name)) +
+    geom_line() +
+    scale_color_manual(
+      values = c(PID = "purple"),
+      breaks = c('PID')) +
+    scale_y_continuous(limits = c(2.9, 3.9), breaks = seq(2.9, 3.9, 0.2)) +
+    labs(title = "",
+         x = "Time", y = "Median Width",
+         fill = "Method") +
+    theme_bw() +
+    theme(legend.position = "none")
+  
+  mdw.PI <- ggplot(data = len.PID.median.df |> filter(name == "PI"),
+                   aes(x = x, y = value, colour = name)) +
+    geom_line() +
+    scale_color_manual(
+      values = c(PI = "violet"),
+      breaks = c('PI')) +
+    scale_y_continuous(limits = c(2.9, 3.9), breaks = seq(2.9, 3.9, 0.2)) +
+    labs(title = "",
+         x = "Time", y = "",
+         fill = "Method") +
+    theme_bw() +
+    theme(legend.position = "none")
+  
+  mdw.P <- ggplot(data = len.PID.median.df |> filter(name == "P"),
+                  aes(x = x, y = value, colour = name)) +
+    geom_line() +
+    scale_color_manual(
+      values = c(P = "pink"),
+      breaks = c('P')) +
+    scale_y_continuous(limits = c(2.9, 3.9), breaks = seq(2.9, 3.9, 0.2)) +
+    labs(title = "",
+         x = "Time", y = "",
+         fill = "Method") +
+    theme_bw() +
+    theme(legend.position = "none")
+  
+  box.PID <- ggplot(data = data.frame(T = c(rep(1, 1000), rep(2, 1000), rep(3, 1000), rep(4, 1000)),
+                                      PID = len.PID$PID), aes(x = factor(T), PID)) +
+    geom_boxplot() +
+    scale_x_discrete(breaks = c("1", "2", "3", "4"),
+                     labels = c("1-1000", "1001-2000", "2001-3000", "3001-4000")) +
+    scale_y_continuous(limits = c(1.5, 6), breaks = seq(1.5, 6, 0.5)) +
+    labs(title = "", x = "", y = "") +
+    theme_bw()
+  
+  box.PI <- ggplot(data = data.frame(T = c(rep(1, 1000), rep(2, 1000), rep(3, 1000), rep(4, 1000)),
+                                     PI = len.PID$PI), aes(x = factor(T), PI)) +
+    geom_boxplot() +
+    scale_x_discrete(breaks = c("1", "2", "3", "4"),
+                     labels = c("1-1000", "1001-2000", "2001-3000", "3001-4000")) +
+    scale_y_continuous(limits = c(1.5, 6), breaks = seq(1.5, 6, 0.5)) +
+    labs(title = "", x = "", y = "") +
+    theme_bw()
+  
+  box.P <- ggplot(data = data.frame(T = c(rep(1, 1000), rep(2, 1000), rep(3, 1000), rep(4, 1000)),
+                                    P = len.PID$P), aes(x = factor(T), P)) +
+    geom_boxplot() +
+    scale_x_discrete(breaks = c("1", "2", "3", "4"),
+                     labels = c("1-1000", "1001-2000", "2001-3000", "3001-4000")) +
+    scale_y_continuous(limits = c(1.5, 6), breaks = seq(1.5, 6, 0.5)) +
+    labs(title = "", x = "", y = "") +
+    theme_bw()
+  
+  save(lcl.PID, lcl.PI, lcl.P,
+       mw.PID, mw.PI, mw.P,
+       mdw.PID, mdw.PI, mdw.P,
+       box.PID, box.PI, box.P,
+       file = paste0("data/AR2_PID_plot_", lr_ch, ".rda"))
+}
+
+ggarrange(lcl.PID, lcl.PI, lcl.P,
+          mw.PID, mw.PI, mw.P,
+          mdw.PID, mdw.PI, mdw.P,
+          box.PID, box.PI, box.P,
+          ncol = 3, nrow = 4)
