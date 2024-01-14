@@ -133,10 +133,14 @@ len.update$ACP <- out_ACP$up - out_ACP$lo
 
 #------
 # PID - Quantile tracking + error integration + scorecasting
+Tg <- 5000
+delta <- 0.01
+Csat <- 2 / pi * (ceiling(log(Tg) * delta) - 1 / log(Tg))
+KI <- mean(series)
 out_PID <- PID.update(series, nfit = nfit, nburnin = ncal, alpha = 0.1,
                       integrate = TRUE,
                       scorecast = TRUE, ncast = ncal, # use expanding window for scorecaster if ncast = NULL
-                      lr = 0.1, Csat = 1, KI = 200)
+                      lr = 0.1, Csat = Csat, KI = KI)
 cov.update$PID <- (out_PID$lo <= series0 & series0 <= out_PID$up)
 len.update$PID <- out_PID$up - out_PID$lo
 
