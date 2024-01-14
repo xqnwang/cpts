@@ -1,6 +1,5 @@
 PID.update <- function(series, nfit, nburnin = 100, alpha = 0.1,
-                       integrate = TRUE,
-                       scorecast = TRUE, ncast = NULL,
+                       integrate = TRUE, scorecast = TRUE, ncast = NULL,
                        lr = 0.1, Csat = NULL, KI = NULL) {
   # Set up data
   y <- series
