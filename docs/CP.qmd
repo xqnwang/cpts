@@ -522,7 +522,7 @@ Features:
 
 #### The effect of constants in integrator
 
-The integrator used in the paper is $r_t(x)=K_{\mathrm{I}} \tan \left(x \log (t) /\left(t C_{\mathrm{sat}}\right)\right)$, where $C_{\mathrm{sat}}$ controls the guaranteed coverage, and $K_{\mathrm{I}}$ controls the change scale of the integrator.
+The integrator used in the paper is $r_t(x)=K_{\mathrm{I}} \tan \left(x \log (t) /\left(t C_{\mathrm{sat}}\right)\right)$, where $C_{\mathrm{sat}}$ controls how long the guaranteed coverage will be achieved, and $K_{\mathrm{I}}$ controls the change scale of the integrator.
 
 Here we set the learning rate for the quantile tracking (P) to $\eta=0.1\hat{B}_t$.
 
@@ -674,7 +674,8 @@ ggarrange(lcl.PID, lcl.PI, lcl.P,
     -   [ ] Include weights in PID (integrator?).
     -   [ ] Handle seasonal time series and specify methods used for forecasting and scorecasting.
 -   [ ] Multi-step ahead forecasting.
-    -   [ ] Correlation between multi step ahead residuals.
+    -   [ ] Correlation between $h$-step-ahead residuals.
+    -   [ ] Correlation between $s$-step-ahead residuals and $h$-step-ahead residuals.
     -   [ ] Similar strategy as PID?
 -   [ ] More simulations and real-world data.
 -   [ ] Theoretical proof.
