@@ -170,11 +170,78 @@ So, $\hat{e}_{t+h|t}$ can be a forecast combination of the MA$(h-1)$ model fitte
 
 The above statement means that $e_{t+h|t}$ is stationary. However, in practice, it is hard to achieve stationary forecast errors especially for time series with trend and seasonality.
 
-**Checklist**
+# Experiments
 
--   [ ] P4 and its derivation
--   [ ] design of the scorecaster $\hat{q}_{t+h|t}$, MA$(h-1)$+LR
--   [ ] stationary $e_{t+h|t}$
+```{r}
+#| label: MCP
+#| message: false
+#| warning: false
+#| results: asis
+
+library(ggplot2)
+library(randomForest)
+source("../R/base.R")
+source("../R/ICP_split.R")
+source("../R/ICP_update.R")
+source("../R/PID_update.R")
+source("../R/MCP_update.R")
+
+# Simulation series AR(2)
+set.seed(0)
+series <- arima.sim(n = 5000, list(ar = c(0.8, -0.5)), sd = sqrt(1))
+series <- as.numeric(series)
+
+# Setup
+nfit <- 500
+ncal <- 500
+series0 <- series[(nfit+ncal+1):length(series)]
+lag_series0 <- tsutils::lagmatrix(series0, seq(4,0,-1))[-c(1:4),]
+
+Tg <- 5000
+delta <- 0.01
+Csat <- 2 / pi * (ceiling(log(Tg) * delta) - 1 / log(Tg))
+KI <- 2
+
+# MCP
+out_MCP <- MCP.update(series, h = 5, nfit = nfit, nburnin = ncal,
+                      alpha = 0.1, integrate = TRUE, scorecast = TRUE,
+                      ncast = ncal, lr = 0.1,
+                      Csat = Csat, KI = KI)
+print("MCP Mean Coverage:")
+(out_MCP$lo <= lag_series0 & lag_series0 <= out_MCP$up) |> 
+  apply(2, mean)
+print("MCP Mean Interval Length:")
+(out_MCP$up - out_MCP$lo) |> apply(2, mean)
+
+# MCP without scorecast
+out_MCP_NF <- MCP.update(series, h = 5, nfit = nfit, nburnin = ncal,
+                         alpha = 0.1, integrate = TRUE, scorecast = FALSE,
+                         ncast = ncal, lr = 0.1,
+                         Csat = Csat, KI = KI)
+print("MCP_NF Mean Coverage:")
+(out_MCP_NF$lo <= lag_series0 & lag_series0 <= out_MCP_NF$up) |> 
+  apply(2, mean)
+print("MCP_NF Mean Interval Length:")
+(out_MCP_NF$up - out_MCP_NF$lo) |> apply(2, mean)
+
+print("Proportion of MCP intervals larger than MCP_NF:")
+((out_MCP$up - out_MCP$lo) > (out_MCP_NF$up - out_MCP_NF$lo)) |> 
+  apply(2, mean)
+```
+
+To-do-list:
+
+-   PID and other CP methods with signed residuals
+
+-   evaluation of multi-step ahead forecast (correlation between them)
+
+-   update the workflow of the functions, making it more general and suitable for any input data
+
+    -   conformity scores
+
+-   interesting applications
+
+-   theorem proof
 
 # References
 
