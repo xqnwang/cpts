@@ -1,9 +1,11 @@
 CVforecast <- function(y, forecastfunction, h = 1, level = c(80, 95), PI = TRUE,
-                       forward = TRUE, window = NULL, xreg = NULL, initial = 0, ...) {
+                       forward = TRUE, window = NULL, xreg = NULL, newxreg = NULL,
+                       initial = 0, ...) {
   y <- as.ts(y)
   n <- length(y)
   # Order levels
   level <- sort(level)
+  
   if (h <= 0) 
     stop("Forecast horizon out of bounds")
   if (initial >= n)
@@ -12,16 +14,32 @@ CVforecast <- function(y, forecastfunction, h = 1, level = c(80, 95), PI = TRUE,
     N <- n + h
     ntr <- n
   } else {
-    N <- n
+    N <- n + h - 1L
     ntr <- n - 1L
   }
+  
   if (!is.null(xreg)) {
-    if (NROW(xreg) != N)
-      stop("xreg must be of the same size as y (if forward = FALSE) or 
-           the same size as y plus h (if forward = TRUE)")
     # Make xreg a ts object to allow easy subsetting later
-    xreg <- ts(as.matrix(xreg), start = start(y), frequency = frequency(y))
+    xreg <- ts(as.matrix(xreg))
+    if (NROW(xreg) != length(y))
+      stop("xreg must be of the same size as y")
+    
+    if (forward && !is.null(newxreg)) {
+      newxreg <- ts(as.matrix(newxreg))
+      if (NROW(newxreg) != h)
+        stop("newxreg must be of the same size as h")
+      # Pad xreg with newxreg
+      xreg <- ts(rbind(xreg, newxreg),
+                 start = start(y),
+                 frequency = frequency(y))
+    } else {
+      # Pad xreg with NAs
+      xreg <- ts(rbind(xreg, matrix(NA, nrow = h, ncol = NCOL(xreg))),
+                 start = start(y),
+                 frequency = frequency(y))
+    }
   }
+  
   if (is.null(window)) {
     indx <- seq(1 + initial, ntr, by = 1L)
   } else {
@@ -87,9 +105,6 @@ CVforecast <- function(y, forecastfunction, h = 1, level = c(80, 95), PI = TRUE,
     out$lower <- lapply(lower, function(low) lagmatrix(low, seq(h)))
     out$upper <- lapply(upper, function(up) lagmatrix(up, seq(h)))
     out$level <- level
-  }
-  if (!is.null(xreg)){
-    out$xreg <- xreg
   }
   # The final forecasting model output in the for loop
   out$method <- fc$method
