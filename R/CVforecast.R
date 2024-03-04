@@ -1,4 +1,5 @@
-CVforecast <- function(y, forecastfunction, h = 1, level = c(80, 95), PI = TRUE, forward = TRUE, window = NULL, xreg = NULL, initial = 0, ...) {
+CVforecast <- function(y, forecastfunction, h = 1, level = c(80, 95), PI = TRUE,
+                       forward = TRUE, window = NULL, xreg = NULL, initial = 0, ...) {
   y <- as.ts(y)
   n <- length(y)
   # Order levels
@@ -9,8 +10,10 @@ CVforecast <- function(y, forecastfunction, h = 1, level = c(80, 95), PI = TRUE,
     stop("initial period too long")
   if (forward) {
     N <- n + h
+    ntr <- n
   } else {
     N <- n
+    ntr <- n - 1L
   }
   if (!is.null(xreg)) {
     if (NROW(xreg) != N)
@@ -20,9 +23,9 @@ CVforecast <- function(y, forecastfunction, h = 1, level = c(80, 95), PI = TRUE,
     xreg <- ts(as.matrix(xreg), start = start(y), frequency = frequency(y))
   }
   if (is.null(window)) {
-    indx <- seq(1 + initial, n, by = 1L)
+    indx <- seq(1 + initial, ntr, by = 1L)
   } else {
-    indx <- seq(window + initial, n, by = 1L)
+    indx <- seq(window + initial, ntr, by = 1L)
   }
   
   pf <- err <- ts(matrix(NA_real_, nrow = N, ncol = h), 
