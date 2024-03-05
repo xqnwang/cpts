@@ -66,7 +66,7 @@
 #' # Fit the same model with a rolling forecast origin until T
 #' cvfc <- CVforecast(lynx, far2, h = 1, forward = TRUE)
 #' 
-#' # Fit the same model with a rolling window of length 30, a rolling forecast origin unil T#' , and a forecast horizon h=3
+#' # Fit the same model with a rolling window of length 30, a rolling forecast origin until T, and a forecast horizon set to 3
 #' cvfc <- CVforecast(lynx, far2, h = 3, forward = TRUE, window = 30)
 #' 
 #' # Example with exogenous predictors and a rolling window of length 30
