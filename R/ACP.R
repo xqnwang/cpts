@@ -1,5 +1,5 @@
 # Conformal forecasting using adaptive conformal prediction method
-ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005, 
+ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
                 symmetric = FALSE, ncal = 10, rollingwindow = FALSE,
                 quantiletype = 1, ...) {
   if (any(alpha >= 1 | alpha <= 0))
@@ -18,8 +18,8 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
                frequency = frequency(object$errors))
   horizon <- NCOL(errors)
   
-  namatrix <- ts(matrix(NA_real_, nrow = NROW(errors), ncol = horizon), 
-                 start = start(errors), 
+  namatrix <- ts(matrix(NA_real_, nrow = NROW(errors), ncol = horizon),
+                 start = start(errors),
                  frequency = frequency(errors))
   colnames(namatrix) <- paste0("h=", seq(horizon))
   lower <- upper <- rep(list(namatrix), length(alpha))
@@ -48,15 +48,16 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
     for (i in seq(length(alpha))) {
       lbl <- paste0(level[i], "%")
       if (symmetric) {
-        alphat[[lbl]][t+1, h] <- alpha[i]
+        alphat[[lbl]][indx[1]+1, h] <- alpha[i]
       } else {
-        alphat_lower[[lbl]][t+1, h] <- alphat_upper[[lbl]][t+1, h] <- alpha[i]/2
+        alphat_lower[[lbl]][indx[1]+1, h] <- alphat_upper[[lbl]][indx[1]+1, h] <-
+          alpha[i]/2
       }
       
       for (t in indx) {
         errors_subset <- subset(
           errors[, h],
-          start = ifelse(expand, first_non_na, t - ncal + 1L),
+          start = ifelse(!rollingwindow, first_non_na, t - ncal + 1L),
           end = t)
         
         if (symmetric) {
@@ -72,19 +73,15 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
             errt[[lbl]][t+1, h] <- as.numeric(abs(errors[t+1, h]) > q_lo)
           }
           # Update alphat
-          alphat[[lbl]][t+2, h] <- alphat[[lbl]][t+1, h] + 
+          alphat[[lbl]][t+2, h] <- alphat[[lbl]][t+1, h] +
             gamma*(alpha[i]- errt[[lbl]][t+1, h])
           
         } else {
           q_lo <- ggdist::weighted_quantile(x = - c(errors_subset, Inf),
                                             probs = 1 - alphat_lower[[lbl]][t+1, h],
-                                            weights = weight_subset,
-                                            n = kess,
                                             type = quantiletype)
           q_up <- ggdist::weighted_quantile(x = c(errors_subset, Inf),
                                             probs = 1 - alphat_upper[[lbl]][t+1, h],
-                                            weights = weight_subset,
-                                            n = kess,
                                             type = quantiletype)
           # Compute errt
           if (alphat_lower[[lbl]][t+1, h] >= 1) {
@@ -102,9 +99,9 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
             errt_upper[[lbl]][t+1, h] <- as.numeric(errors[t+1, h] > q_up)
           }
           # Update alphat
-          alphat_lower[[lbl]][t+2, h] <- alphat_lower[[lbl]][t+1, h] + 
+          alphat_lower[[lbl]][t+2, h] <- alphat_lower[[lbl]][t+1, h] +
             gamma*(alpha[i]/2- errt_lower[[lbl]][t+1, h])
-          alphat_upper[[lbl]][t+2, h] <- alphat_upper[[lbl]][t+1, h] + 
+          alphat_upper[[lbl]][t+2, h] <- alphat_upper[[lbl]][t+1, h] +
             gamma*(alpha[i]/2- errt_upper[[lbl]][t+1, h])
         }
         out$lower[[paste0(level[i], "%")]][t+1, h] <- out$mean[t+1, h] - q_lo
