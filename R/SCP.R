@@ -1,6 +1,6 @@
 # Conformal forecasting using classical split conformal prediction method
-SCP <- function(object, alpha = 0.1, asymmetric = TRUE, ncal = 10,
-                expand = FALSE, weightfunction = NULL, kess = FALSE,
+SCP <- function(object, alpha = 1 - 0.01 * object$level, symmetric = FALSE,
+                ncal = 10, expand = FALSE, weightfunction = NULL, kess = FALSE,
                 quantiletype = 1, ...) {
   if (any(alpha >= 1 | alpha <= 0))
     stop("alpha should be in (0, 1)")
@@ -21,8 +21,8 @@ SCP <- function(object, alpha = 0.1, asymmetric = TRUE, ncal = 10,
     kess <- NULL
   }
   
-  if (!type %in% 1:9)
-    stop("Quantile type is invalid. It must be in 1:9.")
+  if (!quantiletype %in% 1:9)
+    stop("quantiletype is invalid. It must be in 1:9.")
   
   errors <- ts(as.matrix(object$errors),
                start = start(object$errors),
@@ -32,7 +32,7 @@ SCP <- function(object, alpha = 0.1, asymmetric = TRUE, ncal = 10,
   namatrix <- ts(matrix(NA_real_, nrow = NROW(errors), ncol = horizon), 
                  start = start(errors), 
                  frequency = frequency(errors))
-  colnames(namatrix) paste0("h=", seq(horizon))
+  colnames(namatrix) <- paste0("h=", seq(horizon))
   lower <- upper <- rep(list(namatrix), length(alpha))
   names(lower) <- names(upper) <- paste0(level, "%")
   
@@ -60,8 +60,8 @@ SCP <- function(object, alpha = 0.1, asymmetric = TRUE, ncal = 10,
       
       weight_subset <- weightfunction(length(errors_subset) + 1L, ...)
       
-      for (i in length(alpha)) {
-        if (!asymmetric) {
+      for (i in seq(length(alpha))) {
+        if (symmetric) {
           q_lo <- q_up <- ggdist::weighted_quantile(x = abs(c(errors_subset, Inf)),
                                                     probs = 1 - alpha[i],
                                                     weights = weight_subset,
@@ -79,8 +79,8 @@ SCP <- function(object, alpha = 0.1, asymmetric = TRUE, ncal = 10,
                                             n = kess,
                                             type = quantiletype)
         }
-        out$lower[[paste0(level[i], "%")]][t+1, h] <- pred - q_lo
-        out$upper[[paste0(level[i], "%")]][t+1, h] <- pred + q_up
+        out$lower[[paste0(level[i], "%")]][t+1, h] <- out$mean[t+1, h] - q_lo
+        out$upper[[paste0(level[i], "%")]][t+1, h] <- out$mean[t+1, h] + q_up
       }
     }
   }
@@ -88,8 +88,7 @@ SCP <- function(object, alpha = 0.1, asymmetric = TRUE, ncal = 10,
     out$lower <- lapply(out$lower, function(lo) lo[, 1L])
     out$upper <- lapply(upper$lower, function(up) up[, 1L])
   }
-  out$method <- "SCP with ..."
-  out$model <- NULL
+  out$method <- paste("SCP")
   
   return(structure(out, class = "CPforecast"))
   
