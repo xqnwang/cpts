@@ -6,7 +6,7 @@
    
    - (Similar to the tsCV function)
 
-   - | `Input`            | (Similar to the tsCV function in the forecast pacakage)      |
+   - | Input              | (Similar to the tsCV function in the forecast pacakage)      |
      | ------------------ | ------------------------------------------------------------ |
      | `y`                | Univariate time series of length T                           |
      | `forecastfunction` | Function to return an object of class `forecast`. Its first argument must be a univariate time series, and it must have an argument `h` for the forecast horizon. If exogenous predictors are used, then it must also have `xreg` and `newxreg` arguments corresponding to the training and test periods. |
@@ -18,7 +18,7 @@
      | `...`              | Other arguments passed to `forecastfunction`                 |
      |                    |                                                              |
      
-   - | `Ouput`  | an object of class "CVforecast"                              |
+   - | Ouput    | An object of class "CVforecast"                              |
      | -------- | ------------------------------------------------------------ |
      | `method` | The name of the forecasting method as a character string     |
      | `mean`   | Numerical time series object containing the point forecast/s as a vector (if h=1) and a matrix otherwise |
@@ -35,7 +35,7 @@
    
    - Conformal forecasting using XX conformal prediction method
    
-   - | `Input`  |                                                              |
+   - | Input  |                                                              |
      | -------- | ------------------------------------------------------------ |
      | `object` | An object of class "`CVforecast`". Usually the result of a call to CVforecast |
      | `burnin` | Length of burn-in period                                     |
@@ -43,7 +43,7 @@
      | `...`    | Other arguments for XX conformal prediction method           |
      |          |                                                              |
    
-   - | `Output` | an object of class "XX"                                      |
+   - | Output   | An object of class "XX"                                      |
      | -------- | ------------------------------------------------------------ |
      | `method` | The name of the conformal prediction method as a character string |
      | `mean`   | Numerical time series object containing the point forecast/s as a vector (if h=1) and a matrix otherwise |
