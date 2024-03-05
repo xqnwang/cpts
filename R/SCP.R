@@ -1,7 +1,7 @@
 # Conformal forecasting using classical split conformal prediction method
 SCP <- function(object, alpha = 1 - 0.01 * object$level,
                 symmetric = FALSE, ncal = 10, rollingwindow = FALSE,
-                quantiletype = 1, weightfunction = NULL, kess = FALSE,...) {
+                quantiletype = 1, weightfunction = NULL, kess = FALSE, ...) {
   if (any(alpha >= 1 | alpha <= 0))
     stop("alpha should be in (0, 1)")
   alpha <- sort(alpha, decreasing = TRUE)
