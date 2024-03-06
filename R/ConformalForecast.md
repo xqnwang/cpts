@@ -43,7 +43,7 @@
      | `...`    | Other arguments for XX conformal prediction method           |
      |          |                                                              |
    
-   - | Output   | An object of class "XX"                                      |
+   - | Output   | An object of class "CPforecast"                              |
      | -------- | ------------------------------------------------------------ |
      | `method` | The name of the conformal prediction method as a character string |
      | `mean`   | Numerical time series object containing the point forecast/s as a vector (if h=1) and a matrix otherwise |
@@ -55,14 +55,26 @@
      | `...`    | Other outputs for XX method, like alpha, gamma, ...          |
      |          |                                                              |
    
-3. Coverage(object, window = NULL)
+3. Include 'model' element in CVforecast() and various CP method functions
+   - details of CP settings
 
-4. Width(object, window = NULL)
+   - mean coverage, quantiles and mean of interval width
 
-5. plot()
+4. summary() and print() used to print summaries of the above information
 
-   - coverage
+5. accuracy(object, scorefunction, ...)
+   - out-of-sample point forecast accuracy
 
-   - width
+   - out-of-sample interval accuracy: Winkler score
 
-   - time series plot with forecasts
+3. coverage(object, window = NULL)
+
+4. width(object, window = NULL)
+
+5. plot(object)
+
+   - local coverage plot
+- local width plot
+   
+- time series plot with point forecasts and prediction intervals
+
