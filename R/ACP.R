@@ -118,10 +118,9 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
   }
   out$method <- paste("ACP")
   if (symmetric) {
-    out$model$alphat <- alphat
+    out$model$alphat <- list(alphat = alphat)
   } else {
-    out$model$alphat_lower <- alphat_lower
-    out$model$alphat_upper <- alphat_upper
+    out$model$alphat <- list(alphat_lower = alphat_lower, alphat_upper = alphat_upper)
   }
   return(structure(out, class = "CPforecast"))
 }
