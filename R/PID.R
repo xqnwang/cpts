@@ -69,7 +69,7 @@ PID <- function(object, alpha = 1 - 0.01 * object$level,
         
         if (symmetric) {
           # Calculate err_t
-          errt[[lbl]][t, h] <- as.numeric(abs(errors[t, h]) > qs)
+          errt[[lbl]][t, h] <- (abs(errors[t, h]) > qs)
           # Calculate saturation function using err_i, i = indx[1],...,t-1
           if (integrate) {
             integrator_arg <- ifelse(t > indx[1],
@@ -101,8 +101,8 @@ PID <- function(object, alpha = 1 - 0.01 * object$level,
           
         } else {
           # Calculate err_t
-          errt_lower[[lbl]][t, h] <- as.numeric(-errors[t, h] > qs_lower)
-          errt_upper[[lbl]][t, h] <- as.numeric(errors[t, h] > qs_upper)
+          errt_lower[[lbl]][t, h] <- (-errors[t, h] > qs_lower)
+          errt_upper[[lbl]][t, h] <- (errors[t, h] > qs_upper)
           # Calculate saturation function using err_i, i = indx[1],...,t-1
           if (integrate) {
             integrator_arg_lower <- ifelse(t > indx[1],
