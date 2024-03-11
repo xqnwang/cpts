@@ -1,6 +1,6 @@
 # Conformal forecasting using adaptive conformal prediction method
 ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
-                symmetric = FALSE, ncal = 10, rollingwindow = FALSE,
+                symmetric = FALSE, ncal = 10, rolling = FALSE,
                 quantiletype = 1, ...) {
   if (any(alpha >= 1 | alpha <= 0))
     stop("alpha should be in (0, 1)")
@@ -24,10 +24,13 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
   colnames(namatrix) <- paste0("h=", seq(horizon))
   lower <- upper <- rep(list(namatrix), length(alpha))
   names(lower) <- names(upper) <- paste0(level, "%")
-  alphat <- alphat_lower <- alphat_upper <- rep(list(namatrix), length(alpha))
-  names(alphat) <- names(alphat_lower) <- names(alphat_upper) <- paste0(level, "%")
-  errt <- errt_lower <- errt_upper <- rep(list(namatrix), length(alpha))
-  names(errt) <- names(errt_lower) <- names(errt_upper) <- paste0(level, "%")
+  
+  if (symmetric) {
+    alphat <- errt <- lower
+  } else {
+    alphat_lower <- alphat_upper <-
+      errt_lower <- errt_upper <- lower
+  }
   
   out <- list(
     x = object$x,
@@ -57,7 +60,7 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
       for (t in indx) {
         errors_subset <- subset(
           errors[, h],
-          start = ifelse(!rollingwindow, first_non_na, t - ncal + 1L),
+          start = ifelse(!rolling, first_non_na, t - ncal + 1L),
           end = t)
         
         if (symmetric) {
@@ -112,9 +115,12 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
   if (h == 1) {
     out$lower <- lapply(out$lower, function(lo) lo[, 1L])
     out$upper <- lapply(upper$lower, function(up) up[, 1L])
-    alphat <- lapply(alphat, function(alp) alp[, 1L])
-    alphat_lower <- lapply(alphat_lower, function(alp_lo) alp_lo[, 1L])
-    alphat_upper <- lapply(alphat_upper, function(alp_up) alp_up[, 1L])
+    if (symmetric) {
+      alphat <- lapply(alphat, function(alp) alp[, 1L])
+    } else {
+      alphat_lower <- lapply(alphat_lower, function(alp_lo) alp_lo[, 1L])
+      alphat_upper <- lapply(alphat_upper, function(alp_up) alp_up[, 1L])
+    }
   }
   out$method <- paste("ACP")
   if (symmetric) {

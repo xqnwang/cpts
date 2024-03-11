@@ -1,6 +1,6 @@
 # Conformal forecasting using classical split conformal prediction method
 SCP <- function(object, alpha = 1 - 0.01 * object$level,
-                symmetric = FALSE, ncal = 10, rollingwindow = FALSE,
+                symmetric = FALSE, ncal = 10, rolling = FALSE,
                 quantiletype = 1, weightfunction = NULL, kess = FALSE, ...) {
   if (any(alpha >= 1 | alpha <= 0))
     stop("alpha should be in (0, 1)")
@@ -55,7 +55,7 @@ SCP <- function(object, alpha = 1 - 0.01 * object$level,
     for (t in indx) {
       errors_subset <- subset(
         errors[, h],
-        start = ifelse(!rollingwindow, first_non_na, t - ncal + 1L),
+        start = ifelse(!rolling, first_non_na, t - ncal + 1L),
         end = t)
       
       weight_subset <- weightfunction(length(errors_subset) + 1L, ...)
