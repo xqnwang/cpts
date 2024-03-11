@@ -25,14 +25,16 @@ PID <- function(object, alpha = 1 - 0.01 * object$level,
                  start = start(errors), 
                  frequency = frequency(errors))
   colnames(namatrix) <- paste0("h=", seq(horizon))
-  lower <- upper <- lrt <- rep(list(namatrix), length(alpha))
-  names(lower) <- names(upper) <- names(lrt) <- paste0(level, "%")
+  lrt <- namatrix
+  lower <- upper <- rep(list(namatrix), length(alpha))
+  names(lower) <- names(upper) <- paste0(level, "%")
   if (symmetric) {
-    errt <- integrator <- scorecaster <- lower
+    errt <- integrator <- lower
+    scorecaster <- namatrix
   } else {
     errt_lower <- errt_upper <-
-      integrator_lower <- integrator_upper <-
-      scorecaster_lower <- scorecaster_upper <- lower
+      integrator_lower <- integrator_upper <- lower
+    scorecaster_lower <- scorecaster_upper <- namatrix
   }
   
   out <- list(
@@ -76,22 +78,23 @@ PID <- function(object, alpha = 1 - 0.01 * object$level,
             integrator[[lbl]][t, h] <- saturation_fn_log(integrator_arg, t-indx[1]+1, Csat, KI)
           }
           # Train scorecaster
-          if (scorecast) {
+          if (scorecast && i == 1) {
             sc <- try(suppressWarnings(
               scorecastfun(abs(errors_subset), h = 1, ...)
             ), silent = TRUE)
             if (!is.element("try-error", class(sc))) {
-              scorecaster[[lbl]][t, h] <- as.numeric(sc$mean)
+              scorecaster[t, h] <- as.numeric(sc$mean)
             }
           }
           # Learning rate
-          lrt[[lbl]][t, h] <- ifelse(t == indx[1], lr,
-                                     lr*(max(abs(errors_subset)) - min(abs(errors_subset))))
+          if (i == 1)
+            lrt[t, h] <- ifelse(t == indx[1], lr,
+                                lr*(max(abs(errors_subset)) - min(abs(errors_subset))))
           # Update the next quantile
           grad <- ifelse(errt[[lbl]][t, h], -(1-alpha[i]), alpha[i])
-          qs <- qs - lrt[[lbl]][t, h] * grad +
+          qs <- qs - lrt[t, h] * grad +
             ifelse(integrate, integrator[[lbl]][t, h], 0) +
-            ifelse(scorecast, scorecaster[[lbl]][t, h], 0)
+            ifelse(scorecast, scorecaster[t, h], 0)
           # PIs
           out$lower[[paste0(level[i], "%")]][t+1, h] <- out$mean[t+1, h] - qs
           out$upper[[paste0(level[i], "%")]][t+1, h] <- out$mean[t+1, h] + qs
@@ -114,27 +117,28 @@ PID <- function(object, alpha = 1 - 0.01 * object$level,
             integrator_upper[[lbl]][t, h] <- saturation_fn_log(integrator_arg_upper, t-indx[1]+1, Csat, KI)
           }
           # Train scorecaster
-          if (scorecast) {
+          if (scorecast && i == 1) {
             sc_upper <- try(suppressWarnings(
               scorecastfun(errors_subset, h = 1, ...)
             ), silent = TRUE)
             if (!is.element("try-error", class(sc_upper))) {
-              scorecaster_lower[[lbl]][t, h] <- - as.numeric(sc_lower$mean)
-              scorecaster_upper[[lbl]][t, h] <- as.numeric(sc_upper$mean)
+              scorecaster_lower[t, h] <- - as.numeric(sc_upper$mean)
+              scorecaster_upper[t, h] <- as.numeric(sc_upper$mean)
             }
           }
           # Learning rate (same for the upper and lower bounds)
-          lrt[[lbl]][t, h] <- ifelse(t == indx[1], lr,
-                                     lr*(max(errors_subset) - min(errors_subset)))
+          if (i == 1)
+            lrt[t, h] <- ifelse(t == indx[1], lr,
+                                lr*(max(errors_subset) - min(errors_subset)))
           # Update the next quantile
           grad_lower <- ifelse(errt_lower[[lbl]][t, h], -(1-alpha[i]/2), alpha[i]/2)
           grad_upper <- ifelse(errt_upper[[lbl]][t, h], -(1-alpha[i]/2), alpha[i]/2)
-          qs_lower <- qs_lower - lrt[[lbl]][t, h] * grad_lower +
+          qs_lower <- qs_lower - lrt[t, h] * grad_lower +
             ifelse(integrate, integrator_lower[[lbl]][t, h], 0) +
-            ifelse(scorecast, scorecaster_lower[[lbl]][t, h], 0)
-          qs_upper <- qs_upper - lrt[[lbl]][t, h] * grad_upper +
+            ifelse(scorecast, scorecaster_lower[t, h], 0)
+          qs_upper <- qs_upper - lrt[t, h] * grad_upper +
             ifelse(integrate, integrator_upper[[lbl]][t, h], 0) +
-            ifelse(scorecast, scorecaster_upper[[lbl]][t, h], 0)
+            ifelse(scorecast, scorecaster_upper[t, h], 0)
           # PIs
           out$lower[[paste0(level[i], "%")]][t+1, h] <- out$mean[t+1, h] - qs_lower
           out$upper[[paste0(level[i], "%")]][t+1, h] <- out$mean[t+1, h] + qs_upper
@@ -145,21 +149,19 @@ PID <- function(object, alpha = 1 - 0.01 * object$level,
   if (h == 1) {
     out$lower <- lapply(out$lower, function(lo) lo[, 1L])
     out$upper <- lapply(upper$lower, function(up) up[, 1L])
+    lrt <- lrt[, 1L]
     if (symmetric) {
-      lrt <- lapply(lrt, function(lr_t) lr_t[, 1L])
       integrator <- lapply(integrator, function(integrator_t) integrator_t[, 1L])
-      scorecaster <- lapply(scorecaster, function(scorecaster_t) scorecaster_t[, 1L])
+      scorecaster <- scorecaster[, 1L]
     } else {
-      lrt_lower <- lapply(lrt_lower, function(lr_lower_t) lr_lower_t[, 1L])
-      lrt_upper <- lapply(lrt_upper, function(lr_upper_t) lr_upper_t[, 1L])
       integrator_lower <- lapply(integrator_lower, function(integrator_lower_t) integrator_lower_t[, 1L])
       integrator_upper <- lapply(integrator_upper, function(integrator_upper_t) integrator_upper_t[, 1L])
-      scorecaster_lower <- lapply(scorecaster_lower, function(scorecaster_lower_t) scorecaster_lower_t[, 1L])
-      scorecaster_upper <- lapply(scorecaster_upper, function(scorecaster_upper_t) scorecaster_upper_t[, 1L])
+      scorecaster_lower <- scorecaster_lower[, 1L]
+      scorecaster_upper <- scorecaster_upper[, 1L]
     }
   }
   out$method <- paste("PID")
-  out$model$lr <- list(lr = lrt)
+  out$model$lr <- lrt
   if (symmetric) {
     out$model$integrator <- list(integrator = integrator)
     out$model$scorecaster <- list(scorecaster = scorecaster)
