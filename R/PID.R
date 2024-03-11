@@ -2,7 +2,9 @@
 PID <- function(object, alpha = 1 - 0.01 * object$level,
                 symmetric = FALSE, ncal = 10, rolling = FALSE,
                 integrate = TRUE, scorecast = !symmetric, scorecastfun = NULL,
-                lr = 0.1, Csat = NULL, KI = NULL, ...) {
+                lr = 0.1, Tg = length(object$x),
+                Csat = 2 / pi * (ceiling(log(Tg) * 0.01) - 1 / log(Tg)),
+                KI = abs(object$errors) |> max(na.rm = TRUE), ...) {
   if (any(alpha >= 1 | alpha <= 0))
     stop("alpha should be in (0, 1)")
   alpha <- sort(alpha, decreasing = TRUE)
@@ -77,7 +79,7 @@ PID <- function(object, alpha = 1 - 0.01 * object$level,
                                      0)
             integrator[[lbl]][t, h] <- saturation_fn_log(integrator_arg, t-indx[1]+1, Csat, KI)
           }
-          # Train scorecaster
+          # Train scorecaster (same for different alphas)
           if (scorecast && i == 1) {
             sc <- try(suppressWarnings(
               scorecastfun(abs(errors_subset), h = 1, ...)
