@@ -5,12 +5,12 @@
 #' rolling forecast origin.
 #' 
 #' Let \code{y} contain the time series \eqn{y_1,\dots,y_T}{y[1:T]}. Let initial
-#' period be \eqn{T_0} and \code{forward = TRUE}. If window is NULL,
+#' period be \eqn{t_0} and \code{forward = TRUE}. If window is NULL,
 #' \code{forecastfunction} is applied successively to the time series
-#' \eqn{y_{1},\dots,y_t}{y[1:t]}, for \eqn{t=T_0+1,\dots,T}, making predictions
-#' \eqn{\hat{y}_{t+h|t}}{f[t+h]}. If window is not NULL and of length \eqn{T_w},
+#' \eqn{y_{1},\dots,y_t}{y[1:t]}, for \eqn{t=t_0+1,\dots,T}, making predictions
+#' \eqn{\hat{y}_{t+h|t}}{f[t+h]}. If window is not NULL and of length \eqn{t_w},
 #' \code{forecastfunction} is applied successively to the time series
-#' \eqn{y_{t},\dots,y_{T_w+t-1}}{y[(t):T_w+t-1)]}, for \eqn{t=T_0+1,\dots,T-T_w+1}.
+#' \eqn{y_{t-t_w+1},\dots,y_{t}}{y[(t-t_w+1):t)]}, for \eqn{t=\max(t_0, t_w)+1,\dots,T}.
 #' If \code{forward = FALSE}, the last observation used for training is \eqn{y_{T-1}}.
 #' 
 #' @param y Univariate time series
@@ -130,7 +130,7 @@ CVforecast <- function(y, forecastfunction, h = 1, level = c(80, 95), PI = TRUE,
   if (is.null(window)) {
     indx <- seq(1 + initial, ntr, by = 1L)
   } else {
-    indx <- seq(window + initial, ntr, by = 1L)
+    indx <- seq(1 + max(window, initial), ntr, by = 1L)
   }
   
   pf <- err <- ts(matrix(NA_real_, nrow = N, ncol = h), 
