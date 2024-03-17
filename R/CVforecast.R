@@ -198,28 +198,3 @@ CVforecast <- function(y, forecastfun, h = 1, level = c(80, 95),
   
   return(structure(out, class = "CVforecast"))
 }
-
-lagmatrix <- function(x, k) {
-  # Ensure 'x' is a matrix
-  if (!is.matrix(x))
-    stop("ensure x is a matrix")
-  if (NCOL(x) != length(k))
-    stop("k must have the same number of columns as x")
-  
-  n <- NROW(x)
-  y <- x
-  
-  if (all(k == rep(0, length(k)))) {
-    return(y)
-  } else {
-    for (i in seq(NCOL(x))) {
-      if (k[i] == 0) {
-        y[, i] <- x[, i]
-      } else {
-        y[, i] <- c(rep(NA, k[i]), x[-(seq(n - k[i] + 1, n, by = 1L)), i])
-      }
-    }
-  }
-  
-  return(y)
-}
