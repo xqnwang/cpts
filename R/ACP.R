@@ -24,7 +24,9 @@
 #' \code{\link[ggdist]{weighted_quantile}} function in the ggdist package.
 #' @param na.rm If \code{TRUE}, \code{NA} values are removed when calculating
 #' sample quantile.
-#' @param ... Other arguments are passed to \code{weightfun}.
+#' @param ... Other arguments are passed to the
+#' \code{\link[ggdist]{weighted_quantile}} function in the ggdist package for
+#' sample quantile computation.
 #' @return An object of class "\code{CPforecast}".
 #' 
 #' An object of class "\code{CPforecast}" is a list containing the following elements:
@@ -43,6 +45,9 @@
 #' \item{level}{The confidence values associated with the prediction intervals.}
 #' \item{model}{A list containing information about the conformal prediction model.}
 #' @author Xiaoqian Wang
+#' @references Gibbs, I., and Candes, E. (2021). "Adaptive conformal inference under
+#' distribution shift", \emph{Advances in Neural Information Processing Systems},
+#' \bold{34}, 1660--1672.
 #' @examples
 #' 
 #' library(forecast)
@@ -116,7 +121,8 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
           x = abs(c(errors_subset, Inf)),
           probs = 1 - alphat_h[t+h, ],
           type = quantiletype,
-          na.rm = na.rm)
+          na.rm = na.rm,
+          ...)
         
         # Compute errt
         errt_h[t+h, ] <- abs(errors[t+h, h]) > q_lo
@@ -141,12 +147,14 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
           x = -c(errors_subset, Inf),
           probs = 1 - alphat_lower_h[t+h, ],
           type = quantiletype,
-          na.rm = na.rm)
+          na.rm = na.rm,
+          ...)
         q_up <- ggdist::weighted_quantile(
           x = c(errors_subset, Inf),
           probs = 1 - alphat_upper_h[t+h, ],
           type = quantiletype,
-          na.rm = na.rm)
+          na.rm = na.rm,
+          ...)
         
         # Compute errt
         errt_lower_h[t+h, ] <- -errors[t+h, h] > q_lo
