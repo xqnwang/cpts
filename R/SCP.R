@@ -55,7 +55,7 @@
 #' 
 #' An object of class "\code{CPforecast}" is a list containing the following elements:
 #' \item{x}{The original time series.}
-#' \item{method}{The name of the forecasting method as a character string.}
+#' \item{method}{The name of the conformal prediction method as a character string.}
 #' \item{mean}{Point forecasts as a time series for \eqn{h=1}. For \eqn{h>1},
 #' they are returned as a time series matrix with the \eqn{h}th column
 #' containing point forecasts for forecast horizon \eqn{h}. The time index
@@ -95,7 +95,7 @@ SCP <- function(object, alpha = 1 - 0.01 * object$level,
   if (any(alpha >= 1 | alpha <= 0))
     stop("alpha should be in (0, 1)")
   if (ncal < 10)
-    stop("Length of calibration period should at least be 10")
+    stop("length of calibration period should at least be 10")
   if (!quantiletype %in% 1:9)
     stop("quantiletype is invalid. It must be in 1:9.")
   if (is.null(weightfun)) {
@@ -187,6 +187,7 @@ SCP <- function(object, alpha = 1 - 0.01 * object$level,
   out$level <- level
   out$model$method <- out$method
   out$model$call <- match.call()
+  out$model$alpha <- alpha
   out$model$symmetric <- symmetric
   out$model$ncal <- ncal
   out$model$rolling <- rolling
