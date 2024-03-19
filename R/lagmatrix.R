@@ -16,8 +16,6 @@ lagmatrix <- function(x, lag) {
   # Ensure 'x' is a matrix
   if (!is.matrix(x))
     stop("ensure x is a matrix")
-  if (any(lag < 1))
-    stop("ensure lag is a positive integer")
   n <- NROW(x)
   k <- length(lag)
   
@@ -26,7 +24,13 @@ lagmatrix <- function(x, lag) {
   
   lmat <- x
   for (i in 1:k) {
-    lmat[, i] <- c(rep(NA, lag[i]), x[1:(n - lag[i]), i])
+    if (lag[i] == 0) {
+      lmat[, i] <- x[, i]
+    } else if (lag[i] > 0) {
+      lmat[, i] <- c(rep(NA, lag[i]), x[1:(n - lag[i]), i])
+    } else {
+      lmat[, i] <- c(x[(abs(lag[i])+1):n, i], rep(NA, abs(lag[i])))
+    }
   }
   return(structure(lmat, class = class(x)))
 }
