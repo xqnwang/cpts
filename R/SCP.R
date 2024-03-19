@@ -35,7 +35,6 @@
 #' @param ncal Length of the calibration set. If \code{rolling=FALSE}, it denotes
 #' the initial period of calibration sets. If \code{rolling=TRUE}, it indicates
 #' the period of each rolling calibration set.
-#' \code{rolling=TRUE}.
 #' @param rolling If \code{TRUE}, a rolling window strategy will be used to
 #' generate the calibration set. Otherwise, expanding window will be used.
 #' @param quantiletype An integer between 1 and 9 determining the type of
@@ -73,19 +72,24 @@
 #' 
 #' library(forecast)
 #' 
-#' far2 <- function(x, h, level){
-#'   Arima(x, order = c(2, 0, 0)) |> forecast(h = h, level = level)
+#' # Simulation series AR(2)
+#' set.seed(0)
+#' series <- arima.sim(n = 1000, list(ar = c(0.8, -0.5)), sd = sqrt(1))
+#' series <- as.numeric(series)
+#' 
+#' # Setup
+#' far2 <- function(x, h, level) {
+#'   Arima(x, order = c(2, 0, 0)) |> 
+#'     forecast(h = h, level)
 #' }
-#' cvfc <- CVforecast(lynx, far2, h = 3, forward = TRUE, window = 30)
 #' 
-#' # SCP with symmetric conformity scores and rolling calibration sets
-#' scpfc <- SCP(cvfc, symmetric = TRUE,
-#'              ncal = 30, rolling = TRUE)
+#' # Cross-validation forecasting
+#' fc <- CVforecast(series, forecastfun = far2, h = 3, level = c(80, 95),
+#'                  forward = TRUE, window = 100, initial = 1)
 #' 
-#' # SCP with exponential weights for sample quantiles
-#' expweight <- function(n, base = 0.99) c(base^((n-1):1), 1)
-#' scpfc_exp <- SCP(cvfc, symmetric = TRUE,
-#'                  ncal = 30, rolling = TRUE, weightfun = expweight)
+#' # Classical conformal prediction with equal weights
+#' scpfc <- SCP(fc, symmetric = FALSE, ncal = 100, rolling = TRUE,
+#'              kess = FALSE, quantiletype = 1)
 #' 
 #' @export
 SCP <- function(object, alpha = 1 - 0.01 * object$level,

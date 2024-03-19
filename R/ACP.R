@@ -1,4 +1,4 @@
-#' Adaptive conformal prediction methods for time series forecasting
+#' Adaptive conformal prediction method for time series forecasting
 #' 
 #' \code{ACP} computes prediction intervals and other information obtained by
 #' applying the adaptive conformal prediction method.
@@ -15,7 +15,6 @@
 #' @param ncal Length of the calibration set. If \code{rolling=FALSE}, it denotes
 #' the initial period of calibration sets. If \code{rolling=TRUE}, it indicates
 #' the period of each rolling calibration set.
-#' \code{rolling=TRUE}.
 #' @param rolling If \code{TRUE}, a rolling window strategy will be used to
 #' generate the calibration set. Otherwise, expanding window will be used.
 #' @param quantiletype An integer between 1 and 9 determining the type of
@@ -52,14 +51,23 @@
 #' 
 #' library(forecast)
 #' 
-#' far2 <- function(x, h, level){
-#'   Arima(x, order = c(2, 0, 0)) |> forecast(h = h, level = level)
+#' # Simulation series AR(2)
+#' set.seed(0)
+#' series <- arima.sim(n = 1000, list(ar = c(0.8, -0.5)), sd = sqrt(1))
+#' series <- as.numeric(series)
+#' 
+#' # Setup
+#' far2 <- function(x, h, level) {
+#'   Arima(x, order = c(2, 0, 0)) |> 
+#'     forecast(h = h, level)
 #' }
-#' cvfc <- CVforecast(lynx, far2, h = 3, forward = TRUE, window = 30)
+#' 
+#' # Cross-validation forecasting
+#' fc <- CVforecast(series, forecastfun = far2, h = 3, level = c(80, 95),
+#'                  forward = TRUE, window = 100, initial = 1)
 #' 
 #' # ACP with symmetric conformity scores and rolling calibration sets
-#' acpfc <- ACP(cvfc, symmetric = TRUE, gamma = 0.01,
-#'              ncal = 30, rolling = TRUE)
+#' acpfc <- ACP(fc, symmetric = FALSE, gamma = 0.005, ncal = 100, rolling = TRUE)
 #' 
 #' @export
 ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,

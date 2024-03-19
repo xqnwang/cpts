@@ -52,32 +52,19 @@
 #' 
 #' library(forecast)
 #' 
-#' # Fit an AR(2) model to each rolling origin subset until forecast origin T-1
-#' far2 <- function(x, h, level){
-#'   Arima(x, order = c(2, 0, 0)) |> forecast(h = h, level = level)
-#' }
-#' cvfc <- CVforecast(lynx, far2, h = 1, forward = FALSE)
+#' # Simulation series AR(2)
+#' set.seed(0)
+#' series <- arima.sim(n = 1000, list(ar = c(0.8, -0.5)), sd = sqrt(1))
+#' series <- as.numeric(series)
 #' 
-#' # Fit the same model with a rolling forecast origin until T
-#' cvfc <- CVforecast(lynx, far2, h = 1, forward = TRUE)
-#' 
-#' # Fit the same model with a rolling window of length 30, a rolling forecast origin until T, and a forecast horizon set to 3
-#' cvfc <- CVforecast(lynx, far2, h = 3, forward = TRUE, window = 30)
-#' 
-#' # Example with exogenous predictors and a rolling window of length 30
-#' far2_xreg <- function(x, h, level, xreg, newxreg) {
-#'   Arima(x, order = c(2, 0, 0), xreg = xreg) |> 
-#'     forecast(xreg = newxreg, level)
+#' # Setup
+#' far2 <- function(x, h, level) {
+#'   Arima(x, order = c(2, 0, 0)) |> 
+#'     forecast(h = h, level)
 #' }
 #' 
-#' y <- ts(rnorm(100))
-#' xreg <- matrix(rnorm(200), ncol = 2)
-#' newxreg <- matrix(rnorm(10), ncol = 2)
-#' cvfc <- CVforecast(y, far2_xreg, h = 5, forward = TRUE, window = 30,
-#'                    xreg = xreg, newxreg = newxreg)
-#' 
-#' cvfc <- CVforecast(y, far2_xreg, h = 5, forward = FALSE, window = 30,
-#'                    xreg = xreg, newxreg = newxreg)
+#' fc <- CVforecast(series, forecastfun = far2, h = 3, level = c(80, 95),
+#'                  forward = TRUE, window = 100, initial = 1)
 #' 
 #' @export
 CVforecast <- function(y, forecastfun, h = 1, level = c(80, 95),
