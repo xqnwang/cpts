@@ -306,6 +306,7 @@ PID <- function(object, alpha = 1 - 0.01 * object$level,
   out$model$Tg <- Tg
   out$model$Csat <- Csat
   out$model$KI <- KI
+  out$model$lr_update <- lrmat
   if (symmetric) {
     if (integrate)
       out$model$integrator <- integrator
@@ -338,5 +339,35 @@ mytan <- function(x){
     return(-Inf)
   } else {
     return(tan(x))
+  }
+}
+
+print.PID <- function(y, ...) {
+  x <- y$model
+  cat(paste(x$method, "\n\n"))
+  if (!is.null(x$call)) {
+    cat(paste("Call:\n"))
+    for (i in 1:length(deparse(x$call))) {
+      cat(paste("", deparse(x$call)[i]), "\n")
+    }
+    cat(paste("\n"))
+  }
+  
+  cat("  Conformal prediction settings:\n")
+  cat(paste("    symmetric =", x$symmetric, "\n"))
+  cat(paste("    rolling =", x$rolling, "\n"))
+  cat(paste("   ", ifelse(rolling, "window =", "initial window ="), x$ncal, "\n"))
+  
+  cat("\n  Quantile tracking parameters:\n")
+  cat(paste("    lr =", x$lr, "\n"))
+  
+  if (x$integrate) {
+    cat("\n  Error integration parameters:\n")
+    cat(paste("    KI =", round(x$KI, 3), "\n"))
+    cat(paste("    Csat =", round(x$Csat, 3), "\n"))
+  }
+  
+  if (x$scorecast) {
+    cat("\n  Scorecaster is used.\n")
   }
 }
