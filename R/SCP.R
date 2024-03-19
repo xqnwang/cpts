@@ -134,13 +134,13 @@ SCP <- function(object, alpha = 1 - 0.01 * object$level,
     last_non_na <- (!is.na(errors[, h])) |> which() |> max()
     if (last_non_na < first_non_na + ncal - 1L)
       stop("errors in the input object is not long enough for calibration")
-    indx <- seq(first_non_na + ncal - 1L, last_non_na, by = 1L)
+    indx <- seq(first_non_na + ncal - 1L, last_non_na + h - 1L, by = 1L)
     
     for (t in indx) {
       errors_subset <- subset(
         errors[, h],
         start = ifelse(!rolling, first_non_na, t - ncal + 1L),
-        end = t)
+        end = ifelse(t <= last_non_na, t, last_non_na))
       
       weight_subset <- weightfun(length(errors_subset) + 1L, ...)
       
@@ -170,8 +170,8 @@ SCP <- function(object, alpha = 1 - 0.01 * object$level,
       }
       for (i in seq(length(alpha))) {
         lbl <- paste0(level[i], "%")
-        lower[[lbl]][t+h, h] <- pf[t+h, h] - q_lo[i]
-        upper[[lbl]][t+h, h] <- pf[t+h, h] + q_up[i]
+        lower[[lbl]][t+1, h] <- pf[t+1, h] - q_lo[i]
+        upper[[lbl]][t+1, h] <- pf[t+1, h] + q_up[i]
       }
     }
   }
