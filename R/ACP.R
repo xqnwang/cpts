@@ -101,7 +101,7 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
     last_non_na <- (!is.na(errors[, h])) |> which() |> max()
     if (last_non_na < first_non_na + ncal - 1L)
       stop("errors in the input object is not long enough for calibration")
-    indx <- seq(first_non_na + ncal - 1L, last_non_na, by = 1L)
+    indx <- seq(first_non_na + ncal - 1L, last_non_na + h - 1L, by = 1L)
     
     alphat_h <- alphat_lower_h <- alphat_upper_h <-
       errt_h <- errt_lower_h <- errt_upper_h <-
@@ -110,79 +110,80 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
       errors_subset <- subset(
         errors[, h],
         start = ifelse(!rolling, first_non_na, t - ncal + 1L),
-        end = t)
+        end = ifelse(t <= last_non_na, t, last_non_na))
       
       if (symmetric) {
         if (t == indx[1])
-          alphat_h[t+h, ] <- alpha
+          alphat_h[t+1, ] <- alpha
         
         # Compute sample quantiles
+        # (alpha_{t+1} is used to calculate sample quantiles from errors until t)
         q_lo <- q_up <- ggdist::weighted_quantile(
           x = abs(c(errors_subset, Inf)),
-          probs = 1 - alphat_h[t+h, ],
+          probs = 1 - alphat_h[t+1, ],
           type = quantiletype,
           na.rm = na.rm,
           ...)
         
         # Compute errt
-        errt_h[t+h, ] <- abs(errors[t+h, h]) > q_lo
-        outl <- which(alphat_h[t+h, ] >= 1)
-        outs <- which(alphat_h[t+h, ] <= 0)
-        errt_h[t+h, outl] <- TRUE
-        errt_h[t+h, outs] <- FALSE
+        errt_h[t+1, ] <- abs(errors[t+1, h]) > q_lo
+        outl <- which(alphat_h[t+1, ] >= 1)
+        outs <- which(alphat_h[t+1, ] <= 0)
+        errt_h[t+1, outl] <- TRUE
+        errt_h[t+1, outs] <- FALSE
         
-        if (t < max(indx)) {
-          if (!is.na(errors[t+h, h])) {
-            # Update alpha
-            alphat_h[t+h+1, ] <- alphat_h[t+h, ] + gamma*(alpha - errt_h[t+h, ])
-          } else {
-            # Keep alpha unchanged
-            alphat_h[t+h+1, ] <- alphat_h[t+h, ]
-          }
+        if (t == tail(indx, 1))
+          next
+        if (t < last_non_na) {
+          # Update alpha
+          alphat_h[t+2, ] <- alphat_h[t+1, ] + gamma*(alpha - errt_h[t+1, ])
+        } else {
+          # Keep alpha unchanged after errt is not available
+          alphat_h[t+2, ] <- alphat_h[t+1, ]
         }
       } else {
         if (t == indx[1])
-          alphat_lower_h[t+h, ] <- alphat_upper_h[t+h, ] <- alpha/2
+          alphat_lower_h[t+1, ] <- alphat_upper_h[t+1, ] <- alpha/2
         q_lo <- ggdist::weighted_quantile(
           x = -c(errors_subset, Inf),
-          probs = 1 - alphat_lower_h[t+h, ],
+          probs = 1 - alphat_lower_h[t+1, ],
           type = quantiletype,
           na.rm = na.rm,
           ...)
         q_up <- ggdist::weighted_quantile(
           x = c(errors_subset, Inf),
-          probs = 1 - alphat_upper_h[t+h, ],
+          probs = 1 - alphat_upper_h[t+1, ],
           type = quantiletype,
           na.rm = na.rm,
           ...)
         
         # Compute errt
-        errt_lower_h[t+h, ] <- -errors[t+h, h] > q_lo
-        errt_lower_h[t+h, which(alphat_lower_h[t+h, ] >= 1)] <- TRUE
-        errt_lower_h[t+h, which(alphat_lower_h[t+h, ] <= 0)] <- FALSE
+        errt_lower_h[t+1, ] <- (-errors[t+1, h]) > q_lo
+        errt_lower_h[t+1, which(alphat_lower_h[t+1, ] >= 1)] <- TRUE
+        errt_lower_h[t+1, which(alphat_lower_h[t+1, ] <= 0)] <- FALSE
         
-        errt_upper_h[t+h, ] <- errors[t+h, h] > q_up
-        errt_upper_h[t+h, which(alphat_upper_h[t+h, ] >= 1)] <- TRUE
-        errt_upper_h[t+h, which(alphat_upper_h[t+h, ] <= 0)] <- FALSE
+        errt_upper_h[t+1, ] <- errors[t+1, h] > q_up
+        errt_upper_h[t+1, which(alphat_upper_h[t+1, ] >= 1)] <- TRUE
+        errt_upper_h[t+1, which(alphat_upper_h[t+1, ] <= 0)] <- FALSE
         
-        if (t < max(indx)) {
-          if (!is.na(errors[t+h, h])) {
-            # Update alpha
-            alphat_lower_h[t+h+1, ] <- alphat_lower_h[t+h, ] +
-              gamma*(alpha/2 - errt_lower_h[t+h, ])
-            alphat_upper_h[t+h+1, ] <- alphat_upper_h[t+h, ] +
-              gamma*(alpha/2 - errt_upper_h[t+h, ])
-          } else {
-            # Keep alpha unchanged
-            alphat_lower_h[t+h+1, ] <- alphat_lower_h[t+h, ]
-            alphat_upper_h[t+h+1, ] <- alphat_upper_h[t+h, ]
-          }
+        if (t == tail(indx, 1))
+          next
+        if (t < last_non_na) {
+          # Update alpha
+          alphat_lower_h[t+2, ] <- alphat_lower_h[t+1, ] +
+            gamma*(alpha/2 - errt_lower_h[t+1, ])
+          alphat_upper_h[t+2, ] <- alphat_upper_h[t+1, ] +
+            gamma*(alpha/2 - errt_upper_h[t+1, ])
+        } else {
+          # Keep alpha unchanged
+          alphat_lower_h[t+2, ] <- alphat_lower_h[t+1, ]
+          alphat_upper_h[t+2, ] <- alphat_upper_h[t+1, ]
         }
       }
       for (i in seq(length(alpha))) {
         lbl <- paste0(level[i], "%")
-        lower[[lbl]][t+h, h] <- pf[t+h, h] - q_lo[i]
-        upper[[lbl]][t+h, h] <- pf[t+h, h] + q_up[i]
+        lower[[lbl]][t+1, h] <- pf[t+1, h] - q_lo[i]
+        upper[[lbl]][t+1, h] <- pf[t+1, h] + q_up[i]
       }
     }
     for (i in seq(length(alpha))) {
