@@ -1,9 +1,102 @@
-# Conformal forecasting using conformal PID control
+#' Conformal PID control method for time series forecasting
+#' 
+#' \code{PID} computes prediction intervals and other information obtained by
+#' applying the conformal PID control method.
+#' 
+#' @param object An object of class "\code{CVforecast}". It must have an argument
+#' \code{x} for original univariate time series, an argument \code{mean} for
+#' point forecasts and \code{errors} for forecast errors. See the results of a call
+#' to \code{\link{CVforecast}}.
+#' @param alpha A numeric vector of target levels \eqn{1-\alpha}.
+#' @param symmetric If \code{TRUE}, symmetric conformity scores (i.e. \eqn{|e_{t+h|t}|})
+#' are used. If \code{FALSE}, asymmetric conformity scores are used, and upper
+#' limits and lower limits are generated separately.
+#' @param ncal Length of the calibration set. If \code{rolling=FALSE}, it denotes
+#' the initial period of calibration sets. If \code{rolling=TRUE}, it indicates
+#' the period of each rolling calibration set.
+#' @param rolling If \code{TRUE}, a rolling window strategy will be used to
+#' generate the calibration set for learning rate update and scorecasting.
+#' Otherwise, expanding window will be used.
+#' @param integrate If \code{TRUE}, error integration will be included in the
+#' update process.
+#' @param scorecast If \code{TRUE}, scorecasting will be included in the update
+#' process, and \code{scorecastfun} should be given.
+#' @param scorecastfun A scorecaster function to return an object of class
+#' \code{forecast}. Its first argument must be a univariate time series, and
+#' it must have an argument \code{h} for the forecast horizon.
+#' @param lr Initial learning rate used for quantile tracking.
+#' @param Tg The time set to achieve the target absolute guarantee before this.
+#' @param delta The target absolute guarantee is \eqn{1-\alpha-\delta} coverage.
+#' @param Csat A positive constant ensuring that by time \code{Tg}, an absolute
+#' guarantee is of at least \eqn{1-\alpha-\delta} coverage.
+#' @param KI A positive constant to place the integrator on the same scale as the scores.
+#' @param ... Other arguments are passed to the \code{scorecastfun} function.
+#' @return An object of class "\code{CPforecast}".
+#' 
+#' An object of class "\code{CPforecast}" is a list containing the following elements:
+#' \item{x}{The original time series.}
+#' \item{method}{The name of the conformal prediction method as a character string.}
+#' \item{mean}{Point forecasts as a time series for \eqn{h=1}. For \eqn{h>1},
+#' they are returned as a time series matrix with the \eqn{h}th column
+#' containing point forecasts for forecast horizon \eqn{h}. The time index
+#' corresponds to the period for which the forecast is generated.}
+#' \item{errors}{Forecast errors given by
+#' \eqn{e_{t+h} = y_{t+h}-\hat{y}_{t+h|t}}{e[t+h] = y[t+h]-f[t+h]}.}
+#' \item{lower}{A list containing lower limits for prediction intervals for
+#' each \code{level}.}
+#' \item{upper}{A list containing upper limits for prediction intervals for
+#' each \code{level}.}
+#' \item{level}{The confidence values associated with the prediction intervals.}
+#' \item{model}{A list containing information about the conformal prediction model.}
+#' @author Xiaoqian Wang
+#' @references Angelopoulos, A., Candes, E., and Tibshirani, R. J. (2024).
+#' "Conformal PID control for time series prediction", \emph{Advances in Neural
+#' Information Processing Systems}, \bold{36}, 23047--23074.
+#' @examples
+#' 
+#' library(forecast)
+#' 
+#' # Simulation series AR(2)
+#' set.seed(0)
+#' series <- arima.sim(n = 1000, list(ar = c(0.8, -0.5)), sd = sqrt(1))
+#' series <- as.numeric(series)
+#' 
+#' # Setup
+#' far2 <- function(x, h, level) {
+#'   Arima(x, order = c(2, 0, 0)) |> 
+#'     forecast(h = h, level)
+#' }
+#' 
+#' # Cross-validation forecasting
+#' fc <- CVforecast(series, forecastfun = far2, h = 3, level = c(80, 95),
+#'                  forward = TRUE, window = 100, initial = 1)
+#' 
+#' # PID setup
+#' Tg <- 1000
+#' delta <- 0.01
+#' lr <- 0.1
+#' KI <- 2
+#' Csat <- 2 / pi * (ceiling(log(Tg) * delta) - 1 / log(Tg))
+#' 
+#' # PID without scorecaster
+#' pidfc_nsf <- PID(fc, symmetric = FALSE, ncal = 100, rolling = TRUE,
+#'                  integrate = TRUE, scorecast = FALSE,
+#'                  lr = lr, KI = KI, Csat = Csat)
+#' 
+#' # PID with scorecaster
+#' naivefun <- function(x, h) {
+#'   naive(x) |> forecast(h = h)
+#' }
+#' pidfc <- PID(fc, symmetric = FALSE, ncal = 100, rolling = TRUE,
+#'              integrate = TRUE, scorecast = TRUE, scorecastfun = naivefun,
+#'              lr = lr, KI = KI, Csat = Csat)
+#' 
+#' @export
 PID <- function(object, alpha = 1 - 0.01 * object$level,
                 symmetric = FALSE, ncal = 10, rolling = FALSE,
                 integrate = TRUE, scorecast = !symmetric, scorecastfun = NULL,
-                lr = 0.1, Tg = length(object$x),
-                Csat = 2 / pi * (ceiling(log(Tg) * 0.01) - 1 / log(Tg)),
+                lr = 0.1, Tg = NULL, delta = NULL,
+                Csat = 2 / pi * (ceiling(log(Tg) * delta) - 1 / log(Tg)),
                 KI = abs(object$errors) |> max(na.rm = TRUE), ...) {
   if (any(alpha >= 1 | alpha <= 0))
     stop("alpha should be in (0, 1)")
@@ -11,6 +104,11 @@ PID <- function(object, alpha = 1 - 0.01 * object$level,
     stop("Length of calibration period should at least be 10")
   if (scorecast && is.null(scorecastfun))
     stop("scorecastfun should not be NULL if scorecast is TRUE")
+  if (!is.null(Tg) && !is.null(delta)) {
+    if (!is.null(Csat))
+      warning("Csat is replaced by calculation using Tg and delta")
+    Csat <- 2 / pi * (ceiling(log(Tg) * delta) - 1 / log(Tg))
+  }
   
   alpha <- sort(alpha, decreasing = TRUE)
   level <- 100 * (1 - alpha)
