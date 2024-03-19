@@ -194,7 +194,7 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
   }
   if (h == 1) {
     lower <- lapply(lower, function(lo) lo[, 1L])
-    upper <- lapply(lower, function(up) up[, 1L])
+    upper <- lapply(upper, function(up) up[, 1L])
     alphat <- lapply(alphat, function(alp) alp[, 1L])
     alphat_lower <- lapply(alphat_lower, function(alp_lo) alp_lo[, 1L])
     alphat_upper <- lapply(alphat_upper, function(alp_up) alp_up[, 1L])
