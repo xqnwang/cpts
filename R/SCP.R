@@ -201,7 +201,7 @@ SCP <- function(object, alpha = 1 - 0.01 * object$level,
                              "User specified weights")
   out$model$kess <- out$model$call$kess
   
-  return(structure(out, class = "CPforecast"))
+  return(structure(out, class = "SCP"))
 }
 
 print.SCP <- function(y, ...) {

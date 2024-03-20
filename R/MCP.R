@@ -260,7 +260,7 @@ MCP <- function(object, alpha = 1 - 0.01 * object$level,
   if (scorecast)
     out$model$scorecaster <- list(lower = scorecaster_lower, upper = scorecaster_upper)
   
-  return(structure(out, class = "CPforecast"))
+  return(structure(out, class = "MCP"))
 }
 
 print.MCP <- function(y, ...) {

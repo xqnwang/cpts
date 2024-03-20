@@ -227,7 +227,7 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
     out$model$alpha_update <- list(lower = alphat_lower, upper = alphat_upper)
   }
   
-  return(structure(out, class = "CPforecast"))
+  return(structure(out, class = "ACP"))
 }
 
 print.ACP <- function(y, ...) {
