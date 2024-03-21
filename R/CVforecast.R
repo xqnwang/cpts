@@ -68,69 +68,79 @@
 #' 
 #' @export
 CVforecast <- function(y, forecastfun, h = 1, level = c(80, 95),
-                       forward = TRUE, window = NULL, xreg = NULL, newxreg = NULL,
-                       initial = 1, ...) {
+                       forward = TRUE, xreg = NULL, initial = 1, window = NULL, ...) {
+  # Check whether there are non-existent arguments
+  all.args <- names(formals())
+  user.args <- names(match.call())[-1L] # including arguments passed to 3 dots
+  check <- user.args %in% all.args
+  if (!all(check)) {
+    error.args <- user.args[!check]
+    warning(sprintf("The non-existent %s arguments will be ignored.", error.args))
+  }
+  
+  # Check input univariate time series
+  if (any(class(y) %in% c("data.frame", "list", "matrix", "mts"))) {
+    stop("y should be a univariate time series")
+  }
+  seriesname <- deparse(substitute(y))
   y <- as.ts(y)
   n <- length(y)
+  
+  # Check confidence level
+  if (min(level) > 0 && max(level) < 1) {
+    level <- 100 * level
+  } else if (min(level) < 0 || max(level) > 99.99) {
+    stop("confidence limit out of range")
+  }
   level <- sort(level)
   
+  # Check other inputs
   if (h <= 0) 
     stop("forecast horizon out of bounds")
-  if (initial <= 0)
-    stop("initial period should be at least of length 1")
-  if (initial >= n)
-    stop("initial period too long")
+  if (initial < 1 | initial > n)
+    stop("initial period out of bounds")
+  if (initial == n && !forward)
+    stop("initial period out of bounds")
   if (!is.null(window)) {
-    if (window >= n)
-      stop("window period too long")
+    if (window < 1 | window > n)
+      stop("window out of bounds")
+    if (window == n && !forward)
+      stop("window out of bounds")
   }
-  if (forward) {
-    N <- n + h
-    nlast <- n
-  } else {
-    N <- n + h - 1L
-    nlast <- n - 1L
-  }
-  
   if (!is.null(xreg)) {
-    # Make xreg a ts object to allow easy subsetting later
-    xreg <- ts(as.matrix(xreg))
-    if (NROW(xreg) != length(y))
-      stop("xreg must be of the same size as y")
-    
-    if (forward && !is.null(newxreg)) {
-      newxreg <- ts(as.matrix(newxreg))
-      if (NROW(newxreg) < h)
-        stop("newxreg must be of the same size as h")
-      if (NROW(newxreg) > h) {
-        message("only first h rows of newxreg are being used for forecasting")
-        newxreg <- ts(as.matrix(newxreg[seq(h),]))
-      }
-      # Pad xreg with newxreg
-      xreg <- ts(rbind(xreg, newxreg),
-                 start = start(y),
-                 frequency = frequency(y))
-    } else {
+    if(!is.numeric(xreg))
+      stop("xreg should be a numeric matrix or a numeric vector")
+    xreg <- ts(as.matrix(xreg),
+               start = start(y),
+               frequency = frequency(y))
+
+    if (nrow(xreg) < n)
+      stop("xreg should be at least of the same size as y")
+    if (nrow(xreg) < n + forward * h)
       # Pad xreg with NAs
-      xreg <- ts(rbind(xreg, matrix(NA_real_, nrow = h, ncol = NCOL(xreg))),
+      xreg <- ts(rbind(xreg, matrix(NA, nrow=n+forward*h-nrow(xreg), ncol=ncol(xreg))),
                  start = start(y),
                  frequency = frequency(y))
+    if (nrow(xreg) > n + forward * h) {
+      warning(sprintf("only first %s rows of xreg are being used", n + forward * h))
+      xreg <- subset(xreg, start = 1L, end = n + forward * h)
+    }
+    if (is.null(colnames(xreg))) {
+      colnames(xreg) <- if (ncol(xreg) == 1) "xreg" else paste0("xreg", 1:ncol(xreg))
     }
   }
   
-  if (is.null(window)) {
-    indx <- seq(initial, nlast, by = 1L)
-  } else {
-    indx <- seq(max(window, initial), nlast, by = 1L)
-  }
+  N <- ifelse(forward, n + h, n + h - 1L)
+  nlast <- ifelse(forward, n, n - 1L)
+  nfirst <- ifelse(is.null(window), initial, max(window, initial))
+  indx <- seq(nfirst, nlast, by = 1L)
   
-  pf <- err <- ts(matrix(NA_real_, nrow = N, ncol = h), 
-                  start = start(y), 
-                  frequency = frequency(y))
-  colnames(pf) <- colnames(err) <- paste0("h=", seq(h))
-  lower <- rep(list(pf), length(level))
-  upper <- rep(list(pf), length(level))
-  names(lower) <- names(upper) <- paste0(level, "%")
+  pf <- err <- `colnames<-` (
+    ts(matrix(NA_real_, nrow = N, ncol = h), 
+       start = start(y), 
+       frequency = frequency(y)),
+    paste0("h=", 1:h))
+  lower <- upper <- `names<-` (rep(list(pf), length(level)), paste0(level, "%"))
   out <- list(
     x = y
   )
@@ -162,26 +172,33 @@ CVforecast <- function(y, forecastfun, h = 1, level = c(80, 95),
     
     if (!is.element("try-error", class(fc))) {
       pf[i,] <- fc$mean
-      err[i,] <- y[i + seq(h)] - fc$mean
+      err[i,] <- y[i + 1:h] - fc$mean
       for (l in level) {
-        lower[[paste0(l, "%")]][i,] <- fc$lower[seq(h), paste0(l, "%")]
-        upper[[paste0(l, "%")]][i,] <- fc$upper[seq(h), paste0(l, "%")]
+        levelname <- paste0(l, "%")
+        lower[[levelname]][i,] <- fc$lower[, levelname]
+        upper[[levelname]][i,] <- fc$upper[, levelname]
       }
     }
   }
   
-  out$method <- as.character(fc$model$call)[1]
-  out$mean <- lagmatrix(pf, seq(h)) |> subset(start = indx[1] + 1L)
-  out$errors <- lagmatrix(err, seq(h)) |> subset(start = indx[1] + 1L)
-  out$lower <- lapply(lower,
-                      function(low) lagmatrix(low, seq(h)) |>
-                        subset(start = indx[1] + 1L))
-  out$upper <- lapply(upper,
-                      function(up) lagmatrix(up, seq(h)) |>
-                        subset(start = indx[1] + 1L))
+  out$series <- seriesname
+  out$method <- paste("CVforecast")
+  out$MEAN <- lagmatrix(pf, 1:h) |> subset(start = nfirst + 1L)
+  out$ERROR <- lagmatrix(err, 1:h) |> subset(start = nfirst + 1L)
+  out$LOWER <- lapply(lower,
+                      function(low) lagmatrix(low, 1:h) |>
+                        subset(start = nfirst + 1L))
+  out$UPPER <- lapply(upper,
+                      function(up) lagmatrix(up, 1:h) |>
+                        subset(start = nfirst + 1L))
   out$level <- level
   # The final forecasting model output in the for loop
+  if (forward) {
+    out$mean <- fc$mean
+    out$lower <- fc$lower
+    out$upper <- fc$upper
+  }
   out$model <- fc$model
   
-  return(structure(out, class = "CVforecast"))
+  return(structure(out, class = c("CVforecast", "forecast")))
 }
