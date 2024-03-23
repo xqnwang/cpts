@@ -1,6 +1,6 @@
 #' Time series cross-validation forecasting
 #' 
-#' \code{CVforecast} computes forecasts and other information obtained by applying
+#' \code{cvforecast} computes forecasts and other information obtained by applying
 #' \code{forecastfun} to subsets of the time series \code{y} using a
 #' rolling forecast origin.
 #' 
@@ -30,9 +30,9 @@
 #' required when \code{forward = TRUE}.
 #' @param initial Initial period of the time series where no cross-validation is performed.
 #' @param ... Other arguments are passed to \code{forecastfun}.
-#' @return An object of class "\code{CVforecast}".
+#' @return An object of class "\code{cvforecast}".
 #' 
-#' An object of class "\code{CVforecast}" is a list containing the following elements:
+#' An object of class "\code{cvforecast}" is a list containing the following elements:
 #' \item{x}{The original time series.}
 #' \item{method}{The name of the forecasting method as a character string.}
 #' \item{mean}{Point forecasts as a time series for \eqn{h=1}. For \eqn{h>1},
@@ -63,11 +63,11 @@
 #'     forecast(h = h, level)
 #' }
 #' 
-#' fc <- CVforecast(series, forecastfun = far2, h = 3, level = c(80, 95),
+#' fc <- cvforecast(series, forecastfun = far2, h = 3, level = c(80, 95),
 #'                  forward = TRUE, window = 100, initial = 1)
 #' 
 #' @export
-CVforecast <- function(y, forecastfun, h = 1, level = c(80, 95),
+cvforecast <- function(y, forecastfun, h = 1, level = c(80, 95),
                        forward = TRUE, xreg = NULL, initial = 1, window = NULL, ...) {
   # Check whether there are non-existent arguments
   all.args <- names(formals())
@@ -134,6 +134,7 @@ CVforecast <- function(y, forecastfun, h = 1, level = c(80, 95),
   nlast <- ifelse(forward, n, n - 1L)
   nfirst <- ifelse(is.null(window), initial, max(window, initial))
   indx <- seq(nfirst, nlast, by = 1L)
+  fit_times <- length(indx)
   
   pf <- err <- `colnames<-` (
     ts(matrix(NA_real_, nrow = N, ncol = h), 
@@ -182,9 +183,10 @@ CVforecast <- function(y, forecastfun, h = 1, level = c(80, 95),
   }
   
   out$series <- seriesname
-  out$method <- paste("CVforecast")
+  out$method <- paste("cvforecast")
+  out$fit_times <- fit_times
   out$MEAN <- lagmatrix(pf, 1:h) |> subset(start = nfirst + 1L)
-  out$ERROR <- lagmatrix(err, 1:h) |> subset(start = nfirst + 1L)
+  out$ERROR <- lagmatrix(err, 1:h) |> subset(start = nfirst + 1L, end = n)
   out$LOWER <- lapply(lower,
                       function(low) lagmatrix(low, 1:h) |>
                         subset(start = nfirst + 1L))
@@ -192,13 +194,47 @@ CVforecast <- function(y, forecastfun, h = 1, level = c(80, 95),
                       function(up) lagmatrix(up, 1:h) |>
                         subset(start = nfirst + 1L))
   out$level <- level
-  # The final forecasting model output in the for loop
+  out$call <- match.call()
+  # The final forecasting model output if forward is TRUE
   if (forward) {
     out$mean <- fc$mean
     out$lower <- fc$lower
     out$upper <- fc$upper
+    out$model <- fc$model
   }
-  out$model <- fc$model
   
-  return(structure(out, class = c("CVforecast", "forecast")))
+  return(structure(out, class = c("cvforecast", "forecast")))
+}
+
+#' @export
+print.cvforecast <- function(x, ...) {
+  cat(paste("Cross-validation\n\n"))
+  if (!is.null(x$call)) {
+    cat(paste("Call:\n"))
+    for (i in 1:length(deparse(x$call))) {
+      cat(paste("", deparse(x$call)[i]), "\n")
+    }
+    cat(paste("\n"))
+  }
+  
+  cat(paste("", "fit_times =", x$fit_times,
+            ifelse("model" %in% names(x), "(the forward step included)", ""), "\n"))
+  
+  if ("model" %in% names(x)) {
+    cat(paste("\nForecasts of the forward step:\n"))
+    NextMethod()
+  }
+}
+
+#' @export
+summary.cvforecast <- function(object, ...) {
+  class(object) <- c("summary.cvforecast", class(object))
+  object
+}
+
+#' @export
+print.summary.cvforecast <- function(x, ...) {
+  NextMethod()
+  cat("\nCross-validation error measures:\n")
+  #print(accuracy(x))
 }
