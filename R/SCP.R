@@ -142,7 +142,7 @@ scp <- function(object, alpha = 1 - 0.01 * object$level,
   )
   
   for (h in seq(horizon)) {
-    indx <- seq(ncal, n - h, by = 1L)
+    indx <- seq(ncal+h-1, nrow(errors), by = 1L)
     
     for (t in indx) {
       errors_subset <- subset(
