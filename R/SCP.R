@@ -91,22 +91,25 @@
 #' scpfc <- SCP(fc, symmetric = FALSE, ncal = 100, rolling = TRUE,
 #'              kess = FALSE, quantiletype = 1)
 #' 
+#' @importFrom ggdist weighted_quantile
 #' @export
-SCP <- function(object, alpha = 1 - 0.01 * object$level,
+scp <- function(object, alpha = 1 - 0.01 * object$level,
                 symmetric = FALSE, ncal = 10, rolling = FALSE,
-                quantiletype = 1, weightfun = NULL, kess = FALSE, na.rm = FALSE,
+                quantiletype = 1, weightfun = NULL, kess = FALSE, na.rm = TRUE,
                 ...) {
+  # Check inputs
   if (any(alpha >= 1 | alpha <= 0))
-    stop("alpha should be in (0, 1)")
+    stop("`alpha` should be in (0, 1)")
   if (ncal < 10)
-    stop("length of calibration period should at least be 10")
+    stop("length of calibration period, `ncal`, should at least be 10")
   if (!quantiletype %in% 1:9)
-    stop("quantiletype is invalid. It must be in 1:9.")
+    stop("`quantiletype` is invalid. It must be in 1:9.")
   if (is.null(weightfun)) {
-    weightfun <- function(n) rep(1, n + 1L)
+    # Equal weights
+    weightfun <- function(n) rep(1, n)
   }
-  # Kish's effective sample size for sample quantile computation
   if (kess) {
+    # Kish's effective sample size for sample quantile computation
     kess <- function(w) sum(w)^2 / sum(w^2)
   } else {
     kess <- NULL
@@ -114,37 +117,42 @@ SCP <- function(object, alpha = 1 - 0.01 * object$level,
   
   alpha <- sort(alpha, decreasing = TRUE)
   level <- 100 * (1 - alpha)
-  pf <- ts(as.matrix(object$mean),
-           start = start(object$mean),
-           frequency = frequency(object$mean))
-  errors <- ts(as.matrix(object$errors),
-               start = start(object$errors),
-               frequency = frequency(object$errors))
-  horizon <- NCOL(errors)
+  pf <- ts(as.matrix(object$MEAN),
+           start = start(object$MEAN),
+           frequency = frequency(object$MEAN))
+  errors <- ts(as.matrix(object$ERROR),
+               start = start(object$ERROR),
+               frequency = frequency(object$ERROR))
+  horizon <- ncol(pf)
+  n <- nrow(pf)
   
-  namatrix <- ts(matrix(NA_real_, nrow = NROW(errors), ncol = horizon), 
-                 start = start(errors), 
-                 frequency = frequency(errors))
+  if (ncal > nrow(errors))
+    stop("`ncal` is larger than the number of rows in object$ERROR")
+  
+  namatrix <- ts(matrix(NA_real_, nrow = n, ncol = horizon), 
+                 start = start(pf), 
+                 frequency = frequency(pf))
   colnames(namatrix) <- paste0("h=", seq(horizon))
-  lower <- upper <- rep(list(namatrix), length(alpha))
-  names(lower) <- names(upper) <- paste0(level, "%")
+  lower <- upper <- `names<-` (rep(list(namatrix), length(alpha)),
+                               paste0(level, "%"))
   
   out <- list(
-    x = object$x
+    x = object$x,
+    series = object$series
   )
   
   for (h in seq(horizon)) {
-    first_non_na <- (!is.na(errors[, h])) |> which() |> min()
-    last_non_na <- (!is.na(errors[, h])) |> which() |> max()
-    if (last_non_na < first_non_na + ncal - 1L)
-      stop("errors in the input object is not long enough for calibration")
-    indx <- seq(first_non_na + ncal - 1L, last_non_na + h - 1L, by = 1L)
+    # first_non_na <- (!is.na(errors[, h])) |> which() |> min()
+    # last_non_na <- (!is.na(errors[, h])) |> which() |> max()
+    # if (last_non_na < first_non_na + ncal - 1L)
+    #   stop("errors in the input object is not long enough for calibration")
+    indx <- seq(ncal, n - h, by = 1L)
     
     for (t in indx) {
       errors_subset <- subset(
         errors[, h],
-        start = ifelse(!rolling, first_non_na, t - ncal + 1L),
-        end = ifelse(t <= last_non_na, t, last_non_na))
+        start = ifelse(!rolling, 1, t - ncal + 1L),
+        end = t)
       
       weight_subset <- weightfun(length(errors_subset) + 1L, ...)
       
@@ -173,40 +181,47 @@ SCP <- function(object, alpha = 1 - 0.01 * object$level,
           na.rm = na.rm)
       }
       for (i in seq(length(alpha))) {
-        lbl <- paste0(level[i], "%")
-        lower[[lbl]][t+1, h] <- pf[t+1, h] - q_lo[i]
-        upper[[lbl]][t+1, h] <- pf[t+1, h] + q_up[i]
+        lower[[i]][t+h, h] <- pf[t+h, h] - q_lo[i]
+        upper[[i]][t+h, h] <- pf[t+h, h] + q_up[i]
       }
     }
   }
-  if (h == 1) {
-    lower <- lapply(lower, function(lo) lo[, 1L])
-    upper <- lapply(upper, function(up) up[, 1L])
-  }
-  out$method <- paste("SCP")
-  out$mean <- object$mean
-  out$errors <- object$errors
-  out$lower <- lower
-  out$upper <- upper
+  
+  out$method <- paste("scp")
+  out$cp_times <- length(indx)
+  out$MEAN <- object$MEAN
+  out$ERROR <- object$ERROR
+  out$LOWER <- lower
+  out$UPPER <- upper
   out$level <- level
+  out$call <- match.call()
+  if ("mean" %in% names(object)) {
+    out$mean <- object$mean
+    out$lower <- extract_final(lower, nrow = n, ncol = horizon, bench = out$mean)
+    out$upper <- extract_final(upper, nrow = n, ncol = horizon, bench = out$mean)
+  }
   out$model$method <- out$method
   out$model$call <- match.call()
   out$model$alpha <- alpha
   out$model$symmetric <- symmetric
-  out$model$ncal <- ncal
-  out$model$rolling <- rolling
-  out$model$quantiletype <- quantiletype
-  out$model$weight <- ifelse(is.null(out$model$call$weightfun),
-                             "Equal weights",
-                             "User specified weights")
-  out$model$kess <- out$model$call$kess
   
-  return(structure(out, class = "SCP"))
+  return(structure(out, class = c("scp", "cpforecast", "forecast")))
 }
 
-print.SCP <- function(y, ...) {
-  x <- y$model
-  cat(paste(x$method, "\n\n"))
+# Extract final step forecasts from x and copy attributes from bench to it
+extract_final <- function(x, nrow, ncol, bench) {
+  x <- sapply(
+    names(x),
+    function(xx)
+      sapply(ncol:1 - 1, function(h) as.numeric(x[[xx]][nrow-h, ncol-h]))
+    , simplify = FALSE)
+  x <- do.call(cbind, x)
+  forecast:::copy_msts(bench, x)
+}
+
+#' @export
+print.cpforecast <- function(x, ...) {
+  cat(paste(toupper(x$method), "\n\n"))
   if (!is.null(x$call)) {
     cat(paste("Call:\n"))
     for (i in 1:length(deparse(x$call))) {
@@ -215,13 +230,26 @@ print.SCP <- function(y, ...) {
     cat(paste("\n"))
   }
   
-  cat("  Conformal prediction settings:\n")
-  cat(paste("    symmetric =", x$symmetric, "\n"))
-  cat(paste("    rolling =", x$rolling, "\n"))
-  cat(paste("   ", ifelse(rolling, "window =", "initial window ="), x$ncal, "\n"))
+  cat(paste("", "cp_times =", x$cp_times,
+            ifelse("mean" %in% names(x), "(the forward step included)", ""), "\n"))
   
-  cat("\n  Sample quantiles:\n")
-  cat(paste("    type =", x$quantiletype, "\n"))
-  cat(paste("    weights =", tolower(x$weight), "\n"))
-  cat(paste("    kess =", x$kess, "\n"))
+  if ("model" %in% names(x)) {
+    cat(paste("\nForecasts of the forward step:\n"))
+    NextMethod()
+  }
+}
+
+#' @export
+summary.cpforecast <- function(object, ...) {
+  class(object) <- c("summary.cpforecast", class(object))
+  object
+}
+
+#' @export
+print.summary.cpforecast <- function(x, ...) {
+  NextMethod()
+  cat("\nCross-validation error measures:\n")
+  print(round(
+    accuracy(x, measures = c(point_measures, interval_measures), byhorizon = FALSE),
+    digits = 3))
 }
