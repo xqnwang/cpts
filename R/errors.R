@@ -1,6 +1,100 @@
-accuracy.cvforecast <- function(object, x, CV = TRUE, period = NULL,
-                                measures = point_measures,
-                                byhorizon = FALSE, ...) {
+ME <- function(resid, na.rm = TRUE) {
+  mean(resid, na.rm = na.rm)
+}
+
+MAE <- function(resid, na.rm = TRUE, ...){
+  mean(abs(resid), na.rm = na.rm)
+}
+
+MSE <- function(resid, na.rm = TRUE, ...){
+  mean(resid ^ 2, na.rm = na.rm)
+}
+
+RMSE <- function(resid, na.rm = TRUE, ...){
+  sqrt(MSE(resid, na.rm = na.rm))
+}
+
+MPE <- function(resid, actual, na.rm = TRUE, ...){
+  mean(resid / actual * 100, na.rm = na.rm)
+}
+
+MAPE <- function(resid, actual, na.rm = TRUE, ...){
+  mean(abs(resid / actual * 100), na.rm = na.rm)
+}
+
+MASE <- function(resid, train, demean = FALSE, na.rm = TRUE,
+                 period, d = period == 1, D = period > 1, ...){
+  if (D > 0) { # seasonal differencing
+    train <- diff(train, lag = period, differences = D)
+  }
+  if (d > 0) {
+    train <- diff(train, differences = d)
+  }
+  if(demean){
+    train <- train - mean(train, na.rm = na.rm)
+  }
+  scale <- mean(abs(train), na.rm = na.rm)
+  mean(abs(resid / scale), na.rm = na.rm)
+}
+
+RMSSE <- function(resid, train, demean = FALSE, na.rm = TRUE,
+                  period, d = period == 1, D = period > 1, ...){
+  if (D > 0) { # seasonal differencing
+    train <- diff(train, lag = period, differences = D)
+  }
+  if (d > 0) {
+    train <- diff(train, differences = d)
+  }
+  if(demean){
+    train <- train - mean(train, na.rm = na.rm)
+  }
+  scale <- mean(train^2, na.rm = na.rm)
+  sqrt(mean(resid^2 / scale, na.rm = na.rm))
+}
+
+point_measures <- list(ME = ME, MAE = MAE, MSE = MSE, RMSE = RMSE, MPE = MPE,
+                       MAPE = MAPE, MASE = MASE, RMSSE = RMSSE)
+
+winkler_score <- function(lower, upper, actual, level = 95, na.rm = TRUE, ...){
+  if (level > 0 && level < 1) {
+    level <- 100 * level
+  } else if (level < 0 || level > 99.99) {
+    stop("confidence limit out of range")
+  }
+  alpha <- 1 - level/100
+  score <- ifelse(
+    actual < lower,
+    (upper - lower) + (2 / alpha) * (lower - actual),
+    ifelse(
+      actual > upper,
+      (upper - lower) + (2 / alpha) * (actual - upper),
+      # else
+      upper - lower)
+  )
+  mean(score, na.rm = na.rm)
+}
+
+MSIS <- function(lower, upper, actual, train, level = 95,
+                 period, d = period == 1, D = period > 1,
+                 na.rm = TRUE, ...) {
+  if (D > 0) { # seasonal differencing
+    train <- diff(train, lag = period, differences = D)
+  }
+  if (d > 0) {
+    train <- diff(train, differences = d)
+  }
+  scale <- mean(abs(train), na.rm = na.rm)
+  score <- winkler_score(lower = lower, upper = upper, actual = actual,
+                         level = level, na.rm = na.rm)
+  mean(score / scale, na.rm = na.rm)
+}
+
+interval_measures <- list(Winkler = winkler_score, MSIS = MSIS)
+
+
+accuracy.default <- function(object, x, CV = TRUE, period = NULL,
+                             measures = point_measures,
+                             byhorizon = FALSE, ...) {
   if (!any(is.element(class(object), c("cvforecast", "cpforecast"))))
     stop(paste("no accuracy method found for an object of class",class(object)))
   if (!is.list(measures))
@@ -132,96 +226,3 @@ accuracy.cvforecast <- function(object, x, CV = TRUE, period = NULL,
   return(out)
 }
 
-
-point_measures <- list(ME = ME, MAE = MAE, MSE = MSE, RMSE = RMSE, MPE = MPE,
-                       MAPE = MAPE, MASE = MASE, RMSSE = RMSSE)
-
-ME <- function(resid, na.rm = TRUE) {
-  mean(resid, na.rm = na.rm)
-}
-
-MAE <- function(resid, na.rm = TRUE, ...){
-  mean(abs(resid), na.rm = na.rm)
-}
-
-MSE <- function(resid, na.rm = TRUE, ...){
-  mean(resid ^ 2, na.rm = na.rm)
-}
-
-RMSE <- function(resid, na.rm = TRUE, ...){
-  sqrt(MSE(resid, na.rm = na.rm))
-}
-
-MPE <- function(resid, actual, na.rm = TRUE, ...){
-  mean(resid / actual * 100, na.rm = na.rm)
-}
-
-MAPE <- function(resid, actual, na.rm = TRUE, ...){
-  mean(abs(resid / actual * 100), na.rm = na.rm)
-}
-
-MASE <- function(resid, train, demean = FALSE, na.rm = TRUE,
-                 period, d = period == 1, D = period > 1, ...){
-  if (D > 0) { # seasonal differencing
-    train <- diff(train, lag = period, differences = D)
-  }
-  if (d > 0) {
-    train <- diff(train, differences = d)
-  }
-  if(demean){
-    train <- train - mean(train, na.rm = na.rm)
-  }
-  scale <- mean(abs(train), na.rm = na.rm)
-  mean(abs(resid / scale), na.rm = na.rm)
-}
-
-RMSSE <- function(resid, train, demean = FALSE, na.rm = TRUE,
-                  period, d = period == 1, D = period > 1, ...){
-  if (D > 0) { # seasonal differencing
-    train <- diff(train, lag = period, differences = D)
-  }
-  if (d > 0) {
-    train <- diff(train, differences = d)
-  }
-  if(demean){
-    train <- train - mean(train, na.rm = na.rm)
-  }
-  scale <- mean(train^2, na.rm = na.rm)
-  sqrt(mean(resid^2 / scale, na.rm = na.rm))
-}
-
-interval_measures <- list(Winkler = winkler_score, MSIS = MSIS)
-
-winkler_score <- function(lower, upper, actual, level = 95, na.rm = TRUE, ...){
-  if (level > 0 && level < 1) {
-    level <- 100 * level
-  } else if (level < 0 || level > 99.99) {
-    stop("confidence limit out of range")
-  }
-  alpha <- 1 - level/100
-  score <- ifelse(
-    actual < lower,
-    (upper - lower) + (2 / alpha) * (lower - actual),
-    ifelse(
-      actual > upper,
-      (upper - lower) + (2 / alpha) * (actual - upper),
-      # else
-      upper - lower)
-  )
-  mean(score, na.rm = na.rm)
-}
-
-MSIS <- function(lower, upper, actual, train, level = 95,
-                 period, d = period == 1, D = period > 1,
-                 na.rm = TRUE, ...) {
-  if (D > 0) { # seasonal differencing
-    train <- diff(train, lag = period, differences = D)
-  }
-  if (d > 0) {
-    train <- diff(train, differences = d)
-  }
-  scale <- mean(abs(train), na.rm = na.rm)
-  score <- winkler_score(lower = lower, upper = upper, actual = actual,
-                         level = level, na.rm = na.rm)
-  mean(score / scale, na.rm = na.rm)
-}
