@@ -185,14 +185,14 @@ cvforecast <- function(y, forecastfun, h = 1, level = c(80, 95),
   out$series <- seriesname
   out$method <- paste("cvforecast")
   out$fit_times <- fit_times
-  out$MEAN <- lagmatrix(pf, 1:h) |> subset(start = nfirst + 1L)
-  out$ERROR <- lagmatrix(err, 1:h) |> subset(start = nfirst + 1L, end = n)
+  out$MEAN <- lagmatrix(pf, 1:h) |> window(start = time(pf)[nfirst + 1L])
+  out$ERROR <- lagmatrix(err, 1:h) |> window(start = time(err)[nfirst + 1L], end = time(err)[n])
   out$LOWER <- lapply(lower,
                       function(low) lagmatrix(low, 1:h) |>
-                        subset(start = nfirst + 1L))
+                        window(start = time(low)[nfirst + 1L]))
   out$UPPER <- lapply(upper,
                       function(up) lagmatrix(up, 1:h) |>
-                        subset(start = nfirst + 1L))
+                        window(start = time(up)[nfirst + 1L]))
   out$level <- level
   out$call <- match.call()
   # The final forecasting model output if forward is TRUE
