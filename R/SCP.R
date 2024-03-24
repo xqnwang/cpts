@@ -142,10 +142,6 @@ scp <- function(object, alpha = 1 - 0.01 * object$level,
   )
   
   for (h in seq(horizon)) {
-    # first_non_na <- (!is.na(errors[, h])) |> which() |> min()
-    # last_non_na <- (!is.na(errors[, h])) |> which() |> max()
-    # if (last_non_na < first_non_na + ncal - 1L)
-    #   stop("errors in the input object is not long enough for calibration")
     indx <- seq(ncal, n - h, by = 1L)
     
     for (t in indx) {
