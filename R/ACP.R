@@ -116,6 +116,7 @@ acp <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
     
     alphat_h <- alphat_lower_h <- alphat_upper_h <-
       errt_h <- errt_lower_h <- errt_upper_h <-
+      q_lo_h <- q_up_h <-
       matrix(NA_real_, nrow = n, ncol = length(alpha))
     
     for (t in indx) {
@@ -129,7 +130,7 @@ acp <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
           alphat_h[t+h, ] <- alpha
         
         # Compute sample quantiles
-        q_lo <- q_up <- ggdist::weighted_quantile(
+        q_lo_h[t+h, ] <- q_up_h[t+h, ] <- ggdist::weighted_quantile(
           x = abs(c(errors_subset, Inf)),
           probs = 1 - alphat_h[t+h, ],
           type = quantiletype,
@@ -137,17 +138,21 @@ acp <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
           ...)
         
         # Compute errt
-        errt_h[t+h, ] <- tryCatch(
-          {abs(errors[t+h, h]) > q_lo},
-          error = function(e) return(NA_real_)
+        tryCatch(
+          {
+            errt_h[t+1, ] <- abs(errors[t+1, h]) > q_lo_h[t+1, ]
+            outl <- which(alphat_h[t+1, ] >= 1)
+            outs <- which(alphat_h[t+1, ] <= 0)
+            errt_h[t+1, outl] <- TRUE
+            errt_h[t+1, outs] <- FALSE
+          },
+          error = function(e) {
+            errt_h[t+1, ] <- NA_real_
+          }
         )
-        outl <- which(alphat_h[t+h, ] >= 1)
-        outs <- which(alphat_h[t+h, ] <= 0)
-        errt_h[t+h, outl] <- TRUE
-        errt_h[t+h, outs] <- FALSE
         
         if (t < tail(indx, 1)) {
-          if (all(is.na(errt_h[t+1, ]))) {
+          if (any(is.na(errt_h[t+1, ]))) {
             # Keep alpha unchanged
             alphat_h[t+h+1, ] <- alphat_h[t+h, ]
           } else {
@@ -160,13 +165,13 @@ acp <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
           alphat_lower_h[t+h, ] <- alphat_upper_h[t+h, ] <- alpha/2
         
         # Compute sample quantiles
-        q_lo <- ggdist::weighted_quantile(
+        q_lo_h[t+h, ] <- ggdist::weighted_quantile(
           x = -c(errors_subset, Inf),
           probs = 1 - alphat_lower_h[t+h, ],
           type = quantiletype,
           na.rm = na.rm,
           ...)
-        q_up <- ggdist::weighted_quantile(
+        q_up_h[t+h, ] <- ggdist::weighted_quantile(
           x = c(errors_subset, Inf),
           probs = 1 - alphat_upper_h[t+h, ],
           type = quantiletype,
@@ -174,19 +179,21 @@ acp <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
           ...)
         
         # Compute errt
-        errt_lower_h[t+h, ] <- tryCatch(
-          {(-errors[t+h, h]) > q_lo},
-          error = function(e) return(NA_real_)
+        tryCatch(
+          {
+            errt_lower_h[t+1, ] <- (-errors[t+1, h]) > q_lo_h[t+1, ]
+            errt_lower_h[t+1, which(alphat_lower_h[t+1, ] >= 1)] <- TRUE
+            errt_lower_h[t+1, which(alphat_lower_h[t+1, ] <= 0)] <- FALSE
+            
+            errt_upper_h[t+1, ] <- (errors[t+1, h]) > q_up_h[t+1, ]
+            errt_upper_h[t+1, which(alphat_upper_h[t+1, ] >= 1)] <- TRUE
+            errt_upper_h[t+1, which(alphat_upper_h[t+1, ] <= 0)] <- FALSE
+          },
+          error = function(e) {
+            errt_lower_h[t+1, ] <- NA_real_
+            errt_upper_h[t+1, ] <- NA_real_
+          }
         )
-        errt_lower_h[t+h, which(alphat_lower_h[t+h, ] >= 1)] <- TRUE
-        errt_lower_h[t+h, which(alphat_lower_h[t+h, ] <= 0)] <- FALSE
-        
-        errt_upper_h[t+h, ] <- tryCatch(
-          {(errors[t+h, h]) > q_up},
-          error = function(e) return(NA_real_)
-        )
-        errt_upper_h[t+h, which(alphat_upper_h[t+h, ] >= 1)] <- TRUE
-        errt_upper_h[t+h, which(alphat_upper_h[t+h, ] <= 0)] <- FALSE
         
         if (t < tail(indx, 1)) {
           if (any(is.na(errt_lower_h[t+1, ])) || any(is.na(errt_upper_h[t+1, ]))) {
@@ -201,8 +208,8 @@ acp <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
         }
       }
       for (i in seq(length(alpha))) {
-        lower[[i]][t+h, h] <- pf[t+h, h] - q_lo[i]
-        upper[[i]][t+h, h] <- pf[t+h, h] + q_up[i]
+        lower[[i]][t+h, h] <- pf[t+h, h] - q_lo_h[t+h, i]
+        upper[[i]][t+h, h] <- pf[t+h, h] + q_up_h[t+h, i]
       }
     }
     for (i in seq(length(alpha))) {
