@@ -69,10 +69,12 @@
 #' # ACP with symmetric conformity scores and rolling calibration sets
 #' acpfc <- ACP(fc, symmetric = FALSE, gamma = 0.005, ncal = 100, rolling = TRUE)
 #' 
+#' @importFrom ggdist weighted_quantile
 #' @export
-ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
+acp <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
                 symmetric = FALSE, ncal = 10, rolling = FALSE,
-                quantiletype = 1, na.rm = FALSE, ...) {
+                quantiletype = 1, na.rm = TRUE, ...) {
+  # Check inputs
   if (any(alpha >= 1 | alpha <= 0))
     stop("alpha should be in (0, 1)")
   if (gamma < 0)
@@ -84,114 +86,123 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
   
   alpha <- sort(alpha, decreasing = TRUE)
   level <- 100 * (1 - alpha)
-  pf <- ts(as.matrix(object$mean),
-           start = start(object$mean),
-           frequency = frequency(object$mean))
-  errors <- ts(as.matrix(object$errors),
-               start = start(object$errors),
-               frequency = frequency(object$errors))
-  horizon <- NCOL(errors)
+  pf <- ts(as.matrix(object$MEAN),
+           start = start(object$MEAN),
+           frequency = frequency(object$MEAN))
+  errors <- ts(as.matrix(object$ERROR),
+               start = start(object$ERROR),
+               frequency = frequency(object$ERROR))
+  horizon <- ncol(pf)
+  n <- nrow(pf)
   
-  namatrix <- ts(matrix(NA_real_, nrow = NROW(errors), ncol = horizon),
-                 start = start(errors),
-                 frequency = frequency(errors))
+  if (ncal > nrow(errors))
+    stop("`ncal` is larger than the number of rows in object$ERROR")
+  
+  namatrix <- ts(matrix(NA_real_, nrow = n, ncol = horizon),
+                 start = start(pf),
+                 frequency = frequency(pf))
   colnames(namatrix) <- paste0("h=", seq(horizon))
-  lower <- upper <- rep(list(namatrix), length(alpha))
-  names(lower) <- names(upper) <- paste0(level, "%")
-  alphat <- alphat_lower <- alphat_upper <- lower
+  lower <- upper <- alphat <- alphat_lower <- alphat_upper <-
+    `names<-` (rep(list(namatrix), length(alpha)),
+               paste0(level, "%"))
   
   out <- list(
-    x = object$x
+    x = object$x,
+    series = object$series
   )
   
   for (h in seq(horizon)) {
-    first_non_na <- (!is.na(errors[, h])) |> which() |> min()
-    last_non_na <- (!is.na(errors[, h])) |> which() |> max()
-    if (last_non_na < first_non_na + ncal - 1L)
-      stop("errors in the input object is not long enough for calibration")
-    indx <- seq(first_non_na + ncal - 1L, last_non_na + h - 1L, by = 1L)
+    indx <- seq(ncal, n - h, by = 1L)
     
     alphat_h <- alphat_lower_h <- alphat_upper_h <-
       errt_h <- errt_lower_h <- errt_upper_h <-
-      matrix(NA_real_, nrow = NROW(errors), ncol = length(alpha))
+      matrix(NA_real_, nrow = n, ncol = length(alpha))
+    
     for (t in indx) {
       errors_subset <- subset(
         errors[, h],
-        start = ifelse(!rolling, first_non_na, t - ncal + 1L),
-        end = ifelse(t <= last_non_na, t, last_non_na))
+        start = ifelse(!rolling, 1, t - ncal + 1L),
+        end = t)
       
       if (symmetric) {
         if (t == indx[1])
-          alphat_h[t+1, ] <- alpha
+          alphat_h[t+h, ] <- alpha
         
         # Compute sample quantiles
-        # (alpha_{t+1} is used to calculate sample quantiles from errors until t)
         q_lo <- q_up <- ggdist::weighted_quantile(
           x = abs(c(errors_subset, Inf)),
-          probs = 1 - alphat_h[t+1, ],
+          probs = 1 - alphat_h[t+h, ],
           type = quantiletype,
           na.rm = na.rm,
           ...)
         
         # Compute errt
-        errt_h[t+1, ] <- abs(errors[t+1, h]) > q_lo
-        outl <- which(alphat_h[t+1, ] >= 1)
-        outs <- which(alphat_h[t+1, ] <= 0)
-        errt_h[t+1, outl] <- TRUE
-        errt_h[t+1, outs] <- FALSE
+        errt_h[t+h, ] <- tryCatch(
+          {abs(errors[t+h, h]) > q_lo},
+          error = function(e) return(NA_real_)
+        )
+        outl <- which(alphat_h[t+h, ] >= 1)
+        outs <- which(alphat_h[t+h, ] <= 0)
+        errt_h[t+h, outl] <- TRUE
+        errt_h[t+h, outs] <- FALSE
         
-        if (t == tail(indx, 1))
-          next
-        if (t < last_non_na) {
-          # Update alpha
-          alphat_h[t+2, ] <- alphat_h[t+1, ] + gamma*(alpha - errt_h[t+1, ])
-        } else {
-          # Keep alpha unchanged after errt is not available
-          alphat_h[t+2, ] <- alphat_h[t+1, ]
+        if (t < tail(indx, 1)) {
+          if (all(is.na(errt_h[t+1, ]))) {
+            # Keep alpha unchanged
+            alphat_h[t+h+1, ] <- alphat_h[t+h, ]
+          } else {
+            # Update alpha
+            alphat_h[t+h+1, ] <- alphat_h[t+h, ] + gamma*(alpha - errt_h[t+1, ])
+          }
         }
       } else {
         if (t == indx[1])
-          alphat_lower_h[t+1, ] <- alphat_upper_h[t+1, ] <- alpha/2
+          alphat_lower_h[t+h, ] <- alphat_upper_h[t+h, ] <- alpha/2
+        
+        # Compute sample quantiles
         q_lo <- ggdist::weighted_quantile(
           x = -c(errors_subset, Inf),
-          probs = 1 - alphat_lower_h[t+1, ],
+          probs = 1 - alphat_lower_h[t+h, ],
           type = quantiletype,
           na.rm = na.rm,
           ...)
         q_up <- ggdist::weighted_quantile(
           x = c(errors_subset, Inf),
-          probs = 1 - alphat_upper_h[t+1, ],
+          probs = 1 - alphat_upper_h[t+h, ],
           type = quantiletype,
           na.rm = na.rm,
           ...)
         
         # Compute errt
-        errt_lower_h[t+1, ] <- (-errors[t+1, h]) > q_lo
-        errt_lower_h[t+1, which(alphat_lower_h[t+1, ] >= 1)] <- TRUE
-        errt_lower_h[t+1, which(alphat_lower_h[t+1, ] <= 0)] <- FALSE
+        errt_lower_h[t+h, ] <- tryCatch(
+          {(-errors[t+h, h]) > q_lo},
+          error = function(e) return(NA_real_)
+        )
+        errt_lower_h[t+h, which(alphat_lower_h[t+h, ] >= 1)] <- TRUE
+        errt_lower_h[t+h, which(alphat_lower_h[t+h, ] <= 0)] <- FALSE
         
-        errt_upper_h[t+1, ] <- errors[t+1, h] > q_up
-        errt_upper_h[t+1, which(alphat_upper_h[t+1, ] >= 1)] <- TRUE
-        errt_upper_h[t+1, which(alphat_upper_h[t+1, ] <= 0)] <- FALSE
+        errt_upper_h[t+h, ] <- tryCatch(
+          {(errors[t+h, h]) > q_up},
+          error = function(e) return(NA_real_)
+        )
+        errt_upper_h[t+h, which(alphat_upper_h[t+h, ] >= 1)] <- TRUE
+        errt_upper_h[t+h, which(alphat_upper_h[t+h, ] <= 0)] <- FALSE
         
-        if (t == tail(indx, 1))
-          next
-        if (t < last_non_na) {
-          # Update alpha
-          alphat_lower_h[t+2, ] <- alphat_lower_h[t+1, ] +
-            gamma*(alpha/2 - errt_lower_h[t+1, ])
-          alphat_upper_h[t+2, ] <- alphat_upper_h[t+1, ] +
-            gamma*(alpha/2 - errt_upper_h[t+1, ])
-        } else {
-          # Keep alpha unchanged
-          alphat_lower_h[t+2, ] <- alphat_lower_h[t+1, ]
-          alphat_upper_h[t+2, ] <- alphat_upper_h[t+1, ]
+        if (t < tail(indx, 1)) {
+          if (any(is.na(errt_lower_h[t+1, ])) || any(is.na(errt_upper_h[t+1, ]))) {
+            # Keep alpha unchanged
+            alphat_lower_h[t+h+1, ] <- alphat_lower_h[t+h, ]
+            alphat_upper_h[t+h+1, ] <- alphat_upper_h[t+h, ]
+          } else {
+            # Update alpha
+            alphat_lower_h[t+h+1, ] <- alphat_lower_h[t+h, ] + gamma*(alpha/2 - errt_lower_h[t+1, ])
+            alphat_upper_h[t+h+1, ] <- alphat_upper_h[t+h, ] + gamma*(alpha/2 - errt_upper_h[t+1, ])
+          }
         }
       }
       for (i in seq(length(alpha))) {
-        lbl <- paste0(level[i], "%")
-        lower[[lbl]][t+1, h] <- pf[t+1, h] - q_lo[i]
-        upper[[lbl]][t+1, h] <- pf[t+1, h] + q_up[i]
+        lower[[i]][t+h, h] <- pf[t+h, h] - q_lo[i]
+        upper[[i]][t+h, h] <- pf[t+h, h] + q_up[i]
       }
     }
     for (i in seq(length(alpha))) {
@@ -200,56 +211,30 @@ ACP <- function(object, alpha = 1 - 0.01 * object$level, gamma = 0.005,
       alphat_upper[[i]][, h] <- alphat_upper_h[, i]
     }
   }
-  if (h == 1) {
-    lower <- lapply(lower, function(lo) lo[, 1L])
-    upper <- lapply(upper, function(up) up[, 1L])
-    alphat <- lapply(alphat, function(alp) alp[, 1L])
-    alphat_lower <- lapply(alphat_lower, function(alp_lo) alp_lo[, 1L])
-    alphat_upper <- lapply(alphat_upper, function(alp_up) alp_up[, 1L])
-  }
-  out$method <- paste("ACP")
-  out$mean <- object$mean
-  out$errors <- object$errors
-  out$lower <- lower
-  out$upper <- upper
+  
+  out$method <- paste("acp")
+  out$cp_times <- length(indx)
+  out$MEAN <- object$MEAN
+  out$ERROR <- object$ERROR
+  out$LOWER <- lower
+  out$UPPER <- upper
   out$level <- level
+  out$call <- match.call()
+  if ("mean" %in% names(object)) {
+    out$mean <- object$mean
+    out$lower <- extract_final(lower, nrow = n, ncol = horizon, bench = out$mean)
+    out$upper <- extract_final(upper, nrow = n, ncol = horizon, bench = out$mean)
+  }
   out$model$method <- out$method
   out$model$call <- match.call()
   out$model$alpha <- alpha
   out$model$gamma <- gamma
   out$model$symmetric <- symmetric
-  out$model$ncal <- ncal
-  out$model$rolling <- rolling
-  out$model$quantiletype <- quantiletype
   if (symmetric) {
     out$model$alpha_update <- alphat
   } else {
     out$model$alpha_update <- list(lower = alphat_lower, upper = alphat_upper)
   }
   
-  return(structure(out, class = "ACP"))
-}
-
-print.ACP <- function(y, ...) {
-  x <- y$model
-  cat(paste(x$method, "\n\n"))
-  if (!is.null(x$call)) {
-    cat(paste("Call:\n"))
-    for (i in 1:length(deparse(x$call))) {
-      cat(paste("", deparse(x$call)[i]), "\n")
-    }
-    cat(paste("\n"))
-  }
-  
-  cat("  Conformal prediction settings:\n")
-  cat(paste("    symmetric =", x$symmetric, "\n"))
-  cat(paste("    rolling =", x$rolling, "\n"))
-  cat(paste("   ", ifelse(rolling, "window =", "initial window ="), x$ncal, "\n"))
-  
-  cat("\n  Alpha update process:\n")
-  cat(paste("    gamma =", x$gamma, "\n"))
-  
-  cat("\n  Sample quantiles:\n")
-  cat(paste("    type =", x$quantiletype, "\n"))
-  cat(paste("    weights = equal weights\n"))
+  return(structure(out, class = c("acp", "cpforecast", "forecast")))
 }
