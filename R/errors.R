@@ -190,7 +190,7 @@ RMSSE <- function(resid, train, demean = FALSE, na.rm = TRUE,
   sqrt(mean(resid^2 / scale, na.rm = na.rm))
 }
 
-interval_measures <- list(winkler = winkler_score)
+interval_measures <- list(Winkler = winkler_score, MSIS = MSIS)
 
 winkler_score <- function(lower, upper, actual, level = 95, na.rm = TRUE, ...){
   if (level > 0 && level < 1) {
@@ -209,4 +209,19 @@ winkler_score <- function(lower, upper, actual, level = 95, na.rm = TRUE, ...){
       upper - lower)
   )
   mean(score, na.rm = na.rm)
+}
+
+MSIS <- function(lower, upper, actual, train, level = 95,
+                 period, d = period == 1, D = period > 1,
+                 na.rm = TRUE, ...) {
+  if (D > 0) { # seasonal differencing
+    train <- diff(train, lag = period, differences = D)
+  }
+  if (d > 0) {
+    train <- diff(train, differences = d)
+  }
+  scale <- mean(abs(train), na.rm = na.rm)
+  score <- winkler_score(lower = lower, upper = upper, actual = actual,
+                         level = level, na.rm = na.rm)
+  mean(score / scale, na.rm = na.rm)
 }

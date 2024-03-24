@@ -236,5 +236,7 @@ summary.cvforecast <- function(object, ...) {
 print.summary.cvforecast <- function(x, ...) {
   NextMethod()
   cat("\nCross-validation error measures:\n")
-  #print(accuracy(x))
+  print(round(
+    accuracy(x, measures = c(point_measures, interval_measures), byhorizon = FALSE),
+    digits = 3))
 }
