@@ -1,46 +1,65 @@
-width <- function(object) {
-  if (any(!(c("lower", "upper") %in% names(object))))
-    stop("lower, and upper are required for coverage calculation")
-  lower <- lapply(object$lower, function(lo) {
-    lo_ts <- ts(as.matrix(lo),
-                start = start(lo),
-                frequency = frequency(lo))
-    nonna <- (rowSums(is.na(lo_ts)) != NCOL(lo_ts)) |> which() |> min()
-    lo_ts <- subset(lo_ts, start = nonna)
-    lo_ts
-  })
-  upper <- lapply(object$upper, function(up) {
-    up_ts <- ts(as.matrix(up),
-                start = start(up),
-                frequency = frequency(up))
-    nonna <- (rowSums(is.na(up_ts)) != NCOL(up_ts)) |> which() |> min()
-    up_ts <- subset(up_ts, start = nonna)
-    up_ts
-  })
-  intvstart <- start(lower[[1]])
-  colname <- colnames(lower[[1]])
-  namelevel <- names(lower)
-  freq <- frequency(lower)
+#' @export
+width <- function(object, level = object$level, window = NULL, na.rm = TRUE) {
+  # Check inputs
+  if (any(!(c("LOWER", "UPPER") %in% names(object))))
+    stop("LOWER, and UPPER are required for coverage calculation")
+  if (!(is.list(object$LOWER) && is.list(object$UPPER)))
+    stop("LOWER and UPPER should be a list")
+  if (all(level > 0 & level < 1)) {
+    level <- 100 * level
+  } else if (any(level < 0 | level > 99.99)) {
+    stop("confidence limit out of range")
+  }
   
-  widmat <- lapply(namelevel, function(i) {
+  # Extract information of interest
+  level <- sort(level)
+  levelname <- paste0(level, "%")
+  lower <- object$LOWER[levelname]
+  upper <- object$UPPER[levelname]
+  horizon <- ncol(lower[[1]])
+  period <- frequency(lower[[1]])
+  
+  # Match time
+  tspl <- tsp(lower[[1]])
+  tspu <- tsp(upper[[1]])
+  start <- max(tspl[1], tspu[1])
+  end <- min(tspl[2], tspu[2])
+  
+  lower <- lapply(lower, function(lo) window(lo, start = start, end = end))
+  upper <- lapply(upper, function(up) window(up, start = start, end = end))
+  n <- nrow(lower[[1]])
+  
+  # Width matrix
+  widmat <- `names<-` (lapply(levelname, function(i) {
     wid <- upper[[i]] - lower[[i]]
-    wid <- ts(wid, start = intvstart, frequency = freq)
-    colnames(wid) <- colname
+    wid <- ts(wid, start = start, end = end, frequency = period)
+    colnames(wid) <- colnames(upper[[i]])
     return(wid)
-  })
-  names(widmat) <- namelevel
+  }), levelname)
   
-  width <- sapply(widmat, function(wid) {
-    apply(wid, 2, mean, na.rm = TRUE)
+  # Mean coverage
+  widmean <- sapply(widmat, function(wid) {
+    apply(wid, 2, mean, na.rm = na.rm)
   })
+  
+  # Rolling mean coverage
+  if (!is.null(window)) {
+    if (window >= n)
+      stop("the `window` argument should be smaller than the total period of interest")
+    widrmean <- lapply(widmat, function(wid) {
+      apply(wid, 2, zoo::rollmean, k = window, na.rm = na.rm) |>
+        ts(end = end, frequency = period)
+    })
+  }
   
   out <- list(
-    mean = width,
+    mean = widmean,
     width = widmat
   )
+  if (!is.null(window)) out <- append(out, list(rolling = widrmean))
   return(structure(out, class = "width"))
 }
 
 print.width <- function(x, ...) {
-  x$mean
+  print(x$mean)
 }
