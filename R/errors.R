@@ -101,7 +101,7 @@ accuracy.default <- function(object, x, CV = TRUE, period = NULL,
     stop("the `measures` argument must contain a list of accuracy measures")
   
   # Confidence level for interval measures
-  dots <- dots_list(...)
+  dots <- rlang::dots_list(...)
   level <- ifelse(
     "level" %in% names(dots),
     ifelse(dots$level > 0 && dots$level < 1, 100*dots$level, dots$level),
@@ -145,6 +145,8 @@ accuracy.default <- function(object, x, CV = TRUE, period = NULL,
     lb <- object$LOWER[[paste0(level, "%")]]
     ub <- object$UPPER[[paste0(level, "%")]]
     
+    horizon <- ncol(e)
+    
     if (all(is.ts(x), is.ts(e), is.ts(lb), is.ts(ub))) {
       tspo <- tsp(x)
       tspe <- tsp(e)
@@ -152,20 +154,26 @@ accuracy.default <- function(object, x, CV = TRUE, period = NULL,
         stop("the start time of object$ERROR should be later than that of object$x")
       end <- min(tspe[2], tspo[2])
       x <- window(x, start = tspo[1], end = end)
-      e <- window(e, start = tspe[1], end = end)
-      lb <- window(lb, start = tspe[1], end = end)
-      ub <- window(ub, start = tspe[1], end = end)
+      e <- window(e, start = tspe[1], end = end) |> lagmatrix(-(0:(horizon-1)))
+      lb <- window(lb, start = tspe[1], end = end) |> lagmatrix(-(0:(horizon-1)))
+      ub <- window(ub, start = tspe[1], end = end) |> lagmatrix(-(0:(horizon-1)))
     } else {
       stop("both x and ERROR in object should be time-series objects")
     }
-    e <- ts(as.matrix(e), start = start(e), frequency = period)
-    horizon <- ncol(e)
     n <- length(x) - nrow(e)
     
-    cvout <- lapply(1:horizon, function(h) {
+    if (byhorizon) {
+      input <- 1:horizon
+      cvrnames <- paste0("CV h=", 1:horizon)
+    } else {
+      input <- list(1:horizon)
+      cvrnames <- paste0("CV")
+    }
+    
+    cvout <- lapply(input, function(h) {
       out_h <- lapply(1:nrow(e), function(t) {
         all_args <- list(
-          resid = e[t, h], actual = x[n+t], train = x[1:(n+t-h)], period = period,
+          resid = e[t, h], actual = x[n+t-1+h], train = x[1:(n+t-1)], period = period,
           lower = lb[t, h], upper = ub[t, h], level = level, ...
         )
         sapply(measures, function(f) {
@@ -180,10 +188,7 @@ accuracy.default <- function(object, x, CV = TRUE, period = NULL,
       apply(out_h, 2, mean, na.rm = TRUE)
     })
     cvout <- do.call(rbind, cvout)
-    rownames(cvout) <- paste0("CV h=", 1:horizon)
-    if (!byhorizon) {
-      cvout <- `rownames<-` (t(apply(cvout, 2, mean)), "CV")
-    }
+    rownames(cvout) <- cvrnames
   } else {
     cvout <- NULL
   }
@@ -191,16 +196,23 @@ accuracy.default <- function(object, x, CV = TRUE, period = NULL,
   if (testset) {
     x <- object$x
     ff <- object$mean
-    
-    lt <- object$lower[, paste0(level, "%")]
-    ut <- object$upper[, paste0(level, "%")]
-    
     if (length(ff) != length(xx))
       stop("the length of object$mean and x do not match")
     horizon <- length(xx)
     ee <- xx - ff
     
-    testout <- lapply(1:horizon, function(h) {
+    lt <- object$lower[, paste0(level, "%")]
+    ut <- object$upper[, paste0(level, "%")]
+    
+    if (byhorizon) {
+      input <- 1:horizon
+      testrnames <- paste0("Test h=", 1:horizon)
+    } else {
+      input <- list(1:horizon)
+      testrnames <- paste0("Test")
+    }
+    
+    testout <- lapply(input, function(h) {
       all_args <- list(
         resid = ee[h], actual = xx[h], train = x, period = period,
         lower = lt[h], upper = ut[h], level = level, ...
@@ -214,10 +226,7 @@ accuracy.default <- function(object, x, CV = TRUE, period = NULL,
       })
     })
     testout <- do.call(rbind, testout)
-    rownames(testout) <- paste0("Test h=", 1:horizon)
-    if (!byhorizon) {
-      testout <- `rownames<-` (t(apply(testout, 2, mean)), "Test")
-    }
+    rownames(testout) <- testrnames
   } else {
     testout <- NULL
   }
