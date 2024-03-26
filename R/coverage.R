@@ -1,54 +1,76 @@
-coverage <- function(object) {
-  if (any(!(c("x", "lower", "upper") %in% names(object))))
-    stop("x, lower, and upper are required for coverage calculation")
-  lower <- lapply(object$lower, function(lo) {
-    lo_ts <- ts(as.matrix(lo),
-                start = start(lo),
-                frequency = frequency(lo))
-    nonna <- (rowSums(is.na(lo_ts)) != NCOL(lo_ts)) |> which() |> min()
-    lo_ts <- subset(lo_ts, start = nonna)
-    lo_ts
-  })
-  upper <- lapply(object$upper, function(up) {
-    up_ts <- ts(as.matrix(up),
-                start = start(up),
-                frequency = frequency(up))
-    nonna <- (rowSums(is.na(up_ts)) != NCOL(up_ts)) |> which() |> min()
-    up_ts <- subset(up_ts, start = nonna)
-    up_ts
-  })
-  intvstart <- start(lower[[1]])
-  namelevel <- names(lower)
+#' @importFrom stats window
+#' @import zoo rollmean
+#' @export
+coverage <- function(object, level = object$level, window = NULL, na.rm = TRUE) {
+  # Check inputs
+  if (any(!(c("x", "LOWER", "UPPER") %in% names(object))))
+    stop("x, LOWER, and UPPER are required for coverage calculation")
+  if (!(is.list(object$LOWER) && is.list(object$UPPER)))
+    stop("LOWER and UPPER should be a list")
+  if (all(level > 0 & level < 1)) {
+    level <- 100 * level
+  } else if (any(level < 0 | level > 99.99)) {
+    stop("confidence limit out of range")
+  }
   
-  h <- NCOL(lower[[1]])
-  x <- ts(matrix(rep(object$x, h), ncol = h, byrow = FALSE),
+  # Extract information of interest
+  level <- sort(level)
+  levelname <- paste0(level, "%")
+  lower <- object$LOWER[levelname]
+  upper <- object$UPPER[levelname]
+  horizon <- ncol(lower[[1]])
+  
+  period <- frequency(object$x)
+  x <- ts(matrix(rep(object$x, horizon), ncol = horizon, byrow = FALSE),
           start = start(object$x),
-          frequency = frequency(object$x))
-  xend <- end(x)
-  freq <- frequency(x)
+          frequency = period)
   
-  covmat <- lapply(namelevel, function(i) {
-    lo <- window(lower[[i]], start = intvstart, end = xend)
-    up <- window(upper[[i]], start = intvstart, end = xend)
-    xx <- window(x, start = intvstart, end = xend)
+  # Match time
+  tspx <- tsp(x)
+  tspl <- tsp(lower[[1]])
+  tspu <- tsp(upper[[1]])
+  start <- max(tspx[1], tspl[1], tspu[1])
+  end <- min(tspx[2], tspl[2], tspu[2])
+  
+  x <- window(x, start = start, end = end)
+  lower <- lapply(lower, function(lo) window(lo, start = start, end = end))
+  upper <- lapply(upper, function(up) window(up, start = start, end = end))
+  n <- nrow(x)
+  
+  # If coverage matrix
+  covmat <- `names<-` (lapply(levelname, function(i) {
+    lo <- lower[[i]]
+    up <- upper[[i]]
+    xx <- x
     cov <- (lo <= xx & xx <= up)
-    cov <- ts(cov, start = intvstart, end = xend, frequency = freq)
+    cov <- ts(cov, start = start, end = end, frequency = period)
     colnames(cov) <- colnames(lo)
     return(cov)
-  })
-  names(covmat) <- namelevel
+  }), levelname)
   
-  coverage <- sapply(covmat, function(cov) {
-    apply(cov, 2, mean, na.rm = TRUE)
+  # Mean coverage
+  covmean <- sapply(covmat, function(cov) {
+    apply(cov, 2, mean, na.rm = na.rm)
   })
+  
+  # Rolling mean coverage
+  if (!is.null(window)) {
+    if (window >= n)
+      stop("the `window` argument should be smaller than the total period of interest")
+    covrmean <- lapply(covmat, function(cov) {
+      apply(cov, 2, zoo::rollmean, k = window, na.rm = na.rm) |>
+        ts(end = end, frequency = period)
+    })
+  }
   
   out <- list(
-    mean = coverage,
+    mean = covmean,
     ifinn = covmat
   )
+  if (!is.null(window)) out <- append(out, list(rolling = covrmean))
   return(structure(out, class = "coverage"))
 }
 
 print.coverage <- function(x, ...) {
-  x$mean
+  print(x$mean)
 }
