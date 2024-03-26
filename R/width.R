@@ -1,5 +1,5 @@
 #' @export
-width <- function(object, ..., level = 95, window = NULL, na.rm = TRUE) {
+width <- function(object, ..., level = 95, includemedian = FALSE, window = NULL, na.rm = TRUE) {
   # Check inputs
   if (level > 0 && level < 1) {
     level <- 100 * level
@@ -39,25 +39,44 @@ width <- function(object, ..., level = 95, window = NULL, na.rm = TRUE) {
     ts(start = start, end = end, frequency = period)
   colnames(widmat) <- colnames(lower)
   
+  out <- list(
+    width = widmat
+  )
+  
   # Mean coverage
-  widmean <- apply(widmat, 2, mean, na.rm = na.rm)
+  out$mean <- apply(widmat, 2, mean, na.rm = na.rm)
   
   # Rolling mean coverage
   if (!is.null(window)) {
     if (window >= n)
       stop("the `window` argument should be smaller than the total period of interest")
-    widrmean <- apply(widmat, 2, zoo::rollmean, k = window, na.rm = na.rm) |>
+    out$rollmean <- apply(widmat, 2, zoo::rollmean, k = window, na.rm = na.rm) |>
         ts(end = end, frequency = period)
   }
   
-  out <- list(
-    mean = widmean,
-    width = widmat
-  )
-  if (!is.null(window)) out <- append(out, list(rolling = widrmean))
+  # Median
+  if (includemedian) {
+    # Mean median
+    out$median <- apply(widmat, 2, median, na.rm = na.rm)
+    
+    # Rolling median coverage
+    if (!is.null(window)) {
+      if (window >= n)
+        stop("the `window` argument should be smaller than the total period of interest")
+      out$rollmedian <- apply(widmat, 2, zoo::rollmedian, k = window, na.rm = na.rm) |>
+        ts(end = end, frequency = period)
+    }
+  }
+  
   return(structure(out, class = "width"))
 }
 
 print.width <- function(x, ...) {
+  cat("Mean width:\n")
   print(x$mean)
+  
+  if ("median" %in% names(x)) {
+    cat("\nMedian width:\n")
+    print(x$median)
+  }
 }
