@@ -16,10 +16,10 @@ lagmatrix <- function(x, lag) {
   # Ensure 'x' is a matrix
   if (!is.matrix(x))
     stop("ensure x is a matrix")
-  n <- NROW(x)
+  n <- nrow(x)
   k <- length(lag)
   
-  if (NCOL(x) != k)
+  if (ncol(x) != k)
     stop("lag must have the same number of columns as x")
   
   lmat <- x
