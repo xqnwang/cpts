@@ -74,13 +74,16 @@
 #'              integrate = TRUE, scorecast = TRUE,
 #'              lr = lr, KI = KI, Csat = Csat)
 #' 
+#' @importFrom stats lm
+#' @importFrom forecast meanf Arima forecast
 #' @export
-MCP <- function(object, alpha = 1 - 0.01 * object$level,
+mcp <- function(object, alpha = 1 - 0.01 * object$level,
                 ncal = 10, rolling = FALSE,
                 integrate = TRUE, scorecast = TRUE,
                 lr = 0.1, Tg = NULL, delta = NULL,
                 Csat = 2 / pi * (ceiling(log(Tg) * delta) - 1 / log(Tg)),
                 KI = abs(object$errors) |> max(na.rm = TRUE), ...) {
+  # Check inputs
   if (any(alpha >= 1 | alpha <= 0))
     stop("alpha should be in (0, 1)")
   if (ncal < 10)
@@ -93,20 +96,26 @@ MCP <- function(object, alpha = 1 - 0.01 * object$level,
   
   alpha <- sort(alpha, decreasing = TRUE)
   level <- 100 * (1 - alpha)
-  pf <- ts(as.matrix(object$mean),
-           start = start(object$mean),
-           frequency = frequency(object$mean))
-  errors <- ts(as.matrix(object$errors),
-               start = start(object$errors),
-               frequency = frequency(object$errors))
-  horizon <- NCOL(errors)
+  pf <- ts(as.matrix(object$MEAN),
+           start = start(object$MEAN),
+           frequency = frequency(object$MEAN))
+  errors <- ts(as.matrix(object$ERROR),
+               start = start(object$ERROR),
+               frequency = frequency(object$ERROR))
+  horizon <- ncol(pf)
+  n <- nrow(pf)
   
-  namatrix <- ts(matrix(NA_real_, nrow = NROW(errors), ncol = horizon),
-                 start = start(errors),
-                 frequency = frequency(errors))
-  colnames(namatrix) <- paste0("h=", seq(horizon))
-  nalist <- rep(list(namatrix), length(alpha))
-  names(nalist) <- paste0(level, "%")
+  if (ncal > nrow(errors))
+    stop("`ncal` is larger than the number of rows in object$ERROR")
+  
+  namatrix <- `colnames<-` (
+    ts(matrix(NA_real_, nrow = n, ncol = horizon),
+       start = start(pf),
+       frequency = frequency(pf)),
+    paste0("h=", seq(horizon)))
+  nalist <- `names<-` (
+    rep(list(namatrix), length(alpha)),
+    paste0(level, "%"))
   
   lower <- upper <- nalist
   lrmat <- namatrix
@@ -116,79 +125,78 @@ MCP <- function(object, alpha = 1 - 0.01 * object$level,
     scorecaster_lower <- scorecaster_upper <- namatrix
   
   out <- list(
-    x = object$x
+    x = object$x,
+    series = object$series
   )
   
   for (h in seq(horizon)) {
-    first_non_na <- (!is.na(errors[, h])) |> which() |> min()
-    last_non_na <- (!is.na(errors[, h])) |> which() |> max()
-    if (last_non_na < first_non_na + ncal - 1L)
-      stop("errors in the input object is not long enough for calibration")
-    indx <- seq(first_non_na + ncal - 1L, last_non_na + h - 1L, by = 1L)
+    indx <- seq(ncal+h-1, nrow(errors), by = 1L)
     
     errt_lower_h <- errt_upper_h <-
       integ_lower_h <- integ_upper_h <-
-      matrix(NA_real_, nrow = NROW(errors), ncol = length(alpha))
+      q_lo_h <- q_up_h <-
+      matrix(NA_real_, nrow = n, ncol = length(alpha))
     qts_lower_h <- qts_upper_h <-
-      qs_lower_h <- qs_upper_h <- matrix(0, nrow = NROW(errors), ncol = length(alpha))
+      qs_lower_h <- qs_upper_h <- matrix(0, nrow = n, ncol = length(alpha))
     for (t in indx) {
       errors_subset <- subset(
         errors[, h],
-        start = ifelse(!rolling, first_non_na, t - ncal + 1L),
-        end = ifelse(t <= last_non_na, t, last_non_na))
+        start = ifelse(!rolling, h, t - ncal + 1L),
+        end = t)
       
-      if (t <= last_non_na) {
-        # Calculate errt
-        errt_lower_h[t, ] <- (-errors[t, h]) > qs_lower_h[t, ]
-        errt_upper_h[t, ] <- errors[t, h] > qs_upper_h[t, ]
-        
-        # Learning rate (same for the upper and lower bounds)
-        lrmat[t, h] <- ifelse(
-          length(errors_subset) <= 1,
-          lr,
-          lr*(max(errors_subset) - min(errors_subset)))
-        
-        # Update quantile tracking
-        qts_lower_h[t+1, ] <- qts_lower_h[t, ] + lrmat[t, h] * (errt_lower_h[t, ] - alpha/2)
-        qts_upper_h[t+1, ] <- qts_upper_h[t, ] + lrmat[t, h] * (errt_upper_h[t, ] - alpha/2)
-      } else {
-        qts_lower_h[t+1, ] <- qts_lower_h[t, ]
-        qts_upper_h[t+1, ] <- qts_upper_h[t, ]
-      }
+      # Calculate errt
+      errt_lower_h[t, ] <- (-errors[t, h]) > qs_lower_h[t, ]
+      errt_upper_h[t, ] <- errors[t, h] > qs_upper_h[t, ]
+      
+      # Learning rate (same for the upper and lower bounds)
+      lrmat[t, h] <- ifelse(
+        length(errors_subset) <= 1,
+        lr,
+        lr*(max(errors_subset) - min(errors_subset)))
+      
+      # Update quantile tracking
+      qts_lower_h[t+h, ] <- qts_lower_h[t+h-1, ] + lrmat[t, h] * (errt_lower_h[t, ] - alpha/2)
+      qts_upper_h[t+h, ] <- qts_upper_h[t+h-1, ] + lrmat[t, h] * (errt_upper_h[t, ] - alpha/2)
       
       # Update integrator
       if (integrate) {
-        el <- errt_lower_h[indx[1]:(ifelse(t <= last_non_na, t, last_non_na)), ] |>
+        el <- errt_lower_h[indx[1]:t, ] |>
           matrix(ncol = length(alpha))
         integrator_lower_arg <- apply(el, 2, sum) - NROW(el)*alpha/2
-        integ_lower_h[t+1, ] <- sapply(
+        integ_lower_h[t+h, ] <- sapply(
           1:length(alpha),
-          function(i) saturation_fn_log(integrator_lower_arg[i], NROW(el), Csat, KI))
+          function(i) ifelse(
+            NROW(el) == 1,
+            0,
+            saturation_fn_log(integrator_lower_arg[i], NROW(el), Csat, KI)))
         
-        eu <- errt_upper_h[indx[1]:(ifelse(t <= last_non_na, t, last_non_na)), ] |>
+        eu <- errt_upper_h[indx[1]:t, ] |>
           matrix(ncol = length(alpha))
         integrator_upper_arg <- apply(eu, 2, sum) - NROW(eu)*alpha/2
-        integ_upper_h[t+1, ] <- sapply(
+        integ_upper_h[t+h, ] <- sapply(
           1:length(alpha),
-          function(i) saturation_fn_log(integrator_upper_arg[i], NROW(eu), Csat, KI))
+          function(i) ifelse(
+            NROW(eu) == 1,
+            0,
+            saturation_fn_log(integrator_upper_arg[i], NROW(eu), Csat, KI)))
       }
       
       # Update scorecaster
       if (scorecast) {
         if (h == 1) {
-          model <- forecast::meanf(errors_subset, h = 1)
-          scorecaster_lower[t+1, h] <- -as.numeric(model$mean)
-          scorecaster_upper[t+1, h] <- as.numeric(model$mean)
+          model <- forecast::meanf(errors_subset, h = h)
+          scorecaster_lower[t+h, h] <- -as.numeric(model$mean)
+          scorecaster_upper[t+h, h] <- as.numeric(model$mean)
         } else {
           model_MA <- forecast::Arima(errors_subset, order = c(0, 0, h-1)) |>
-            forecast::forecast(h = 1)
+            forecast::forecast(h = h)
           model_LR <- lm(
             as.formula(paste0("V", h, " ~ .")), 
             data = setNames(
               as.data.frame(sapply(1:h, function(j) {
                 subset(
                   errors[, j],
-                  start = ifelse(!rolling, first_non_na-h+j, t-ncal+1-h+j),
+                  start = ifelse(!rolling, j, t-ncal+1-h+j),
                   end = t-h+j)
               })),
               paste0("V", 1:h))
@@ -198,23 +206,29 @@ MCP <- function(object, alpha = 1 - 0.01 * object$level,
                 data.frame(sapply(1:(h-1),
                                   function(j) scorecaster_upper[t-h+1+j, j]) |> matrix(nrow = 1)),
                 paste0("V", 1:(h-1))))
-          scorecaster_lower[t+1, h] <- -(as.numeric(model_MA$mean) + as.numeric(model_LR$mean))/2
-          scorecaster_upper[t+1, h] <- (as.numeric(model_MA$mean) + as.numeric(model_LR$mean))/2
+          scorecaster_lower[t+h, h] <- -(as.numeric(model_MA$mean[h]) + as.numeric(model_LR$mean))/2
+          scorecaster_upper[t+h, h] <- (as.numeric(model_MA$mean[h]) + as.numeric(model_LR$mean))/2
         }
       }
       
       # Update the next quantile
-      qs_lower_h[t+1, ] <- qts_lower_h[t+1, ] +
-        ifelse(rep(integrate, length(alpha)), integ_lower_h[t+1, ], rep(0, length(alpha))) +
-        rep(ifelse(scorecast, scorecaster_lower[t+1, h], 0), length(alpha))
-      qs_upper_h[t+1, ] <- qts_upper_h[t+1, ] +
-        ifelse(rep(integrate, length(alpha)), integ_upper_h[t+1, ], rep(0, length(alpha))) +
-        rep(ifelse(scorecast, scorecaster_upper[t+1, h], 0), length(alpha))
+      qs_lower_h[t+h, ] <- qts_lower_h[t+h, ] +
+        ifelse(rep(integrate, length(alpha)), integ_lower_h[t+h, ], rep(0, length(alpha))) +
+        rep(ifelse(scorecast,
+                   ifelse(is.na(scorecaster_lower[t+h, h]), 0, scorecaster_lower[t+h, h]),
+                   0),
+            length(alpha))
+      qs_upper_h[t+h, ] <- qts_upper_h[t+h, ] +
+        ifelse(rep(integrate, length(alpha)), integ_upper_h[t+h, ], rep(0, length(alpha))) +
+        rep(ifelse(scorecast,
+                   ifelse(is.na(scorecaster_upper[t+h, h]), 0, scorecaster_upper[t+h, h]),
+                   0),
+            length(alpha))
       
       # PIs
       for (i in seq(length(alpha))) {
-        lower[[i]][t+1, h] <- pf[t+1, h] - qs_lower_h[t+1, i]
-        upper[[i]][t+1, h] <- pf[t+1, h] + qs_upper_h[t+1, i]
+        lower[[i]][t+h, h] <- pf[t+h, h] - qs_lower_h[t+h, i]
+        upper[[i]][t+h, h] <- pf[t+h, h] + qs_upper_h[t+h, i]
       }
     }
     if (integrate) {
@@ -224,34 +238,27 @@ MCP <- function(object, alpha = 1 - 0.01 * object$level,
       }
     }
   }
-  if (h == 1) {
-    out$lower <- lapply(out$lower, function(lo) lo[, 1L])
-    out$upper <- lapply(out$upper, function(up) up[, 1L])
-    lrmat <- lrmat[, 1L]
-    if (integrate) {
-      integrator_lower <- lapply(integrator_lower, function(int_low) int_low[, 1L])
-      integrator_upper <- lapply(integrator_upper, function(int_up) int_up[, 1L])
-    }
-    if (scorecast) {
-      scorecaster_lower <- scorecaster_lower[, 1L]
-      scorecaster_upper <- scorecaster_upper[, 1L]
-    }
-  }
-  out$method <- paste("MCP")
-  out$mean <- object$mean
-  out$errors <- object$errors
-  out$lower <- lower
-  out$upper <- upper
+  
+  out$method <- paste("mcp")
+  out$cp_times <- length(indx)
+  out$MEAN <- object$MEAN
+  out$ERROR <- object$ERROR
+  out$LOWER <- lower
+  out$UPPER <- upper
   out$level <- level
+  out$call <- match.call()
+  if ("mean" %in% names(object)) {
+    out$mean <- object$mean
+    out$lower <- extract_final(lower, nrow = n, ncol = horizon, bench = out$mean)
+    out$upper <- extract_final(upper, nrow = n, ncol = horizon, bench = out$mean)
+  }
   out$model$method <- out$method
   out$model$call <- match.call()
   out$model$alpha <- alpha
-  out$model$ncal <- ncal
-  out$model$rolling <- rolling
+  out$model$symmetric <- symmetric
   out$model$integrate <- integrate
   out$model$scorecast <- scorecast
   out$model$lr <- lr
-  out$model$Tg <- Tg
   out$model$Csat <- Csat
   out$model$KI <- KI
   out$model$lr_update <- lrmat
@@ -260,35 +267,5 @@ MCP <- function(object, alpha = 1 - 0.01 * object$level,
   if (scorecast)
     out$model$scorecaster <- list(lower = scorecaster_lower, upper = scorecaster_upper)
   
-  return(structure(out, class = "MCP"))
-}
-
-print.MCP <- function(y, ...) {
-  x <- y$model
-  cat(paste(x$method, "\n\n"))
-  if (!is.null(x$call)) {
-    cat(paste("Call:\n"))
-    for (i in 1:length(deparse(x$call))) {
-      cat(paste("", deparse(x$call)[i]), "\n")
-    }
-    cat(paste("\n"))
-  }
-  
-  cat("  Conformal prediction settings:\n")
-  cat(paste("    symmetric = FALSE\n"))
-  cat(paste("    rolling =", x$rolling, "\n"))
-  cat(paste("   ", ifelse(rolling, "window =", "initial window ="), x$ncal, "\n"))
-  
-  cat("\n  Quantile tracking parameters:\n")
-  cat(paste("    lr =", x$lr, "\n"))
-  
-  if (x$integrate) {
-    cat("\n  Error integration parameters:\n")
-    cat(paste("    KI =", round(x$KI, 3), "\n"))
-    cat(paste("    Csat =", round(x$Csat, 3), "\n"))
-  }
-  
-  if (x$scorecast) {
-    cat("\n  Scorecaster is used.\n")
-  }
+  return(structure(out, class = c("mcp", "cpforecast", "forecast")))
 }

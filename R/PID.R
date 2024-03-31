@@ -160,7 +160,7 @@ pid <- function(object, alpha = 1 - 0.01 * object$level,
     for (t in indx) {
       errors_subset <- subset(
         errors[, h],
-        start = ifelse(!rolling, 1, t - ncal + 1L),
+        start = ifelse(!rolling, h, t - ncal + 1L),
         end = t)
       
       if (symmetric) {
