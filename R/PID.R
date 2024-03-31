@@ -147,7 +147,7 @@ pid <- function(object, alpha = 1 - 0.01 * object$level,
   )
   
   for (h in seq(horizon)) {
-    indx <- seq(ncal+h-1, nrow(errors), by = 1L)
+    indx <- seq(h, nrow(errors), by = 1L)
 
     errt_h <- errt_lower_h <- errt_upper_h <-
       integ_h <- integ_lower_h <- integ_upper_h <-
@@ -158,9 +158,10 @@ pid <- function(object, alpha = 1 - 0.01 * object$level,
       matrix(0, nrow = n, ncol = length(alpha))
     
     for (t in indx) {
+      t_burnin <- max(t - ncal + 1L, h)
       errors_subset <- subset(
         errors[, h],
-        start = ifelse(!rolling, h, t - ncal + 1L),
+        start = ifelse(!rolling, h, t_burnin),
         end = t)
       
       if (symmetric) {
@@ -178,20 +179,21 @@ pid <- function(object, alpha = 1 - 0.01 * object$level,
         
         # Update integrator
         if (integrate) {
-          es <- errt_h[indx[1]:t, ] |> matrix(ncol = length(alpha))
-          integrator_arg <- apply(es, 2, sum) - NROW(es)*alpha
+          es <- errt_h[h:t, ] |> matrix(ncol = length(alpha))
+          integrator_arg <- apply(es, 2, sum) - nrow(es)*alpha
           integ_h[t+h, ] <- sapply(
             1:length(alpha),
             function(i) ifelse(
-              NROW(es) == 1,
+              nrow(es) == 1,
               0,
-              saturation_fn_log(integrator_arg[i], NROW(es), Csat, KI)))
+              saturation_fn_log(integrator_arg[i], nrow(es), Csat, KI)))
         }
         
         # Update scorecaster
-        if (scorecast) {
+        do_scorecast <- (scorecast && t >= (ncal+h-1))
+        if (do_scorecast) {
           sc <- try(suppressWarnings(
-            # h-step-ahed forecast
+            # h-step-ahead forecast
             scorecastfun(abs(errors_subset), h = h, ...)
           ), silent = TRUE)
           if (!is.element("try-error", class(sc))) {
@@ -202,7 +204,7 @@ pid <- function(object, alpha = 1 - 0.01 * object$level,
         # Update the next quantile
         qs_h[t+h, ] <- qts_h[t+h, ] +
           ifelse(rep(integrate, length(alpha)), integ_h[t+h, ], rep(0, length(alpha))) +
-          rep(ifelse(scorecast, scorecaster[t+h, h], 0), length(alpha))
+          rep(ifelse(do_scorecast, scorecaster[t+h, h], 0), length(alpha))
         qs_lower_h[t+h, ] <- qs_upper_h[t+h, ] <- qs_h[t+h, ]
       } else {
         # Calculate errt
@@ -221,29 +223,30 @@ pid <- function(object, alpha = 1 - 0.01 * object$level,
         
         # Update integrator
         if (integrate) {
-          el <- errt_lower_h[indx[1]:t, ] |> matrix(ncol = length(alpha))
-          integrator_lower_arg <- apply(el, 2, sum) - NROW(el)*alpha/2
+          el <- errt_lower_h[h:t, ] |> matrix(ncol = length(alpha))
+          integrator_lower_arg <- apply(el, 2, sum) - nrow(el)*alpha/2
           integ_lower_h[t+h, ] <- sapply(
             1:length(alpha),
             function(i) ifelse(
-              NROW(el) == 1,
+              nrow(el) == 1,
               0,
-              saturation_fn_log(integrator_lower_arg[i], NROW(el), Csat, KI)))
+              saturation_fn_log(integrator_lower_arg[i], nrow(el), Csat, KI)))
           
-          eu <- errt_upper_h[indx[1]:t, ] |> matrix(ncol = length(alpha))
-          integrator_upper_arg <- apply(eu, 2, sum) - NROW(eu)*alpha/2
+          eu <- errt_upper_h[h:t, ] |> matrix(ncol = length(alpha))
+          integrator_upper_arg <- apply(eu, 2, sum) - nrow(eu)*alpha/2
           integ_upper_h[t+h, ] <- sapply(
             1:length(alpha),
             function(i) ifelse(
-              NROW(eu) == 1,
+              nrow(eu) == 1,
               0,
-              saturation_fn_log(integrator_upper_arg[i], NROW(eu), Csat, KI)))
+              saturation_fn_log(integrator_upper_arg[i], nrow(eu), Csat, KI)))
         }
         
         # Update scorecaster
-        if (scorecast) {
+        do_scorecast <- (scorecast && t >= (ncal+h-1))
+        if (do_scorecast) {
           sc <- try(suppressWarnings(
-            # h-step-ahed forecast
+            # h-step-ahead forecast
             scorecastfun(errors_subset, h = h, ...)
           ), silent = TRUE)
           if (!is.element("try-error", class(sc))) {
@@ -255,16 +258,18 @@ pid <- function(object, alpha = 1 - 0.01 * object$level,
         # Update the next quantile
         qs_lower_h[t+h, ] <- qts_lower_h[t+h, ] +
           ifelse(rep(integrate, length(alpha)), integ_lower_h[t+h, ], rep(0, length(alpha))) +
-          rep(ifelse(scorecast, scorecaster_lower[t+h, h], 0), length(alpha))
+          rep(ifelse(do_scorecast, scorecaster_lower[t+h, h], 0), length(alpha))
         qs_upper_h[t+h, ] <- qts_upper_h[t+h, ] +
           ifelse(rep(integrate, length(alpha)), integ_upper_h[t+h, ], rep(0, length(alpha))) +
-          rep(ifelse(scorecast, scorecaster_upper[t+h, h], 0), length(alpha))
+          rep(ifelse(do_scorecast, scorecaster_upper[t+h, h], 0), length(alpha))
       }
       
       # PIs
-      for (i in seq(length(alpha))) {
-        lower[[i]][t+h, h] <- pf[t+h, h] - qs_lower_h[t+h, i]
-        upper[[i]][t+h, h] <- pf[t+h, h] + qs_upper_h[t+h, i]
+      if (t >= (ncal+h-1)) {
+        for (i in seq(length(alpha))) {
+          lower[[i]][t+h, h] <- pf[t+h, h] - qs_lower_h[t+h, i]
+          upper[[i]][t+h, h] <- pf[t+h, h] + qs_upper_h[t+h, i]
+        }
       }
     }
     if (integrate) {
