@@ -1,0 +1,1306 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  11pt,
+  a4paper,
+]{article}
+
+\usepackage{amsmath,amssymb}
+\usepackage{setspace}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else  
+    % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm]{geometry}
+\ifLuaTeX
+  \usepackage{luacolor}
+  \usepackage[soul]{lua-ul}
+\else
+  \usepackage{soul}
+  
+\fi
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\setcounter{secnumdepth}{3}
+
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+\usepackage{orcidlink}
+\definecolor{mypink}{RGB}{219, 48, 122}
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\usepackage{amsthm}
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\theoremstyle{remark}
+\AtBeginDocument{\renewcommand*{\proofname}{Proof}}
+\newtheorem*{remark}{Remark}
+\newtheorem*{solution}{Solution}
+\newtheorem{refremark}{Remark}[section]
+\newtheorem{refsolution}{Solution}[section]
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage[style=authoryear-comp,]{biblatex}
+\addbibresource{references.bib}
+\usepackage{bookmark}
+
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Online conformal inference for multi-step time series forecasting},
+  pdfauthor={Xiaoqian Wang; Rob J Hyndman},
+  pdfkeywords={Conformal prediction, Distribution-free
+inference, Nonexchangeability, Valid prediction interval, Weighted
+quantile estimate},
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+%% CAPTIONS
+\usepackage{caption}
+\DeclareCaptionStyle{italic}[justification=centering]
+ {labelfont={bf},textfont={it},labelsep=colon}
+\captionsetup[figure]{style=italic,format=hang,singlelinecheck=true}
+\captionsetup[table]{style=italic,format=hang,singlelinecheck=true}
+
+%% FONT
+\usepackage{bera}
+\usepackage[charter]{mathdesign}
+\usepackage[scale=0.9]{sourcecodepro}
+\usepackage[lf,t]{FiraSans}
+
+%% HEADERS AND FOOTERS
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\rfoot{\Large\sffamily\raisebox{-0.1cm}{\textbf{\thepage}}}
+\makeatletter
+\lhead{\textsf{\expandafter{\@title}}}
+\makeatother
+\rhead{}
+\cfoot{}
+\setlength{\headheight}{15pt}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancypagestyle{plain}{%
+\fancyhf{} % clear all header and footer fields
+\fancyfoot[C]{\sffamily\thepage} % except the center
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}}
+
+%% MATHS
+\usepackage{bm,amsmath}
+\allowdisplaybreaks
+
+%% GRAPHICS
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\floatpagefraction}{0.8}
+
+%% SECTION TITLES
+\usepackage[compact,sf,bf]{titlesec}
+\titleformat{\section}[block]
+  {\fontsize{15}{17}\bfseries\sffamily}
+  {\thesection}
+  {0.4em}{}
+\titleformat{\subsection}[block]
+  {\fontsize{12}{14}\bfseries\sffamily}
+  {\thesubsection}
+  {0.4em}{}
+\titlespacing{\section}{0pt}{*5}{*1}
+\titlespacing{\subsection}{0pt}{*2}{*0.2}
+
+%% BIBLIOGRAPHY.
+
+\makeatletter
+\@ifpackageloaded{biblatex}{
+\ExecuteBibliographyOptions{bibencoding=utf8,minnames=1,maxnames=3, maxbibnames=99,dashed=false,terseinits=true,giveninits=true,uniquename=false,uniquelist=false,doi=false, isbn=false,url=true,sortcites=false}
+\DeclareFieldFormat{url}{\texttt{\url{#1}}}
+\DeclareFieldFormat[article]{pages}{#1}
+\DeclareFieldFormat[inproceedings]{pages}{\lowercase{pp.}#1}
+\DeclareFieldFormat[incollection]{pages}{\lowercase{pp.}#1}
+\DeclareFieldFormat[article]{volume}{\mkbibbold{#1}}
+\DeclareFieldFormat[article]{number}{\mkbibparens{#1}}
+\DeclareFieldFormat[article]{title}{\MakeCapital{#1}}
+\DeclareFieldFormat[article]{url}{}
+\DeclareFieldFormat[inproceedings]{title}{#1}
+\DeclareFieldFormat{shorthandwidth}{#1}
+\usepackage{xpatch}
+\xpatchbibmacro{volume+number+eid}{\setunit*{\adddot}}{}{}{}
+% Remove In: for an article.
+\renewbibmacro{in:}{%
+  \ifentrytype{article}{}{%
+  \printtext{\bibstring{in}\intitlepunct}}}
+\AtEveryBibitem{\clearfield{month}}
+\AtEveryCitekey{\clearfield{month}}
+\DeclareDelimFormat[cbx@textcite]{nameyeardelim}{\addspace}
+\renewcommand*{\finalnamedelim}{\addspace\&\space}
+}{}
+\makeatother
+
+%% PAGE BREAKING to avoid widows and orphans
+\clubpenalty = 2000
+\widowpenalty = 2000
+\usepackage{microtype}% Placement of logos
+
+\RequirePackage[absolute,overlay]{textpos}
+\setlength{\TPHorizModule}{1cm}
+\setlength{\TPVertModule}{1cm}
+\def\placefig#1#2#3#4{\begin{textblock}{.1}(#1,#2)\rlap{\includegraphics[#3]{#4}}\end{textblock}}
+
+% Title and date
+
+\title{Online conformal inference for multi-step time series
+forecasting}
+\date{1 May 2024}
+
+\def\Date{\number\day}
+\def\Month{\ifcase\month\or
+ January\or February\or March\or April\or May\or June\or
+ July\or August\or September\or October\or November\or December\fi}
+\def\Year{\number\year}
+
+% Working paper number and JEL codes
+
+\makeatletter
+\def\wp#1{\gdef\@wp{#1}}\def\@wp{??/??}
+\def\jel#1{\gdef\@jel{#1}}\def\@jel{??}
+\def\showjel{{\large\textsf{\textbf{JEL classification:}}~\@jel}}
+\def\nojel{\def\showjel{}}
+\makeatother
+
+\wp{no/yr}
+\jel{C10,C14,C32}
+
+% Title page
+
+\makeatletter
+\def\cover{{\sffamily\setcounter{page}{0}
+        \thispagestyle{empty}
+        \placefig{2}{1.5}{width=5cm}{monash2}
+        \placefig{16.9}{1.5}{width=2.1cm}{MBSportrait}
+        \begin{textblock}{4}(16.9,4)ISSN 1440-771X\end{textblock}
+        \begin{textblock}{7}(12.7,27.9)\hfill
+        \includegraphics[height=0.7cm]{AACSB}~~~
+        \includegraphics[height=0.7cm]{EQUIS}~~~
+        \includegraphics[height=0.7cm]{AMBA}
+        \end{textblock}
+        \vspace*{2.5cm}
+        \begin{center}\Large
+        Department of Econometrics and Business Statistics\\[.5cm]
+        \footnotesize http://monash.edu/business/ebs/research/publications
+        \end{center}\vspace{2cm}
+        \begin{center}
+        \fbox{\parbox{14cm}{\begin{onehalfspace}\centering\Huge\vspace*{0.3cm}
+                \textsf{\textbf{\expandafter{\@title}}}\vspace{1cm}\par
+                \LARGE
+                \expandafter{\@author}
+                \end{onehalfspace}
+        }}
+        \end{center}
+        \vfill
+                \begin{center}\Large
+                \Month~\Year\\[1cm]
+                Working Paper \@wp
+        \end{center}\vspace*{2cm}}}
+        \def\addresses#1{\gdef\@addresses{#1}}\def\@addresses{??}
+        \def\pageone{{\sffamily\setstretch{1}%
+        \thispagestyle{empty}%
+        \vbox to \textheight{%
+        \raggedright\baselineskip=1.2cm
+     {\fontsize{24.88}{30}\sffamily\textbf{\expandafter{\@title}}}
+        \vspace{2cm}\par
+        \hspace{1cm}\parbox{14cm}{\sffamily\large\@addresses}\vspace{1cm}\vfill
+        \hspace{1cm}{\large\Date~\Month~\Year}\\[1cm]
+        \hspace{1cm}\showjel\vss}}}
+\def\blindtitle{{\sffamily
+     \thispagestyle{plain}\raggedright\baselineskip=1.2cm
+     {\fontsize{24.88}{30}\sffamily\textbf{\expandafter{\@title}}}\vspace{1cm}\par
+        }}
+\def\titlepage{{\cover\newpage\pageone\newpage\blindtitle}}
+
+\def\blind{\def\titlepage{{\blindtitle}}\let\maketitle\blindtitle}
+\def\titlepageonly{\def\titlepage{{\pageone\end{document}}}}
+\def\nocover{\def\titlepage{{\pageone\newpage\blindtitle}}\let\maketitle\titlepage}
+\let\maketitle\titlepage
+\makeatother
+
+% Authors
+
+
+  \author{Xiaoqian Wang, Rob J Hyndman}
+  \addresses{%
+    %
+      \textbf{Xiaoqian Wang}\\%
+      %
+        Department of Econometrics \& Business Statistics\\%
+        Monash University\\%
+        Clayton VIC 3800\\%
+        Australia\\%
+      %
+      {Email: xiaoqian.wang@monash.edu}\\%
+      \textit{Corresponding author}\\[0.5cm]%
+   %
+      \textbf{Rob J Hyndman}\\%
+      %
+        Department of Econometrics \& Business Statistics\\%
+        Monash University\\%
+        Clayton VIC 3800\\%
+        Australia\\%
+      %
+      {Email: rob.hyndman@monash.edu}\\%
+      \\[0.5cm]%
+   %
+   }%
+   \lfoot{\sf Wang, Hyndman: 1 May 2024}
+
+% Keywords
+
+\newenvironment{keywords}{\par\vspace{0.5cm}\noindent{\sffamily\textbf{Keywords:}}}{\vspace{0.25cm}\par\hrule\vspace{0.5cm}\par}
+
+% Abstract
+\renewenvironment{abstract}{\begin{minipage}{\textwidth}\parskip=1.4ex\noindent
+\hrule\vspace{0.1cm}\par{\sffamily\textbf{\abstractname}}\newline\setstretch{1}}
+  {\end{minipage}}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A brief summary
+\end{abstract}
+
+\begin{keywords}
+  Conformal prediction; Distribution-free
+inference; Nonexchangeability; Valid prediction interval; 
+  Weighted quantile estimate.
+\end{keywords}
+
+\setstretch{1}
+\section{Introduction}\label{sec-intro}
+
+We consider a general sequential setting in which we observe a time
+series \(\{y_t\}_{t \geq 1}\) generated by an unknown data generating
+process (DGP), which may depend on its own past, along with other
+exogenous predictors, \(\bm{x}_t=(x_{1,t},\ldots,x_{p,t})^{\prime}\),
+and their histories. The distribution of
+\(\{(\bm{x}_t, y_t)\}_{t \geq 1} \subseteq \mathbb{R}^p \times \mathbb{R}\)
+is obviously allowed to vary over time in time series context. At each
+time point \(t\), we aim to forecast \(H\) steps into the future,
+providing a \emph{prediction set} (which is a prediction interval in
+this setting), \(\hat{\mathcal{C}}_{t+h|t}\), for the realization
+\(y_{t+h}\) for each \(h\in[H]\). The \(h\)-step-ahead forecast uses the
+previously observed data \(\{(\bm{x}_i, y_i)\}_{1 \leq i \leq t}\) along
+with the new information of the predictors
+\(\{\bm{x}_{t+j}\}_{1\leq j\leq h}\). Note that we can generate ex-ante
+forecasts by using forecasts of the predictors based on information
+available up to and including time \(t\). Alternatively, ex-post
+forecasts are generated assuming that actual observations of the
+predictors from the forecast period are available. Given a nominal
+\emph{miscoverage rate} \(\alpha \in (0,1)\) specified by the user, we
+expect the output \(\hat{\mathcal{C}}_{t+h|t}\) to be a \emph{valid}
+prediction interval so that \(y_{t+h}\) falls within the prediction
+interval \(\hat{\mathcal{C}}_{t+h|t}\) at least \(100(1-\alpha)\%\) of
+the time.
+
+\begin{itemize}
+\item
+  Throughout this paper, we use split conformal prediction.
+\item
+  Uniform notation.
+\end{itemize}
+
+\section{Related work}\label{sec-review}
+
+\subsection{Conformal prediction for regression}\label{sec-review_reg}
+
+In this section, we focus on the regression setting, which stands as one
+of the primary areas where conformal prediction methods have seen
+substantial development. Suppose we have \(n\) data points
+\(Z_i = (X_i, Y_i) \in \mathbb{R}^d \times \mathbb{R}\),
+\(i=1,\ldots,n\). The aim of conformal prediction is to construct a
+prediction interval
+\(\hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right)\) ensuring that
+the unseen response \(Y_{n+1}\) falls within
+\(\hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right)\) at least
+\(100(1-\alpha)\%\) of the time.
+
+\subsubsection{Split conformal
+prediction}\label{split-conformal-prediction}
+
+\textbf{Split conformal prediction} (SCP, also called inductive
+conformal prediction, \textcite{papadopoulos2002}; \textcite{vovk2005};
+\textcite{lei2018}), is a holdout method for building prediction
+intervals using a pre-trained model.
+
+In regression setting, SCP randomly separates the available \(n\) data
+points into a \emph{proper training set} \(\mathcal{D}_{\text{tr}}\) of
+size \(n_t\) and a \emph{calibration set} \(\mathcal{D}_{\text{cal}}\)
+of size \(n_c\). Given a regression model
+\(\hat{\mu}: \mathbb{R}^d \rightarrow \mathbb{R}\) that is fitted on the
+training set and a score function \(\mathcal{S}\), a \emph{nonconformity
+score} \(s_i = \mathcal{S}\left(X_i, Y_i\right)\),
+\(i\in\mathcal{D}_{\text{cal}}\), is computed on every data point in
+\(\mathcal{D}_{\text{cal}}\) to measure the nonconformity between the
+calibration's response values and the predicted values obtained from the
+fitted model \(\hat{\mu}\). One commonly used nonconformity score
+function \(\mathcal{S}\) in regression is the absolute residual,
+i.e.~\(s_i = |Y_i - \hat{\mu}(X_i)|\). Then SCP computes the prediction
+interval for the test data \(Y_{n+1}\) using
+
+\begin{equation}\phantomsection\label{eq-scp}{
+\hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right) = \left\{y\in\mathbb{R}: \mathcal{S}\left(X_{n+1}, y\right) \leq Q_{1-\alpha}\left(\sum_{i \in \mathcal{D}_{\text{cal}}}\frac{1}{n_c+1}\cdot\delta_{s_{i}}+\frac{1}{n_c+1}\cdot\delta_{+\infty}\right)\right\},
+}\end{equation}
+
+where \(\mathrm{Q}_\tau(\cdot)\) denotes the \(\tau\)-quantile of its
+argument, and \(\delta_a\) denotes the point mass at \(a\).
+
+\begin{theorem}[SCP, \textcite{vovk2005};
+\textcite{lei2018}]\protect\hypertarget{thm-scp}{}\label{thm-scp}
+
+Assume that the data points \((X_i, Y_i)\), \(i=1,\ldots,n+1\), are
+i.i.d. (or more generally, exchangeable) from any distribution. For any
+score function \(\mathcal{S}\), and any \(\alpha\in(0,1)\), the split
+conformal prediction interval defined in Equation~\ref{eq-scp} satisfies
+
+\[
+\mathbb{P}\left\{Y_{n+1} \in \hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right)\right\} \geq 1-\alpha.
+\]
+
+Moreover, if we assume additionally that the nonconformity scores on
+\(\mathcal{D}_{\text{cal}}\) are distinct with probability one, then we
+also have
+
+\[
+\mathbb{P}\left\{Y_{n+1} \in \hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right)\right\} < 1-\alpha+\frac{1}{n_c+1}.
+\]
+
+\end{theorem}
+
+\subsubsection{Nonexchangeable conformal
+prediction}\label{nonexchangeable-conformal-prediction}
+
+\textcite{barber2023} propose \textbf{nonexchangeable conformal
+prediction} (NexCP) that generalizes the SCP method to allow for some
+sources of nonexchangeability. For split conformal, the NexCP method can
+be considered as simply using weighted quantiles to obtain robust
+inference. Note that NexCP assumes the weights are fixed and
+data-independent. The intuition is that a higher weight should be
+assigned to a data point that is believed to originate from the same
+distribution as the test data.
+
+Given weights \(w_i \in [0,1]\), \(i \in \mathcal{D}_{\text{cal}}\), the
+prediction interval of the NexCP method for the test data \(Y_{n+1}\) is
+given by
+
+\begin{equation}\phantomsection\label{eq-nexcp}{
+\hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right) = \left\{y\in\mathbb{R}: \mathcal{S}\left(X_{n+1}, y\right) \leq Q_{1-\alpha}\left(\sum_{i \in \mathcal{D}_{\text{cal}}}\tilde{w}_i\cdot\delta_{s_{i}}+\tilde{w}_{n+1}\cdot\delta_{+\infty}\right)\right\},
+}\end{equation}
+
+where \(\tilde{w}_i\) and \(\tilde{w}_{n+1}\) are normalized weights
+calculated by
+
+\[
+\tilde{w}_i = \frac{w_i}{\sum_{i\in\mathcal{D}_{\text{cal}}}w_i+1}, \text{ for } i \in \mathcal{D}_{\text{cal}} \quad \text{and} \quad \tilde{w}_{n+1} =  \frac{1}{\sum_{i\in\mathcal{D}_{\text{cal}}}w_i+1}.
+\]
+
+By placing different prespecified weights on data points, NexCP is able
+to deal with data that are not exchangeable and provide robustness
+against distribution drift. \textcite{barber2023} suggests using an
+exponential weighting scheme for time series data, where the weights
+decrease exponentially as data points come from the further in the past.
+
+\begin{theorem}[NexCP,
+\textcite{barber2023}]\protect\hypertarget{thm-nexcp}{}\label{thm-nexcp}
+
+Let \(\mathcal{S}(Z)\) denote a vector of nonconformity scores for data
+points in the calibration and test sets, and \(\mathcal{S}(Z^i)\) denote
+a vector of nonconformity scores after swapping the test point with the
+\(i\)th data point in the calibration set.
+
+For any score function \(\mathcal{S}\), and any \(\alpha\in(0,1)\), the
+nonexchangeable split conformal prediction interval defined in
+Equation~\ref{eq-nexcp} satisfies
+
+\[
+\mathbb{P}\left\{Y_{n+1} \in \hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right)\right\} \geq 1-\alpha-\sum_{i \in \mathcal{D}_{\text{cal}}} \tilde{w}_i \cdot \mathrm{d}_{\mathrm{TV}}\left(\mathcal{S}(Z), \mathcal{S}\left(Z^i\right)\right),
+\]
+
+without the assumption of exchangeability of the data, where
+\(\mathrm{d}_{\mathrm{TV}}\) denotes the total variation distance
+between two distributions.
+
+Moreover, if we assume additionally that the nonconformity scores on
+\(\mathcal{D}_{\text{cal}}\) are distinct with probability one, then the
+probability also has the upper bound:
+
+\[
+\mathbb{P}\left\{Y_{n+1} \in \hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right)\right\} < 1-\alpha+\tilde{w}_{n+1}+\sum_{i \in \mathcal{D}_{\text{cal}}} \tilde{w}_i \cdot \mathrm{d}_{\mathrm{TV}}\left(\mathcal{S}(Z), \mathcal{S}\left(Z^i\right)\right).
+\]
+
+\end{theorem}
+
+\subsubsection{Adaptive conformal
+prediction}\label{adaptive-conformal-prediction}
+
+The \textbf{adaptive conformal prediction} (ACP) proposed by
+\textcite{gibbs2021} accounts for nonexchangeability by updating the
+quantile level in an online manner. Specifically, it treats \(\alpha\)
+as a tunable parameter and estimates it recursively based on the
+historical performance. ACP can be used to deal with arbitrary online
+distribution shifts.
+
+Similar to SCP, the initial step involves a random split on the observed
+data, yielding a training set for fitting a regression model and a
+withheld calibration set. ACP assumes that there exists an optimal value
+\(\alpha_{t}^{*}\) to achieve the desired miscoverage rate \(\alpha\) at
+each time \(t\). To deal with cases where the data generating
+distribution is shifting over time, ACP recursively estimates the
+parameter \(\alpha_t^{*}\) on the test points, using the updating
+equation
+
+\begin{equation}\phantomsection\label{eq-acp}{
+\alpha_{t+1} = \alpha_{t} + \gamma\left(\alpha - \mathrm{err}_t\right),
+}\end{equation}
+
+rather than consistently using the target miscoverage rate \(\alpha\).
+Here, \(\gamma > 0\) is a fixed step size parameter, \(\alpha_1\) is the
+initial estimate typically set as \(\alpha_1=\alpha\), and
+\(\mathrm{err}_t = \mathbb{1}\left\{Y_t \notin \hat{\mathcal{C}}_{t}^{\alpha_t}\left(X_t\right)\right\}\),
+where \(\hat{\mathcal{C}}_{t}^{\alpha_t}\left(X_t\right)\) denotes the
+prediction set obtained using the \(1-\alpha_{t}\) quantile for the
+nonconformity scores available up to and including time \(t\).
+
+This update process adapts the estimation of \(\alpha_{t}^{*}\) based on
+the historical frequency of miscoverage in the prediction sets.
+Specifically, it adjusts upwards (or downwards) the estimate of
+\(\alpha_{t}^{*}\) if the prediction sets have shown over-coverage (or
+under-coverage) of the actual outcomes.
+
+Selecting the parameter \(\gamma\) is pivotal yet challenging.
+\textcite{gibbs2021} suggests setting \(\gamma\) in proportion to the
+degree of variation of the unknown \(\alpha_{t}^{*}\) over time. Several
+strategies have been proposed to avoid the necessity of selecting
+\(\gamma\). For example, \textcite{zaffran2022} use an adaptive
+aggregation of multiple ACPs with a set of candidate values for
+\(\gamma\) , determining weights based on their historical performance.
+\textcite{bastani2022} propose the multivalid prediction algorithm in
+which the prediction set is established by selecting a threshold from a
+sequence of candidate thresholds. However, \textcite{gibbs2022} have
+empirically shown that both previous methods fail to promptly adapt to
+the local changes. To address this limitation, \textcite{gibbs2022}
+propose adaptively tuning the step size parameter \(\gamma\) in an
+online setting, choosing an ``optimal'' value for \(\gamma\) from a
+candidate set of values by assessing their historical performance.
+
+\begin{theorem}[ACP,
+\textcite{gibbs2021}]\protect\hypertarget{thm-acp}{}\label{thm-acp}
+
+Assume that, with probability one, \(Q_{\tau, t}\) is continuous and
+nondecreasing so that \(Q_{0, t}=-\infty\) and \(Q_{1, t}=\infty\). Then
+for any \(\alpha\in(0,1)\), \(\gamma > 0\), and any \(T \geq 1\) test
+points, the prediction sets given by ACP satisfy
+
+\[
+|\frac{1}{T}\sum_{t=1}^{T}\mathrm{err}_t - \alpha| \leq \frac{\max\left\{\alpha_1,1-\alpha_1\right\}+\gamma}{\gamma T}.
+\]
+
+In particular, this means that the prediction intervals obtained by ACP
+yield long-run coverage,
+i.e.~\(\lim _{T \rightarrow \infty} \frac{1}{T} \sum_{t=1}^T \mathrm{err}_t = \alpha\).
+
+\end{theorem}
+
+\textbf{Remark.} Theorem~\ref{thm-acp} suggests that a larger value for
+\(\gamma\) generally results in less deviation from the target coverage.
+As there is no restriction on \(\alpha_t\) and it can drift below \(0\)
+or above \(1\), a larger \(\gamma\) may lead to frequent output of null
+or infinite prediction sets in order to quickly adapt to the current
+miscoverage status.
+
+\subsubsection{Conformal PID control}\label{conformal-pid-control}
+
+Instead of iteratively updating the miscoverage rate \(\alpha\) as in
+\textcite{gibbs2021}, \textcite{angelopoulos2024} draw inspiration from
+control theory and directly update the quantile estimate \(q_t\) in an
+online fashion to achieve long-run coverage. This method treats the
+system for producing prediction sets as a
+\textbf{proportional-integral-derivative} controller, later referred to
+as PID.
+
+The iteration of the PID method is given by
+
+\[
+q_{t+1}=\underbrace{q_t+\eta \left(\mathrm{err}_t-\alpha\right)}_{\mathrm{P}}+\underbrace{r_t\left(\sum_{i=1}^t \left(\mathrm{err}_i-\alpha\right)\right)}_{\mathrm{I}}+\underbrace{g_t^{\prime}}_{\mathrm{D}}.
+\]
+
+The PID method integrates three modules, namely quantile tracking (P
+control), error integration (I control), and scorecasting (D control).
+
+The P control module updates the quantile iteratively with a constant
+learning rate \(\eta > 0\). The underlying intuition is similar to that
+of ACP: it increases (or decreases) the quantile estimate if the
+prediction set at time \(t\) miscovered (or covered) the corresponding
+realization. ACP can be considered as a special case of the P control,
+while the P control has the ability to prevent the generation of null or
+infinite prediction sets after a sequence of miscoverage events.
+
+\begin{theorem}[The P control,
+\textcite{angelopoulos2024}]\protect\hypertarget{thm-pid_p}{}\label{thm-pid_p}
+
+Assume that the nonconformity scores are bounded within \([-b, b]\), for
+\(0<b<\infty\). Then for any \(\alpha \in (0,1)\), \(\eta > 0\), and any
+\(T \geq 1\) the P control iteration satisfies
+
+\[
+|\frac{1}{T}\sum_{t=1}^{T}\mathrm{err}_t - \alpha| \leq \frac{b+\eta}{\eta T}.
+\]
+
+In particular, this means that the prediction intervals obtained by the
+P control iteration yield long-run coverage,
+i.e.~\(\lim _{T \rightarrow \infty} \frac{1}{T} \sum_{t=1}^T \mathrm{err}_t = \alpha\).
+
+\end{theorem}
+
+The I control involves the sum of historical coverage errors
+\(\sum_{i=1}^t (\mathrm{err}_i-\alpha)\) in a saturation function
+\(r_t\) when updating the quantile estimate, further stabilizing the
+coverage.
+
+\begin{theorem}[The I control,
+\textcite{angelopoulos2024}]\protect\hypertarget{thm-pid_i}{}\label{thm-pid_i}
+
+Assume that the nonconformity scores are bounded within \([-b, b]\), for
+\(b>0\), and that the saturation function \(r_t\) satisfies
+
+\begin{equation}\phantomsection\label{eq-saturation}{
+x \geq c \cdot h(t) \Longrightarrow r_t(x) \geq b, \quad \text {and} \quad x \leq-c \cdot h(t) \Longrightarrow r_t(x) \leq -b,
+}\end{equation}
+
+for positive constants \(b, c\) and an admissible function \(h\). Then
+for any \(\alpha \in (0,1)\), and any \(T \geq 1\) the I control
+iteration satisfies
+
+\[
+|\frac{1}{T}\sum_{t=1}^{T}\mathrm{err}_t - \alpha| \leq \frac{c \cdot h(T)+1}{T}.
+\]
+
+In particular, this means that the prediction intervals obtained by the
+I control iteration yield long-run coverage,
+i.e.~\(\lim _{T \rightarrow \infty} \frac{1}{T} \sum_{t=1}^T \mathrm{err}_t = \alpha\).
+
+\end{theorem}
+
+Finally, the D control \(g_t^{\prime}\) is the forecast of \(q_{t+1}\)
+produced by a scorecaster (forecasting model) fitted using the
+nonconformity scores available up to and including time \(t\). Instead
+of reacting to the past miscoverage events, this module looks forward
+and identifies the leftover signal not captured by the regression model
+\(\hat{\mu}\). However, it may introduce variability and result in wider
+prediction sets if the scorecaster is aggressive or if there is not much
+leftover signal in the nonconformity scores.
+
+\subsection{Conformal prediction for time series}\label{sec-review_ts}
+
+\begin{itemize}
+\item
+  Brief literature review of conformal prediction methods or
+  applications on time series data.
+\item
+  Multi-step conformal prediction.
+\end{itemize}
+
+\section{Multi-step conformal prediction for time
+series}\label{sec-method}
+
+We now consider multi-step time series forecasting problems. In the
+following sections, we first introduce the setup for time series
+forecasting problems, and then generalize the existing conformal
+prediction methods described in Section~\ref{sec-review_reg} to deal
+with multi-step time series forecasting. Finally, we explore the
+properties of forecast errors for optimal multi-step forecasts, and then
+propose the \textbf{autocorrelated multi-step conformal prediction}
+(AcMCP) method to account for the serial correlation of multi-step
+forecast errors.
+
+\subsection{Setup}\label{sec-setup}
+
+Let \(z_t = (\bm{x}_t, y_t)\) denote the data point (including the
+response and possibly predictors) at time \(t\). Suppose that, at each
+time \(t\), we have a forecasting model \(\hat{f}_t\) trained using the
+historical data \(z_{1:t}\). Throughout the paper, we assume that the
+predictors are known into the future. In this way, we perform ex-post
+forecasting and there is no additional uncertainty introduced from
+forecasting the exogenous predictors. Using the forecasting model
+\(\hat{f}_t\), we are able to produce \(H\)-step point forecasts,
+\(\{\hat{y}_{t+h|t}\}_{h\in[H]}\), using the future values for the
+predictors. The task is to employ conformal inference to build
+\(H\)-step prediction intervals,
+\(\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}\left(z_{1:t},\bm{x}_{t+1:h}\right)\}_{h\in[H]}\),
+at the target coverage level \(1-\alpha\). For brevity, we will use
+\(\hat{\mathcal{C}}_{t+h|t}^{\alpha}\) to denote the \(h\)-step-ahead
+prediction interval produced using the information up to time \(t\).
+
+\textbf{Sequential split.} In time series context, it is infeasible to
+perform random splitting in split conformal due to the temporal
+dependency present in the data. Instead, throughout the conformal
+prediction methods in this section, we use a sequential split to
+preserve the temporal structure. For example, the \(t\) available data
+points, \(z_{1:t}\), are sequentially split into two consecutive sets, a
+proper training set \(\mathcal{D}_{\text{tr}} \subset \{1,\ldots,t_r\}\)
+and a calibration set
+\(\mathcal{D}_{\text{cal}} \subset \{t_r+1,\ldots,t\}\), where
+\(t-t_r \gg h\).
+
+\textbf{Online learning.} Here we consider a generic online learning
+framework to adapt to all conformal prediction methods we will discuss
+in subsequent sections. The framework adopts a standard rolling window
+evaluation strategy. Let the length of the training set be denoted as
+\(t_r\)\hspace{0pt} and the calibration set length as
+\(t_c\)\hspace{0pt}. The online learning framework consists of the
+following steps.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Initialization. Train a forecasting model on the initial proper
+  training set \(z_{t-t_r+1:t}\), setting \(t=t_r\). Then generate
+  \(H\)-step point forecasts \(\{\hat{y}_{t_r+h|t_r}\}_{h\in[H]}\) and
+  compute the corresponding nonconformity scores
+  \(\{s_{t_r+h|t_r}=\mathcal{S}(z_{1:t_r}, y_{t_r+h})\}_{h\in[H]}\)
+  based on the true values \(H\) time steps ahead,
+  i.e.~\(\{y_{t_r+h}\}_{h\in[H]}\).
+\item
+  Recurring procedure. Roll the training set forward by one data point
+  by setting \(t \rightarrow t+1\). Then repeat the step 1 until the
+  nonconformity scores on the entire initial calibration set,
+  \(\{s_{t+h|t}\}_{t_r \leq t \leq t_r+t_c-h}\) for \(h\in[H]\), are
+  computed.
+\item
+  Quantile estimation and prediction interval calculation. Use
+  nonconformity scores obtained from the calibration set to perform
+  quantile estimation and compute \(H\)-step prediction intervals on the
+  test set.
+\item
+  Online updating. Recursively roll the training set and calibration set
+  forward by one data point to update the nonconformity scores for
+  calibration, and then repeat the step 3 until prediction intervals for
+  the entire test set are obtained, i.e.,
+  \(\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}\}_{t_r+t_c \leq t \leq T-h}\)
+  for \(h \in [H]\), where \(T-t_r-t_c\) is the length of the test set.
+  Therefore, our goal is to achieve long-run coverage in time.
+\end{enumerate}
+
+For simplicity, so far we have only presented the nonconformity score
+defined as the (signed) forecast error
+
+\[
+s_{t+h|t}=\mathcal{S}\left(z_{1:t}, y_{t+h}\right):=y_{t+h}-\hat{f}_t\left(z_{1:t},\bm{x}_{t+1:h}\right)=y_{t+h}-\hat{y}_{t+h|t},
+\]
+
+which is the most commonly used accuracy measure in the context of time
+series forecasting. We also note that the online learning setting can
+also be easily adjusted to work with expanding windows for the training
+and calibration sets.
+
+\textbf{Remark.} With sequential splitting, multiple \(H\)-step
+forecasts and their respective nonconformity scores can be computed on
+the calibration set. These nonconformity scores have diverse forecast
+horizons, ranging from \(1\) to \(H\), i.e., the number of periods
+between the forecast origin and the time at which nonconformity scores
+are evaluated. Thus, we can not uniformly treat these nonconformity
+scores and generate \(H\)-step prediction intervals of identical width.
+
+\subsection{Related methods extensions to multi-step
+forecasting}\label{sec-ext}
+
+One of the key properties of optimal forecast errors is that the
+variance of the forecast error \(e_{t+h|t}\) is non-decreasing in \(h\)
+\autocite{diebold1996,patton2007}. Therefore, instead of uniformly
+treating \(H\)-step nonconformity scores and generating \(H\)-step
+prediction intervals of identical width, we consider a setting wherein a
+separate conformal prediction procedure is applied for each
+\(h \in [H]\) in an online manner.
+
+\subsubsection{Online multi-step split conformal
+prediction}\label{online-multi-step-split-conformal-prediction}
+
+We introduce online \textbf{multi-step split conformal prediction}
+(MSCP) as a generalization of SCP to recursively update all \(H\)-step
+prediction intervals over time. Specifically, for each \(h \in [H]\), we
+consider the following simple online update to construct prediction
+intervals on the test set:
+
+\begin{equation}\phantomsection\label{eq-mscp}{
+\hat{\mathcal{C}}_{t+h|t}^{\alpha} = \left\{y\in\mathbb{R}: s_{t+h|t}^{y} \leq Q_{1-\alpha}\left(\sum_{i=t-t_c+1}^{t}\frac{1}{t_c+1}\cdot\delta_{s_{i|i-h}}+\frac{1}{t_c+1}\cdot\delta_{+\infty}\right)\right\},
+}\end{equation}
+
+where \(s_{t+h|t}^{y}:=\mathcal{S}(z_{1:t}, y)\) denote the
+\(h\)-step-ahead nonconformity score calculated at time \(t\) using a
+hypothesized test observation \(y\).
+
+\begin{itemize}
+\item
+  Quantile estimation.
+\item
+  Theorem?
+\end{itemize}
+
+\subsubsection{Online multi-step weighted conformal
+prediction}\label{online-multi-step-weighted-conformal-prediction}
+
+The online \textbf{multi-step weighted conformal prediction} (MWCP)
+method adapts the NexCP method to the online setting. MWCP uses weighted
+quantile estimate for constructing prediction intervals, contrasting
+with the MSCP definitions where all nonconformity scores for calibration
+are implicitly assigned equal weight.
+
+We choose fixed weights \(w_i = b^{t+1-i}\), \(b \in (0, 1)\) and
+\(i=t-t_c+1,\ldots,t\), for nonconformity scores on the corresponding
+calibration set. In this setting, weights decay exponentially as the
+nonconformity scores get order, akin to the rationale behind the
+exponential smoothing method in time series forecasting. Then for each
+\(h \in [H]\), MWCP consider the online update for \(h\)-step-ahead
+prediction interval:
+
+\[
+\hat{\mathcal{C}}_{t+h|t}^{\alpha} = \left\{y\in\mathbb{R}: s_{t+h|t}^{y} \leq Q_{1-\alpha}\left(\sum_{i=t-t_c+1}^{t}\tilde{w}_i\cdot\delta_{s_{i|i-h}}+\tilde{w}_{t+1}\cdot\delta_{+\infty}\right)\right\},
+\]
+
+where \(\tilde{w}_i\) and \(\tilde{w}_{t+1}\) are normalized weights
+given by
+
+\[
+\tilde{w}_i = \frac{w_i}{\sum_{i=t-t_c+1}^{t}w_i+1}, \text{ for } i \in \{t-t_c+1,\ldots,t\} \quad \text{and} \quad \tilde{w}_{t+1} =  \frac{1}{\sum_{i=t-t_c+1}^{t}w_i+1}.
+\]
+
+Throughout the experiments in the paper, we will take \(b = 0.99\).
+
+\begin{itemize}
+\item
+  Weighted quantile estimation.
+\item
+  Theorem?
+\end{itemize}
+
+\subsubsection{Multi-step adaptive conformal
+prediction}\label{multi-step-adaptive-conformal-prediction}
+
+In the online learning framework outlined in Section~\ref{sec-setup}, we
+extend the ACP method to address multi-step time series forecasting,
+introducing the \textbf{multi-step adaptive conformal prediction} (MACP)
+method. Specifically, for each \(h \in [H]\), we iteratively estimate
+\(\alpha^{*}\) (treated as a tunable parameter) using the update
+equation
+
+\begin{equation}\phantomsection\label{eq-macp}{
+\alpha_{t+h|t} := \alpha_{t+h-1|t-1} + \gamma\left(\alpha - \mathrm{err}_{t|t-h}\right),
+}\end{equation}
+
+and compute the \(h\)-step-ahead prediction interval using
+Equation~\ref{eq-mscp} by setting \(\alpha = \alpha_{t+h|t}\). Here,
+\(\gamma > 0\) denotes a fixed step size parameter, \(\alpha_{h+1|1}\)
+denotes the initial estimate typically set to \(\alpha\), and
+\(\mathrm{err}_{t|t-h} = \mathbb{1}\left\{y_t \notin \hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}\right\}\).
+For \(h=1\), Equation~\ref{eq-macp} reduces to the update for ACP as
+given by Equation~\ref{eq-acp}. For \(h>1\), the adjustment of the
+estimate of \(\alpha\) at time \(t+h\) is determined by the miscoverage
+event at time \(t\). We raise the estimate of \(\alpha\) if
+\(\hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}\) covered \(y_t\), whereas
+we lower the estimate if \(\hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}\)
+miscovered \(y_t\). Thus the miscoverage event has a delayed impact on
+the estimation of \(\alpha\) over \(h\) periods, indicating that the
+correction of the \(\alpha\) estimate becomes less responsive with
+increasing values of \(h\). In our experiments we will use
+\(\gamma=0.01\).
+
+\begin{itemize}
+\tightlist
+\item
+  Theorem?
+\end{itemize}
+
+\subsubsection{Multi-step conformal PID
+control}\label{multi-step-conformal-pid-control}
+
+We propose \textbf{multi-step conformal PID control} method (referred to
+as MPID hereafter), a generalization of the PID method to deal with
+multi-step forecasting.
+
+For each individual forecast horizon \(h\in[H]\), the iteration of the
+\(h\)-step-ahead quantile estimate is given by
+
+\[
+q_{t+h|t}=\underbrace{q_{t+h|t}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)}_{\mathrm{P}}+\underbrace{r_t\left(\sum_{i=h+1}^t \left(\mathrm{err}_{i|i-h}-\alpha\right)\right)}_{\mathrm{I}}+\underbrace{\hat{s}_{t+h|t}}_{\mathrm{D}},
+\]
+
+where as before, \(\eta > 0\) is a constant learning rate, and \(r_t\)
+is a saturation function that adheres to the conditions specified in
+Equation~\ref{eq-saturation} for an admissible function \(h\). Here, we
+define \(\hat{s}_{t+h|t}\) as the \(h\)-step-ahead forecast of the
+nonconformity score (defined as the forecast error), produced by any
+suitable scorecaster (forecasting model) trained using the
+\(h\)-step-ahead nonconformity scores available up to and including time
+t.
+
+The P control in MPID shows a delayed correction of the \(\alpha\)
+estimate for \(h>1\). The I control accounts for the cumulative
+historical coverage errors associated with \(h\)-step-ahead prediction
+intervals during the update process, thereby enhancing the stability of
+the interval coverage. Moreover, the D control performs \(h\)-step
+forecasting, which tends to result in increased forecast variance for
+larger \(h\).
+
+\begin{itemize}
+\tightlist
+\item
+  Theorem?
+\end{itemize}
+
+\subsection{Autocorrelated multi-step conformal
+prediction}\label{sec-acmcp}
+
+In the PID method proposed by \textcite{angelopoulos2024}, a notable
+feature is the inclusion of a scorecaster, a model trained on the score
+sequence, to forecast the next score. The rationale behind it is to
+residualize out any leftover signal in the score distribution not
+captured by the base forecasting model, such as trend and seasonality.
+However, in the context of time series forecasting, good forecasts are
+essential for making good decisions. We naturally expect to use a good
+forecasting model and ensure there is no useful signal in forecast
+errors (defined as nonconformity scores in this paper). If the forecasts
+are not optimal, the forecasting model should be improved to enhance its
+performance. Hence, we typically assume the use of a good forecasting
+model, and therefore, relying on another model to predict forecast
+errors to capture leftover information is not a commonly used solution.
+
+On the other hand, in our general setup outlined in
+Section~\ref{sec-intro} and Section~\ref{sec-setup}, the DGP of a time
+series may depend on its own past, along with other exogenous predictors
+and their histories. Consequently, the \(h\)-step-ahead forecast errors
+\(e_{t+h|t}\) may depend on the forecast errors from the past \(h-1\)
+steps, i.e.~\(e_{t+1|t}, \ldots, e_{t+h-1|t}\), and forecast errors may
+accumulate over the forecast horizon. However, no conformal prediction
+methods have taken this potential dependence into account in their
+methodological construction.
+
+In this section, we will explore the properties of multi-step forecast
+errors and propose a novel conformal prediction method that considers
+the autocorrelations of multi-step forecast errors.
+
+\subsubsection{Properties of multi-step forecast errors}\label{sec-ppt}
+
+We assume that a time series \(\{y_t\}_{t \geq 1}\) is generated by a
+general non-stationary autoregressive process given by:
+
+\begin{equation}\phantomsection\label{eq-dgp}{
+y_t = f_{t}\left(y_{(t-d):(t-1)},\bm{x}_{(t-k):t}\right) + \epsilon_t,
+}\end{equation}
+
+where \(f_{t}\) is considered a non-linear function in \(d\) lagged
+values of \(y_t\) (\(y_{(t-d):(t-1)}\)) and current value along with the
+preceding \(k\) values of the exogenous predictors
+(\(\bm{x}_{(t-k):t}\)), and \(\epsilon_t\) is white noise.
+
+It is well-established in the forecasting literature that, for optimal
+\(h\)-step-ahead forecasts, the sequence of forecast errors is \emph{at
+most} an MA\((h-1)\) process \autocite{harvey1997,diebold2017}. We now
+present the property under the assumption of a non-stationary
+autoregressive DGP, and provide its proof in Section~\ref{sec-proof_ma}
+based on the proof of Proposition~\ref{prp-ar} that we will introduce
+later.
+
+\begin{proposition}[MA\((h-1)\) process for \(h\)-step-ahead optimal
+forecast errors]\protect\hypertarget{prp-ma}{}\label{prp-ma}
+
+Let \(\{y_t\}_{t \geq 1}\) be a time series generated by a general
+non-stationary autoregressive process as given in Equation~\ref{eq-dgp}.
+Assume that the exogenous predictors are known into the future if
+applicable. The forecast errors of optimal \(h\)-step-ahead forecasts
+follow an approximate MA(\(h-1\)) process:
+
+\[
+e_{t+h|t} = c + \epsilon_{t+h} + \theta_1\epsilon_{t+h-1} + \cdots + \theta_{h-1}\epsilon_{t+1},
+\]
+
+where \(c=0\), motivated by the property that optimal forecasts are
+unbiased.
+
+\end{proposition}
+
+We proceed by exploring the autocorrelations of multi-step forecast
+errors for optimal forecasts.
+
+\begin{proposition}[Autocorrelations of multi-step optimal forecast
+errors]\protect\hypertarget{prp-ar}{}\label{prp-ar}
+
+Let \(\{y_t\}_{t \geq 1}\) be a time series generated by a general
+non-stationary autoregressive process as given in Equation~\ref{eq-dgp}.
+Assume that the exogenous predictors are known into the future if
+applicable. The forecast errors of optimal \(h\)-step-ahead forecasts
+are \ul{at most} an approximate AR(\(h-1\)) process given by:
+
+\[
+e_{t+h|t} = c + \epsilon_{t+h} + \phi_1e_{t+h-1|t} + \cdots + \phi_{h-1}e_{t+1|t},
+\]
+
+where \(e_{t+h|t}\) is the \(h\)-step-ahead forecast error with variance
+non-decreasing in \(h\), and the intercept \(c=0\), given the property
+that optimal forecasts are unbiased.
+
+\end{proposition}
+
+\begin{proof}
+Let \(\hat{y}_{t+h|t}\) be the optimal \(h\)-step-ahead point forecast,
+and \(e_{t+h|t}\) be the \(h\)-step-ahead forecast error. Denote
+\(\bm{u}_{t+h}=\bm{x}_{(t-k+h):(t+h)}\). Then we have
+
+\[
+\begin{aligned}
+&\hat{y}_{t+1|t}=f_{t+1}(y_t,\cdots,y_{t-d+1},\bm{u}_{t+1}), \text{ for } h=1, \\
+&\hat{y}_{t+h|t}=f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_t,\cdots,y_{t+h-d},\bm{u}_{t+h}\right), \text{ for } 1 < h \leq d. \text{ and } \\
+&\hat{y}_{t+h|t}=f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}\right), \text{ for } h > d.
+\end{aligned}
+\]
+
+For \(h=1\), we simply have \(e_{t+1|t} = \epsilon_{t+1}\).
+
+For \(1<h\leq d\), applying the first order Taylor series expansion, we
+can write
+
+\[
+\begin{aligned}
+y_{t+h}
+=&f_{t+h}\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
+=&f_{t+h}\left(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+1|t}+e_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
+\underset{\text{te}}{\approx}&f_{t+h}\left(\bm{a}\right)+\operatorname{D}f_{t+h}\left(\bm{a}\right)\left(\bm{v}-\bm{a}\right)+
+\epsilon_{t+h} \\
+=&f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right) \\
+&+e_{t+h-1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_1}+\cdots+e_{t+2|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{h-2}}+e_{t+1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{h-1}}+\epsilon_{t+h} \\
+=&\hat{y}_{t+h|t}+e_{t+h|t},
+\end{aligned}
+\]
+
+where \(\bm{v}=\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)\),
+\(\bm{a} =\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)\),
+\(\operatorname{D}f_{t+h}\left(\bm{a}\right)\) denotes the matrix of
+partial derivative of \(f_{t+h}(\bm{v})\) at \(\bm{v}=\bm{a}\), and
+\(\frac{\partial}{\partial v_i}\) denotes the the partial derivative
+with respect to the \(i\)th component in \(f_{t+h}\).
+
+Similarly, for \(h > d\), we can write
+
+\[
+\begin{aligned}
+y_{t+h}
+=&f_{t+h}\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
+=&f_{t+h}\left(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t}+e_{t+h-d|t},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
+\underset{\text{te}}{\approx}&f_{t+h}\left(\bm{a}\right)+\operatorname{D}f_{t+h}\left(\bm{a}\right)\left(\bm{v}-\bm{a}\right)+
+\epsilon_{t+h} \\
+=&f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}\right) \\
+&+e_{t+h-1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_1}+e_{t+h-d|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{d}}+\epsilon_{t+h} \\
+=&\hat{y}_{t+h|t}+e_{t+h|t},
+\end{aligned}
+\]
+
+Therefore, the forecast errors of optimal \(h\)-step-ahead forecasts are
+at most an approximate AR(\(h-1\)) process.
+\end{proof}
+
+Proposition~\ref{prp-ar} can be viewed as an extension of
+Proposition~\ref{prp-ma}. It suggests that the \(h\)-step ahead forecast
+error, \(e_{t+h|t}\), is serially correlated with the forecast errors
+from at most the past \(h-1\) steps, i.e.,
+\(e_{t+1|t}, \ldots, e_{t+h-1|t}\). However, we note that the
+autocorrelation among errors associated with optimal forecasts can not
+be used to improve forecasting performance, as it does not incorporate
+any information available when the forecast was made. It is reasonable
+because if we could forecast the forecast error, we could improve the
+forecast, indicating that the initial forecast couldn't have been
+optimal.
+
+The proof of Proposition~\ref{prp-ar} suggests that, if \(f_t\) is a
+linear autoregressive model, then the AR coefficients are the linear
+coefficients of the optimal forecasting model. However, when \(f_t\)
+takes on a more complex non-linear structure, the AR coefficients become
+complicated functions of observed data and unobserved model
+coefficients.
+
+\subsubsection{The AcMCP method}\label{sec-novel}
+
+Inspired by the properties of multi-step forecast errors discussed in
+Section~\ref{sec-ppt}, we now propose the \textbf{autocorrelated
+multi-step conformal prediction} (AcMCP) method. Unlike extensions of
+existing conformal prediction methods that treat multi-step forecasting
+as independent events (see Section~\ref{sec-ext}), the AcMCP method
+integrates the autocorrelations inherent in multi-step forecast errors,
+thereby making the output multi-step prediction intervals more logically
+structured.
+
+The AcMCP method updates the quantile estimate \(q_t\) in an online
+setting to achieve the goal of long-run coverage. Specifically, the
+iteration of the \(h\)-step-ahead quantile estimate is given by
+
+\[
+q_{t+h|t}=q_{t+h|t}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)+r_t\left(\sum_{i=h+1}^t w_{i}\left(\mathrm{err}_{i|i-h}-\alpha\right)\right)+\tilde{e}_{t+h|t},
+\]
+
+for \(h\in[H]\). Obviously, the AcMCP method can be viewed as a further
+extension of the MPID method. Nevertheless, AcMCP diverges from MPID
+with several innovations and differences.
+
+First, we assign different weights \(w_i \in [0,1]\) to historical
+coverage errors with the intuition that a higher weight should be given
+to a historical coverage error obtained closer to the present forecast
+period. Such a setting is particularly suitable for time series
+forecasting problems. In line with MWCP, we choose normalized
+exponentially decaying weights, i.e.,
+\(w_i = \frac{b^{t+1-i}}{\sum_{i=h+1}^{t}b^{t+1-i}}\), for
+\(b \in (0, 1)\). Throughout the experiments in the paper, we will take
+\(b = 0.99\).
+
+Additionally, \(\tilde{e}_{t+h|t}\) is a forecast combination of two
+simple models: one being an MA\((h-1)\) model trained on
+\(h\)-step-ahead forecast errors available up to and including time
+\(t\) (i.e.~\(e_{1+h|1}, \ldots, e_{t|t-h}\)), and the other an
+AR\((h-1)\) model (with respect to \(h\) instead of \(t\)) trained by
+regressing \(e_{t+h|t}\) on forecast errors from past steps
+(i.e.~\(e_{t+h-1|t}, \ldots, e_{t+1|t}\)). Thus, we perform multi-step
+conformal prediction recursively, contrasting with the independent
+approach employed in MPID. Moreover, the inclusion of
+\(\tilde{e}_{t+h|t}\) is not intended to forecast the nonconformity
+scores (i.e., forecast errors in this paper), but rather to incorporate
+autocorrelations present in multi-step forecast errors within the
+resulting multi-step prediction intervals. As previously explained, in
+the context of time series forecasting, we typically assume the use of a
+good base forecasting model, making it unnecessary to train an
+additional model to predict forecast errors in order to capture leftover
+information. If the forecasts are not optimal, the base forecasting
+model should be improved to enhance its performance.
+
+\begin{itemize}
+\item
+  Choosing the learning rate? Analysis of the parameter effect.
+\item
+  Coverage and proof
+\end{itemize}
+
+\section{Simulations}\label{simulations}
+
+\begin{itemize}
+\item
+  Evaluated on two properties: validity and efficiency.
+\item
+  Evaluation and visualization.
+
+  \begin{itemize}
+  \item
+    an easy-to-interpret visualisation combining validity and
+    efficiency: plot average/median interval length against mean
+    coverage for different methods or different parameter values.
+  \item
+    instead of plotting forecasts and prediction intervals, plot errors
+    and quantile estimate.
+  \end{itemize}
+\end{itemize}
+
+\section{Applications}\label{applications}
+
+\begin{itemize}
+\item
+  COVID-19 case counts
+\item
+  Stock price
+\item
+  Electricity demand
+\item
+  Hierarchical time series (tourism data)?
+\end{itemize}
+
+\section{Discussion}\label{discussion}
+
+\begin{itemize}
+\item
+  Large forecast horizon
+\item
+  Evaluation of multi-step intervals
+\item
+  Use the forecasts of predictors, introducing more variability
+\end{itemize}
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
+\printbibliography[heading=none]
+
+\newpage
+\appendix
+% \pagenumbering{arabic}% resets `page` counter to 1
+\setcounter{section}{0}
+\renewcommand{\thesection}{Appendix \Alph{section}}
+\renewcommand{\thesubsection}{\Alph{section}.\arabic{subsection}}
+\renewcommand{\thefigure}{A\arabic{figure}}
+\renewcommand{\thetable}{A\arabic{table}}
+\setcounter{figure}{0}
+\setcounter{table}{0}
+
+\section{Weighted quantile estimation}\label{sec-wq}
+
+\begin{itemize}
+\tightlist
+\item
+  median-unbiased estimates
+\end{itemize}
+
+\section{Proof}\label{sec-proof}
+
+\subsection{\texorpdfstring{Proof of
+Proposition~\ref{prp-ma}}{Proof of Proposition~}}\label{sec-proof_ma}
+
+\begin{proof}
+Here, we give the proof of Proposition~\ref{prp-ma} based on
+Proposition~\ref{prp-ar}, and the idea is motivated by
+\textcite{sommer2023}.
+
+For \(1\)-step-ahead optimal forecast, we have
+
+\[
+y_{t+1} = f_{t+1}(y_{(t-d+1):t},\bm{x}_{(t-k+1):(t+1)}) + \epsilon_{t+1},
+\]
+
+so \(e_{t+1|t}=\epsilon_{t+1}\).
+
+Based on Proposition~\ref{prp-ar}, we have
+
+\[
+\begin{aligned}
+e_{t+2|t} &= \epsilon_{t+2} + \phi_{1}^{(2)}e_{t+1|t} \\
+e_{t+3|t} &= \epsilon_{t+3} + \phi_{1}^{(3)}e_{t+2|t} + \phi_{2}^{(3)}e_{t+1|t} \\
+\cdots \\
+e_{t+d|t} &= \epsilon_{t+d} + \phi_{1}^{(d)}e_{t+d-1|t} + \cdots + \phi_{d-1}^{(d)}e_{t+1|t} \\
+e_{t+d+1|t} &= \epsilon_{t+d+1} + \phi_{1}^{(d+1)}e_{t+d|t} + \cdots + \phi_{d-1}^{(d+1)}e_{t+2|t} + \phi_{d}^{(d+1)}e_{t+1|t} \\
+\cdots \\
+e_{t+H|t} &= \epsilon_{t+H} + \phi_{1}^{(H)}e_{t+H-1|t} + \cdots + \phi_{d-1}^{(H)}e_{t+H-d+1|t} + \phi_{d}^{(H)}e_{t+H-d|t}, \quad H > d + 1. \\
+\end{aligned}
+\]
+
+Substituting all equations above into the following equation, we can
+obtain
+
+\[
+e_{t+h|t} = \epsilon_{t+h} + \sum_{i=1}^{h-1}\theta_{i}\epsilon_{t+h-i}, \text{ for each } h\in[H],
+\]
+
+where \(\theta_{i}\) is a complex function derived from the AR
+coefficients of all AR\((j-1)\) models, for \(j = 1,2,\ldots,h-1\). So
+we conclude that the \(h\)-step-ahead forecast error sequence
+\(\{e_{t+h|t}\}\) follows an MA\((h-1)\) process.
+\end{proof}
+
+
+
+
+\end{document}
