@@ -116,9 +116,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -1165,24 +1165,21 @@ setting to achieve the goal of long-run coverage. Specifically, the
 iteration of the \(h\)-step-ahead quantile estimate is given by
 
 \[
-q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)+r_t\left(\sum_{i=h+1}^t w_{i}\left(\mathrm{err}_{i|i-h}-\alpha\right)\right)+\tilde{e}_{t+h|t},
+q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)+r_t\left(\sum_{i=h+1}^t \left(\mathrm{err}_{i|i-h}-\alpha\right)\right)+\tilde{e}_{t+h|t},
 \]
 
 for \(h\in[H]\). Obviously, the AcMCP method can be viewed as a further
-extension of the MPID method. Nevertheless, AcMCP diverges from MPID
-with several innovations and differences.
+extension of the PID method. Nevertheless, AcMCP diverges from PID with
+several innovations and differences.
 
-First, we assign different weights \(w_i \in [0,1]\) to historical
-coverage errors with the intuition that a higher weight should be given
-to a historical coverage error obtained closer to the present forecast
-period. Such a setting is particularly suitable for time series
-forecasting problems. In line with MWCP, we choose normalized
-exponentially decaying weights, i.e.,
-\(w_i = \frac{b^{t-i}}{\sum_{i=h+1}^{t}b^{t-i}}\), for \(b \in (0, 1)\).
-Throughout the experiments in the paper, we will take \(b = 0.99\).
+First, we are no longer confined to predicting just one step forward.
+Instead, we can make multi-step forecasting, constructing
+distribution-free prediction intervals for steps \(t+1,\ldots,t+h\)
+based on available information up to time \(t\). This is highly
+important in the field of time series forecasting.
 
-Additionally, \(\tilde{e}_{t+h|t}\) is a forecast combination of two
-simple models: one being an MA\((h-1)\) model trained on
+Additionally, in AcMCP, \(\tilde{e}_{t+h|t}\) is a forecast combination
+of two simple models: one being an MA\((h-1)\) model trained on
 \(h\)-step-ahead forecast errors available up to and including time
 \(t\) (i.e.~\(e_{1+h|1}, \ldots, e_{t|t-h}\)), and the other an
 AR\((h-1)\) model (with respect to \(h\) instead of \(t\)) trained by
