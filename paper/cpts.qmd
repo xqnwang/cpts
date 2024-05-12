@@ -436,7 +436,7 @@ In particular, this means the prediction intervals obtained by the iteration yie
 ::: proof
 Let $E_T=\sum_{t=h+1}^{T}\left(\mathrm{err}_{t|t-h}-\alpha\right)$. The inequality given by @eq-cov_acmcp can be expressed as $\left|E_T\right| \leq c \cdot g(T-h) + h$. We will prove one side of the absolute inequality, specifically $E_T \leq c \cdot g(T-h) + h$, with the other side following analogously. We proceed with the proof using induction.
 
-For $T=h+1$, $E_T = \mathrm{err}_{h+1|1}-\alpha \leq 1 \leq cg(T-h) + h$ as $c>0$, $h\geq 1$, and $g$ is nonnegative. Thus, @eq-cov_acmcp holds for $T=h+1$.
+For $T=h+1,\ldots,2h$, $E_T = \sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha) \leq (T-h)-(T-h)\alpha \leq T-h \leq h \leq cg(T-h) + h$ as $c>0$, $h\geq 1$, $g$ is nonnegative, and $\mathrm{err}_{t|t-h} \leq 1$. Thus, @eq-cov_acmcp holds for $T=h+1,\ldots,2h$.
 
 Now, assuming @eq-cov_acmcp is true up to $T$. We partition the argument into $h+1$ cases:
 
@@ -474,7 +474,7 @@ $$
 E_{T+h} = E_T+\sum_{t=T+1}^{T+h}(\mathrm{err}_{t|t-h}-\alpha) \leq cg(T-h)+h-h\alpha \leq cg(T)+h.
 $$
 
-Therefore, assuming @eq-cov_acmcp holds true up to $T-h$, we can deduce the desired outcome at $T$. This completes the proof for the first part of @prp-cov_acmcp.
+Therefore, we can deduce the desired outcome at any $T \geq h+1$. This completes the proof for the first part of @prp-cov_acmcp.
 
 Regarding the second part, $g(t-h)/(t-h) \rightarrow 0$ as $t \rightarrow \infty$ due to the sublinearity of the admissible function $g$. Hence the second part holds trivially.
 :::

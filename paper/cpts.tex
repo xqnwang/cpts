@@ -116,9 +116,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{theorem}{Theorem}[section]
-\theoremstyle{plain}
 \newtheorem{proposition}{Proposition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -256,7 +256,7 @@ quantile estimate},
 
 \title{Online conformal inference for multi-step time series
 forecasting}
-\date{8 May 2024}
+\date{12 May 2024}
 
 \def\Date{\number\day}
 \def\Month{\ifcase\month\or
@@ -356,7 +356,7 @@ forecasting}
       \\[0.5cm]%
    %
    }%
-   \lfoot{\sf Wang, Hyndman: 8 May 2024}
+   \lfoot{\sf Wang, Hyndman: 12 May 2024}
 
 % Keywords
 
@@ -1231,10 +1231,11 @@ the absolute inequality, specifically \(E_T \leq c \cdot g(T-h) + h\),
 with the other side following analogously. We proceed with the proof
 using induction.
 
-For \(T=h+1\),
-\(E_T = \mathrm{err}_{h+1|1}-\alpha \leq 1 \leq cg(T-h) + h\) as
-\(c>0\), \(h\geq 1\), and \(g\) is nonnegative. Thus,
-Equation~\ref{eq-cov_acmcp} holds for \(T=h+1\).
+For \(T=h+1,\ldots,2h\),
+\(E_T = \sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha) \leq (T-h)-(T-h)\alpha \leq T-h \leq h \leq cg(T-h) + h\)
+as \(c>0\), \(h\geq 1\), \(g\) is nonnegative, and
+\(\mathrm{err}_{t|t-h} \leq 1\). Thus, Equation~\ref{eq-cov_acmcp} holds
+for \(T=h+1,\ldots,2h\).
 
 Now, assuming Equation~\ref{eq-cov_acmcp} is true up to \(T\). We
 partition the argument into \(h+1\) cases:
@@ -1291,9 +1292,9 @@ In case (h+1), noticing \(E_T \leq cg(T-h)\), and simply using
 E_{T+h} = E_T+\sum_{t=T+1}^{T+h}(\mathrm{err}_{t|t-h}-\alpha) \leq cg(T-h)+h-h\alpha \leq cg(T)+h.
 \]
 
-Therefore, assuming Equation~\ref{eq-cov_acmcp} holds true up to
-\(T-h\), we can deduce the desired outcome at \(T\). This completes the
-proof for the first part of Proposition~\ref{prp-cov_acmcp}.
+Therefore, we can deduce the desired outcome at any \(T \geq h+1\). This
+completes the proof for the first part of
+Proposition~\ref{prp-cov_acmcp}.
 
 Regarding the second part, \(g(t-h)/(t-h) \rightarrow 0\) as
 \(t \rightarrow \infty\) due to the sublinearity of the admissible
