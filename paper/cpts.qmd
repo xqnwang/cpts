@@ -323,7 +323,7 @@ $$
 y_t = f_{t}\left(y_{(t-d):(t-1)},\bm{x}_{(t-k):t}\right) + \epsilon_t,
 $$ {#eq-dgp}
 
-where $f_{t}$ is considered a non-linear function in $d$ lagged values of $y_t$ ($y_{(t-d):(t-1)}$) and the current value along with the preceding $k$ values of the exogenous predictors ($\bm{x}_{(t-k):t}$), and $\epsilon_t$ is white noise.
+where $f_{t}$ is considered a non-linear function in $d$ lagged values of $y_t$ (i.e. $y_{(t-d):(t-1)}$) and the current value along with the preceding $k$ values of the exogenous predictors (i.e. $\bm{x}_{(t-k):t}$), and $\epsilon_t$ is white noise.
 
 It is well-established in the forecasting literature that, for optimal $h$-step-ahead forecasts, the sequence of forecast errors is *at most* an MA$(h-1)$ process [@harvey1997; @diebold2017]. We now present the property under the assumption of a non-stationary autoregressive DGP, and provide its proof in @sec-proof_ma based on the proof of @prp-ar that we will introduce later.
 
@@ -358,9 +358,11 @@ Let $\hat{y}_{t+h|t}$ be the optimal $h$-step-ahead point forecast, and $e_{t+h|
 
 $$
 \begin{aligned}
-&\hat{y}_{t+1|t}=f_{t+1}(y_t,\cdots,y_{t-d+1},\bm{u}_{t+1}), \text{ for } h=1, \\
-&\hat{y}_{t+h|t}=f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_t,\cdots,y_{t+h-d},\bm{u}_{t+h}\right), \text{ for } 1 < h \leq d. \text{ and } \\
-&\hat{y}_{t+h|t}=f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}\right), \text{ for } h > d.
+\hat{y}_{t+h|t}=\begin{cases}
+      f_{t+1}\left(y_t,\cdots,y_{t-d+1},\bm{u}_{t+1}\right) & \text{ if } h=1, \\
+      f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_t,\cdots,y_{t+h-d},\bm{u}_{t+h}\right) &  \text{ if } 1 < h \leq d, \\
+      f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}\right) & \text{ if } h > d.\\
+    \end{cases}\\
 \end{aligned}
 $$
 
@@ -381,7 +383,7 @@ y_{t+h}
 \end{aligned}
 $$
 
-where $\bm{v}=\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)$, $\bm{a} =\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)$, $\operatorname{D}f_{t+h}\left(\bm{a}\right)$ denotes the matrix of partial derivative of $f_{t+h}(\bm{v})$ at $\bm{v}=\bm{a}$, and $\frac{\partial}{\partial v_i}$ denotes the the partial derivative with respect to the $i$th component in $f_{t+h}$.
+where $\bm{v}=\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)$, $\bm{a} =\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)$, $\operatorname{D}f_{t+h}\left(\bm{a}\right)$ denotes the matrix of partial derivative of $f_{t+h}(\bm{v})$ at $\bm{v}=\bm{a}$, and $\frac{\partial}{\partial v_i}$ denotes the partial derivative with respect to the $i$th component in $f_{t+h}$.
 
 Similarly, for $h > d$, we can write
 
@@ -520,6 +522,110 @@ Let $q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}$, then @eq-acmcp_1 transforms into 
 -   Choosing the learning rate? Analysis of the parameter effect.
 
 # Simulations
+
+## Linear autoregressive process
+
+$$
+y_t = 0.8y_{t-1} - 0.5y_{t-2} + \epsilon_t,
+$$
+
+where $\epsilon_t$ is white noise with error variance $\sigma^2 = 1$.
+
+$n = 5000, nfit = ncal = 500, \alpha = 0.1, H = 3$.
+
+```{r}
+#| label: fig-AR2_cov
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 10
+#| fig-height: 9
+#| fig-cap: Data simulated from an AR(2) model
+
+P_AR2_cov <- readRDS("../result/P_AR2_cov.rds")
+P_AR2_cov
+```
+
+```{r}
+#| label: fig-AR2_box
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 10
+#| fig-height: 8
+#| fig-cap: Data simulated from an AR(2) model
+
+P_AR2_box <- readRDS("../result/P_AR2_box.rds")
+P_AR2_box
+```
+
+```{r}
+#| label: fig-AR2_timeplot
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 10
+#| fig-height: 8
+#| fig-cap: Data simulated from an AR(2) model
+
+P_AR2_timeplot <- readRDS("../result/P_AR2_timeplot.rds")
+P_AR2_timeplot
+```
+
+## Nonlinear autoregressive process
+
+$$
+y_t = \sin(y_{t-1}) + 0.5\log(y_{t-2} + 1) + 0.1y_{t-1}x_{1,t} + 0.3x_{2,t} + \epsilon_{t}
+$$
+
+where $\epsilon_t$ is white noise with error variance $\sigma^2 = 0.1$.
+
+$n = 2000, nfit = ncal = 500, \alpha = 0.1, H = 3$.
+
+```{r}
+#| label: fig-NL_cov
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 10
+#| fig-height: 9
+#| fig-cap: Data simulated from a nonlinear model
+
+P_NL_cov <- readRDS("../result/P_NL_cov.rds")
+P_NL_cov
+```
+
+```{r}
+#| label: fig-NL_box
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 10
+#| fig-height: 8
+#| fig-cap: Data simulated from a nonlinear model
+
+P_NL_box <- readRDS("../result/P_NL_box.rds")
+P_NL_box
+```
+
+```{r}
+#| label: fig-NL_timeplot
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 10
+#| fig-height: 8
+#| fig-cap: Data simulated from a nonlinear model
+
+P_NL_timeplot <- readRDS("../result/P_NL_timeplot.rds")
+P_NL_timeplot
+```
 
 -   Evaluated on two properties: validity and efficiency.
 

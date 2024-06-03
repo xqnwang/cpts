@@ -3,6 +3,8 @@
 *.rds
 *.csv
 refs/*
+!result/*
+*_files/
 
 # History files
 .Rhistory
