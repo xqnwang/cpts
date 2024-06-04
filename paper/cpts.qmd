@@ -521,9 +521,11 @@ Let $q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}$, then @eq-acmcp_1 transforms into 
 
 -   Choosing the learning rate? Analysis of the parameter effect.
 
-# Simulations
+# Experiments
 
-## Linear autoregressive process
+## Simulated examples
+
+### Linear autoregressive process
 
 $$
 y_t = 0.8y_{t-1} - 0.5y_{t-2} + \epsilon_t,
@@ -575,7 +577,7 @@ P_AR2_timeplot <- readRDS("../result/P_AR2_timeplot.rds")
 P_AR2_timeplot
 ```
 
-## Nonlinear autoregressive process
+### Nonlinear autoregressive process
 
 $$
 y_t = \sin(y_{t-1}) + 0.5\log(y_{t-2} + 1) + 0.1y_{t-1}x_{1,t} + 0.3x_{2,t} + \epsilon_{t}
@@ -635,15 +637,89 @@ P_NL_timeplot
 
     -   instead of plotting forecasts and prediction intervals, plot errors and quantile estimate.
 
-# Applications
+## Real data examples
 
--   COVID-19 case counts
+### Electricity demand data
 
--   Stock price
+Daily electricity demand in 2012–2014, Victoria, Australia
 
--   Electricity demand
+-   $H=7, \alpha=0.1, nfit = 2 \text{ years}, ncal = 100$
 
--   Hierarchical time series (tourism data)?
+-   temperature, workday, cooling (18)
+
+```{r}
+#| label: fig-elec_data
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 10
+#| fig-height: 5
+#| fig-cap: Daily electricity demand and corresponding maximum daily temperatures in 2012–2014, Victoria, Australia.
+
+P_elec_data <- readRDS("../result/P_elec_data.rds")
+P_elec_data
+```
+
+```{r}
+#| label: fig-elec_cov
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 15
+#| fig-height: 7
+#| fig-cap: Daily electricity demand
+
+P_elec_cov <- readRDS("../result/P_elec_cov.rds")
+P_elec_cov
+```
+
+```{r}
+#| label: fig-elec_box
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 8
+#| fig-height: 10
+#| fig-cap: Daily electricity demand
+
+P_elec_box <- readRDS("../result/P_elec_box.rds")
+P_elec_box
+```
+
+```{r}
+#| label: fig-elec_timeplot
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 8
+#| fig-height: 10
+#| fig-cap: Daily electricity demand
+
+P_elec_timeplot <- readRDS("../result/P_elec_timeplot.rds")
+P_elec_timeplot
+```
+
+The ELEC2 dataset:
+
+-   Date: date between 7 May 1996 to 5 December 1998. Here normalized between 0 and 1
+
+-   Day: day of the week (1-7)
+
+-   Period: time of the measurement (1-48) in half hour intervals over 24 hours. Here normalized between 0 and 1
+
+-   NSWprice: New South Wales electricity price, normalized between 0 and 1
+
+-   NSWdemand: New South Wales electricity demand, normalized between 0 and 1
+
+-   VICprice: Victoria electricity price, normalized between 0 and 1
+
+-   VICdemand: Victoria electricity demand, normalized between 0 and 1
+
+transfer: scheduled electricity transfer between both states, normalized between 0 and 1
 
 # Discussion
 

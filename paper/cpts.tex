@@ -256,7 +256,7 @@ quantile estimate},
 
 \title{Online conformal inference for multi-step time series
 forecasting}
-\date{3 June 2024}
+\date{4 June 2024}
 
 \def\Date{\number\day}
 \def\Month{\ifcase\month\or
@@ -356,7 +356,7 @@ forecasting}
       \\[0.5cm]%
    %
    }%
-   \lfoot{\sf Wang, Hyndman: 3 June 2024}
+   \lfoot{\sf Wang, Hyndman: 4 June 2024}
 
 % Keywords
 
@@ -1392,9 +1392,11 @@ long-run coverage achieved by the AcMCP method.
   Choosing the learning rate? Analysis of the parameter effect.
 \end{itemize}
 
-\section{Simulations}\label{simulations}
+\section{Experiments}\label{experiments}
 
-\subsection{Linear autoregressive
+\subsection{Simulated examples}\label{simulated-examples}
+
+\subsubsection{Linear autoregressive
 process}\label{linear-autoregressive-process}
 
 \[
@@ -1442,7 +1444,7 @@ where \(\epsilon_t\) is white noise with error variance
 
 \end{figure}%
 
-\subsection{Nonlinear autoregressive
+\subsubsection{Nonlinear autoregressive
 process}\label{nonlinear-autoregressive-process}
 
 \[
@@ -1507,18 +1509,93 @@ where \(\epsilon_t\) is white noise with error variance
   \end{itemize}
 \end{itemize}
 
-\section{Applications}\label{applications}
+\subsection{Real data examples}\label{real-data-examples}
+
+\subsubsection{Electricity demand data}\label{electricity-demand-data}
+
+Daily electricity demand in 2012--2014, Victoria, Australia
 
 \begin{itemize}
 \item
-  COVID-19 case counts
+  \(H=7, \alpha=0.1, nfit = 2 \text{ years}, ncal = 100\)
 \item
-  Stock price
-\item
-  Electricity demand
-\item
-  Hierarchical time series (tourism data)?
+  temperature, workday, cooling (18)
 \end{itemize}
+
+\begin{figure}
+
+\centering{
+
+\includegraphics{cpts_files/figure-pdf/fig-elec_data-1.pdf}
+
+}
+
+\caption{\label{fig-elec_data}Daily electricity demand and corresponding
+maximum daily temperatures in 2012--2014, Victoria, Australia.}
+
+\end{figure}%
+
+\begin{figure}
+
+\centering{
+
+\includegraphics{cpts_files/figure-pdf/fig-elec_cov-1.pdf}
+
+}
+
+\caption{\label{fig-elec_cov}Daily electricity demand}
+
+\end{figure}%
+
+\begin{figure}
+
+\centering{
+
+\includegraphics{cpts_files/figure-pdf/fig-elec_box-1.pdf}
+
+}
+
+\caption{\label{fig-elec_box}Daily electricity demand}
+
+\end{figure}%
+
+\begin{figure}
+
+\centering{
+
+\includegraphics{cpts_files/figure-pdf/fig-elec_timeplot-1.pdf}
+
+}
+
+\caption{\label{fig-elec_timeplot}Daily electricity demand}
+
+\end{figure}%
+
+The ELEC2 dataset:
+
+\begin{itemize}
+\item
+  Date: date between 7 May 1996 to 5 December 1998. Here normalized
+  between 0 and 1
+\item
+  Day: day of the week (1-7)
+\item
+  Period: time of the measurement (1-48) in half hour intervals over 24
+  hours. Here normalized between 0 and 1
+\item
+  NSWprice: New South Wales electricity price, normalized between 0 and
+  1
+\item
+  NSWdemand: New South Wales electricity demand, normalized between 0
+  and 1
+\item
+  VICprice: Victoria electricity price, normalized between 0 and 1
+\item
+  VICdemand: Victoria electricity demand, normalized between 0 and 1
+\end{itemize}
+
+transfer: scheduled electricity transfer between both states, normalized
+between 0 and 1
 
 \section{Discussion}\label{discussion}
 
