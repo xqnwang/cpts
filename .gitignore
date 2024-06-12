@@ -3,7 +3,8 @@
 *.rds
 *.csv
 refs/*
-!result/*
+!result/P*
+!result/T*
 *_files/
 
 # History files
