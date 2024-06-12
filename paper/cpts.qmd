@@ -261,8 +261,6 @@ $$
 \tilde{w}_i = \frac{w_i}{\sum_{i=t-t_c+1}^{t}w_i+1}, \text{ for } i \in \{t-t_c+1,\ldots,t\} \quad \text{and} \quad \tilde{w}_{t+1} =  \frac{1}{\sum_{i=t-t_c+1}^{t}w_i+1}.
 $$
 
-Throughout the experiments in the paper, we will take $b = 0.99$.
-
 -   Weighted quantile estimation.
 
 -   Theorem?
@@ -280,8 +278,6 @@ and compute the $h$-step-ahead prediction interval using @eq-mscp by setting $\a
 @eq-mscp indicates that the correction to the estimation of $\alpha$ at time $t+h$ is determined by the historical miscoverage frequency up to time $t$. At each iteration, we raise the estimate of $\alpha$ used for quantile estimation at time $t+h$ if $\hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}$ covered $y_t$, whereas we lower the estimate if $\hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}$ miscovered $y_t$. Thus the miscoverage event has a delayed impact on the estimation of $\alpha$ over $h$ periods, indicating that the correction of the $\alpha$ estimate becomes less prompt with increasing values of $h$. Particularly, @eq-macp reduces to the update for ACP as given by @eq-acp for $h=1$.
 
 It should be noted that the update equation $\alpha_{t+1|t-h+1} := \alpha_{t|t-h} + \gamma\left(\alpha - \mathrm{err}_{t|t-h}\right)$ is not utilized in this context. This arises from its limitation that the available information at time $t$ is insufficient to derive the $\alpha$ estimate for forecasting $h$ steps ahead.
-
-In our experiments we will use $\gamma=0.01$.
 
 -   Theorem?
 
@@ -301,7 +297,7 @@ $$
 x \geq c \cdot g(t-h) \Longrightarrow r_t(x) \geq b, \quad \text {and} \quad x \leq-c \cdot g(t-h) \Longrightarrow r_t(x) \leq -b,
 $$ {#eq-saturation_h}
 
-for constant $b, c > 0$, and an admissible function $g$ that is sublinear, nonnegative, nondecreasing. Here, we define $\hat{s}_{t+h|t}$ as the $h$-step-ahead forecast of the nonconformity score (defined as the forecast error), produced by any suitable scorecaster (forecasting model) trained using the $h$-step-ahead nonconformity scores available up to and including time $t$. With this updating equation, we can obtain all required $h$-step-ahead forecast intervals using information available up to time $t$.
+for constant $b, c > 0$, and an admissible function $g$ that is sublinear, nonnegative, nondecreasing. Here, we define $\hat{s}_{t+h|t}$ as the $h$-step-ahead forecast of the nonconformity score (defined as the forecast error), produced by any suitable scorecaster (forecasting model) trained using the $h$-step-ahead nonconformity scores available up to and including time $t$. With this updating equation, we can obtain all required $h$-step-ahead prediction intervals using information available up to time $t$.
 
 The P control in MPID shows a delayed correction of the $\alpha$ estimate for a length of $h$ periods. The I control accounts for the cumulative historical coverage errors associated with $h$-step-ahead prediction intervals during the update process, thereby enhancing the stability of the interval coverage. Moreover, the D control performs $h$-step-ahead forecasting, which tends to result in increased forecast variance for larger forecast horizon $h$.
 
@@ -323,7 +319,7 @@ $$
 y_t = f_{t}\left(y_{(t-d):(t-1)},\bm{x}_{(t-k):t}\right) + \epsilon_t,
 $$ {#eq-dgp}
 
-where $f_{t}$ is considered a non-linear function in $d$ lagged values of $y_t$ (i.e. $y_{(t-d):(t-1)}$) and the current value along with the preceding $k$ values of the exogenous predictors (i.e. $\bm{x}_{(t-k):t}$), and $\epsilon_t$ is white noise.
+where $f_{t}$ is considered a nonlinear function in $d$ lagged values of $y_t$ (i.e. $y_{(t-d):(t-1)}$) and the current value along with the preceding $k$ values of the exogenous predictors (i.e. $\bm{x}_{(t-k):t}$), and $\epsilon_t$ is white noise.
 
 It is well-established in the forecasting literature that, for optimal $h$-step-ahead forecasts, the sequence of forecast errors is *at most* an MA$(h-1)$ process [@harvey1997; @diebold2017]. We now present the property under the assumption of a non-stationary autoregressive DGP, and provide its proof in @sec-proof_ma based on the proof of @prp-ar that we will introduce later.
 
@@ -405,7 +401,7 @@ Therefore, the forecast errors of optimal $h$-step-ahead forecasts are at most a
 
 @prp-ar can be viewed as an extension of @prp-ma. It suggests that the $h$-step ahead forecast error, $e_{t+h|t}$, is serially correlated with the forecast errors from at most the past $h-1$ steps, i.e., $e_{t+1|t}, \ldots, e_{t+h-1|t}$. However, we note that the autocorrelation among errors associated with optimal forecasts can not be used to improve forecasting performance, as it does not incorporate any information available when the forecast was made. It is reasonable because if we could forecast the forecast error, we could improve the forecast, indicating that the initial forecast couldn’t have been optimal.
 
-The proof of @prp-ar suggests that, if $f_t$ is a linear autoregressive model, then the AR coefficients are the linear coefficients of the optimal forecasting model. However, when $f_t$ takes on a more complex non-linear structure, the AR coefficients become complicated functions of observed data and unobserved model coefficients.
+The proof of @prp-ar suggests that, if $f_t$ is a linear autoregressive model, then the AR coefficients are the linear coefficients of the optimal forecasting model. However, when $f_t$ takes on a more complex nonlinear structure, the AR coefficients become complicated functions of observed data and unobserved model coefficients.
 
 ### The AcMCP method {#sec-novel}
 
@@ -523,17 +519,21 @@ Let $q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}$, then @eq-acmcp_1 transforms into 
 
 # Experiments
 
+In this section, we examine the empirical performance of the previously proposed multi-step conformal prediction methods using two simulated data settings and two real data examples. Throughout the experiments, we adhere to the following parameter settings: we focus on the target coverage level $1-\alpha=0.9$; for the MWCP method, we use $b=0.99$ as per @barber2023; following @angelopoulos2024, we use a step size parameter of $\gamma=0.005$ for the MACP method, a Theta model as the scorecaster in the MPID method, and a learning rate of $\eta=0.01\hat{B}_t$ for quantile tracking in the MPID and AcMCP methods, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\cdots,s_{t|t-h}\}$ is the highest score over a tailing window and the window length $\Delta$ is set to be same as the length of the calibration set; we consider a clipped version of MACP by imputing infinite intervals with the largest score seen so far.
+
 ## Simulated examples
 
 ### Linear autoregressive process
+
+We first consider a simulated stationary time series which is generated from an AR$(2)$ process
 
 $$
 y_t = 0.8y_{t-1} - 0.5y_{t-2} + \epsilon_t,
 $$
 
-where $\epsilon_t$ is white noise with error variance $\sigma^2 = 1$.
+where $\epsilon_t$ is white noise with error variance $\sigma^2 = 1$. After an appropriate burn-in period, we generate $N=5000$ data points. Under the sequential split and online learning settings, we create training sets $\mathcal{D}_{\text{tr}}$ and calibration sets $\mathcal{D}_{\text{cal}}$, each with a length of $500$. We use AR$(2)$ models to generate $1$- to $3$-step-ahead point forecasts (i.e. $H=3$) with the automated algorithm implemented in the **forecast** R package [@hyndman2024]. The goal is to generate prediction intervals using various proposed conformal prediction methods and evaluate whether they can achieve the nominal long-run coverage for each separate forecast horizon.
 
-$n = 5000, nfit = ncal = 500, \alpha = 0.1, H = 3$.
+@fig-AR2_cov presents the rolling coverage and interval width of each method for each forecast horizon, with metrics computed over a rolling window of size $500$. In terms of coverage, we observe that MPID and AcMCP achieve approximately the desired $90\%$ coverage level over the rolling windows, while other methods, including the AR model, undergo much wider swings away from the desired level, showing large troughs and peaks in coverage as time changes. Turning to the prediction interval width, the trajectories of the rolling mean and median of the interval widths for each method are largely consistent. AcMCP constructs narrower prediction intervals than MPID, despite both methods achieving similar coverage. Moreover, we see that AcMCP tends to offer adaptive prediction intervals, and results in wider intervals especially when competing methods undercover, which is to be expected. In short, AcMCP intervals offer greater adaptivity and more precise coverage compared to AR, MSCP, MWCP and MACP. However, MPID achieves tight coverage but at the cost of constructing wider prediction intervals. This is due to the fact that the inclusion of a second model (scorecaster) is likely to introduce large variance into the generated prediction intervals. The results can be further elucidated with @fig-AR2_box, which presents boxplots of rolling coverage and interval width for each method and each forecast horizon.
 
 ```{r}
 #| label: fig-AR2_cov
@@ -541,9 +541,9 @@ $n = 5000, nfit = ncal = 500, \alpha = 0.1, H = 3$.
 #| message: false
 #| warning: false
 #| results: hide
-#| fig-width: 10
-#| fig-height: 9
-#| fig-cap: Data simulated from an AR(2) model
+#| fig-width: 8
+#| fig-height: 7
+#| fig-cap: AR(2) simulation results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $500$. The black dashed line indicates the target level of $1-\alpha=0.9$.
 
 P_AR2_cov <- readRDS("../result/P_AR2_cov.rds")
 P_AR2_cov
@@ -555,13 +555,15 @@ P_AR2_cov
 #| message: false
 #| warning: false
 #| results: hide
-#| fig-width: 10
-#| fig-height: 8
-#| fig-cap: Data simulated from an AR(2) model
+#| fig-width: 8
+#| fig-height: 3
+#| fig-cap: AR(2) simulation results showing boxplots of the rolling coverage and interval width for each method across different forecast horizons. The red dashed lines show the target coverage level, while the blue dashed lines indicate the median interval width of the AcMCP method.
 
 P_AR2_box <- readRDS("../result/P_AR2_box.rds")
 P_AR2_box
 ```
+
+We note that the inclusion of the last term $\tilde{e}_{t+h|t}$ in AcMCP should only result in a slight difference compared to the version without this term, which we henceforth refer to as MPI. This is because, the inclusion of $\tilde{e}_{t+h|t}$ aims to capture autocorrelations inherent in multi-step forecast errors and focuses on the mean of forecast errors, whereas the whole update of AcMCP operates on quantiles of scores. To illustrate the subtle difference in their results and explore their origins, we visualize their prediction interval over a truncated period of length $500$, as shown in @fig-AR2_timeplot. We observe that AcMCP and MPI indeed construct similar prediction intervals so their lower and upper bounds mostly overlap with each other. The main differences may occur around the time 1320 and during the period 1470-1500, where AcMCP tends to have a fanning-out effect, increasing the interval width as the forecast horizon increases, compared to MPI. @fig-AR2_timeplot also presents the prediction interval bounds given by MACP. The prediction intervals of both AcMCP and MACP can capture certain patterns in the actual observations, and there is no consistent pattern indicating dominance of one method over the other in terms of interval width.
 
 ```{r}
 #| label: fig-AR2_timeplot
@@ -569,9 +571,9 @@ P_AR2_box
 #| message: false
 #| warning: false
 #| results: hide
-#| fig-width: 10
-#| fig-height: 8
-#| fig-cap: Data simulated from an AR(2) model
+#| fig-width: 8
+#| fig-height: 5
+#| fig-cap: AR(2) simulation results showing the prediction interval bounds for the MACP, MPI, and AcMCP methods over a truncated period of length 500.
 
 P_AR2_timeplot <- readRDS("../result/P_AR2_timeplot.rds")
 P_AR2_timeplot
@@ -579,13 +581,17 @@ P_AR2_timeplot
 
 ### Nonlinear autoregressive process
 
+We then consider the case of a nonlinear data generation process, which happens in many practical time series applications. We specify the true data generation process as
+
 $$
-y_t = \sin(y_{t-1}) + 0.5\log(y_{t-2} + 1) + 0.1y_{t-1}x_{1,t} + 0.3x_{2,t} + \epsilon_{t}
+y_t = \sin(y_{t-1}) + 0.5\log(y_{t-2} + 1) + 0.1y_{t-1}x_{1,t} + 0.3x_{2,t} + \epsilon_{t},
 $$
 
-where $\epsilon_t$ is white noise with error variance $\sigma^2 = 0.1$.
+where $x_{1,t}$ and $x_{2,t}$ are uniformly distributed on $[0,1]$, and $\epsilon_{t}$ is white noise with error variance $\sigma^2 = 0.1$. Thus, the time series $y_t$ nonlinearly depends on its lagged values $y_{t-1}$ and $y_{t-2}$, as well as exogenous variables $x_{1,t}$ and $x_{2,t}$.
 
-$n = 2000, nfit = ncal = 500, \alpha = 0.1, H = 3$.
+After an appropriate burn-in period, we generate $N=2000$ data points. Under the sequential split and online learning settings, we create training sets $\mathcal{D}_{\text{tr}}$ and calibration sets $\mathcal{D}_{\text{cal}}$, each with a length of $500$. Given the nonlinear structure of the data generation process, we use feed-forward neural networks with a single hidden layer and lagged inputs to generate $1$- to $3$-step-ahead point forecasts (i.e. $H=3$) with the automated algorithm implemented in the **forecast** R package. Note that it is not straightforward for neural networks to derive interval forecasts, thus we do not include neural network models when presenting the results.
+
+@fig-elec_cov illustrates the rolling coverage and interval width of each method, with calculations based on a rolling window of size $100$. We see that MPID and AcMCP are able to maintain minor fluctionations around the target coverage of $90\%$ across all time indices, contrasting with MSCP, MWCP, and MACP, which struggle to sustain the target coverage and display pronounced fluctuations over time. Moreover, all conformal prediction methods, except for MSCP, construct adaptive prediction intervals. They widen intervals in response to undercoverage and narrow them when overcoverage occurs. Notably, MPID and AcMCP demonstrate greater adaptability, displaying higher variability in interval widths compared to competing methods in order to uphold the desired coverage. Lastly, AcMCP intervals are evidently narrower than MPID intervals for $2$-step-ahead forecasting but wider for $3$-step-ahead forecasting. AcMCP intervals appear to be more reasonable, as they tend to widen with increasing forecast horizons.
 
 ```{r}
 #| label: fig-NL_cov
@@ -593,13 +599,45 @@ $n = 2000, nfit = ncal = 500, \alpha = 0.1, H = 3$.
 #| message: false
 #| warning: false
 #| results: hide
-#| fig-width: 10
-#| fig-height: 9
-#| fig-cap: Data simulated from a nonlinear model
+#| fig-width: 8
+#| fig-height: 7
+#| fig-cap: Nonlinear simulation results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $100$. The black dashed line indicates the target level of $1-\alpha=0.9$.
 
 P_NL_cov <- readRDS("../result/P_NL_cov.rds")
 P_NL_cov
 ```
+
+The most basic requirement for a prediction interval is to cover the actual value with the desired probability. Evaluating the efficiency of forecast intervals is relevant only when they demonstrate valid coverage. As discussed, MSCP, MWCP and MACP have coverage that deviate a bit far from the desired coverage, thus we now focus our comparison on MPID and AcMCP, the two methods that offer more accurate coverage. @tbl-NL_winkler shows the resulting coverage gap (the difference between actual and nominal coverage), forecast interval width, and Winkler score [@winkler1972], averaged over all test sets, for the MPI, MPID, and AcMCP methods. The Winkler score is proposed by @winkler1972 to evaluate a prediction interval, and is defined as the length of the interval plus a penalty if the observation is outside the interval. A smaller Winkler score indicates better performance. The results indicate that, in this nonlinear data generation process setting, there is essentially no difference among these three methods in terms of overall coverage gap, average interval width, and Winkler score.
+
+```{r}
+#| label: tbl-NL_winkler
+#| message: false
+#| warning: false
+#| tbl-cap: Nonlinear simulation results showing coverage gap, interval width, and Winkler score, averaged over all test sets.
+
+T_NL_winkler <- readRDS("../result/T_NL_winkler.rds")
+library(kableExtra)
+T_NL_winkler |>
+  kable(
+    format = "latex",
+    booktabs = TRUE,
+    digits = 3,
+    align = c("l", rep("r", ncol(T_NL_winkler) - 1)),
+    escape = FALSE,
+    linesep = ""
+  ) |>
+  kable_paper(full_width = FALSE) |>
+  kable_styling(
+    latex_options = c("repeat_header", "scale_down"),
+    font_size = 13
+  ) |>
+  add_header_above(
+    c(" " = 1, "h=1" = 3, "h=2" = 3, "h=3" = 3),
+    align = "c"
+  )
+```
+
+We provide further insights into the performance of these conformal prediction methods by presenting boxplots of the rolling coverage and interval width for each method, as depicted in @fig-NL_box. We see that coverage variability is higher for MSCP, MWCP and MACP than for MPID and AcMCP, while MPID and AcMCP lead to a lower effective interval size.
 
 ```{r}
 #| label: fig-NL_box
@@ -607,45 +645,19 @@ P_NL_cov
 #| message: false
 #| warning: false
 #| results: hide
-#| fig-width: 10
-#| fig-height: 8
-#| fig-cap: Data simulated from a nonlinear model
+#| fig-width: 8
+#| fig-height: 3
+#| fig-cap: Nonlinear simulation results showing boxplots of the rolling coverage and interval width for each method across different forecast horizons. The red dashed lines show the target coverage level, while the blue dashed lines indicate the median interval width of the AcMCP method.
 
 P_NL_box <- readRDS("../result/P_NL_box.rds")
 P_NL_box
 ```
 
-```{r}
-#| label: fig-NL_timeplot
-#| echo: false
-#| message: false
-#| warning: false
-#| results: hide
-#| fig-width: 10
-#| fig-height: 8
-#| fig-cap: Data simulated from a nonlinear model
-
-P_NL_timeplot <- readRDS("../result/P_NL_timeplot.rds")
-P_NL_timeplot
-```
-
--   Evaluated on two properties: validity and efficiency.
-
--   Evaluation and visualization.
-
-    -   an easy-to-interpret visualisation combining validity and efficiency: plot average/median interval length against mean coverage for different methods or different parameter values.
-
-    -   instead of plotting forecasts and prediction intervals, plot errors and quantile estimate.
-
 ## Real data examples
 
 ### Electricity demand data
 
-Daily electricity demand in 2012–2014, Victoria, Australia
-
--   $H=7, \alpha=0.1, nfit = 2 \text{ years}, ncal = 100$
-
--   temperature, workday, cooling (18)
+Now we examine empirical performance of the conformal prediction methods using an electricity demand data set. The data set tracks daily electricity demand (GW), daily maximum temperature (degrees Celsius), and holiday information for the state of Victoria, Australia, spanning a three-year period from 2012 to 2014. @fig-elec_data displays the daily electricity demand during 2012-2014, along with temperatures. The right panel shows a nonlinear relationship between electricity demand and temperature, with demand increasing for low temperatures (due to heating) and increasing for high temperatures (due to cooling).
 
 ```{r}
 #| label: fig-elec_data
@@ -653,13 +665,17 @@ Daily electricity demand in 2012–2014, Victoria, Australia
 #| message: false
 #| warning: false
 #| results: hide
-#| fig-width: 10
-#| fig-height: 5
-#| fig-cap: Daily electricity demand and corresponding maximum daily temperatures in 2012–2014, Victoria, Australia.
+#| fig-width: 8
+#| fig-height: 3
+#| fig-cap: Daily electricity demand and corresponding daily maximum temperatures in 2012–2014, Victoria, Australia.
 
 P_elec_data <- readRDS("../result/P_elec_data.rds")
 P_elec_data
 ```
+
+Our response variable is $\texttt{Demand}$, and we use two covariates: $\texttt{Temperature}$, and $\texttt{Workday}$ which is an indicator variable for if the day was a working day or not. Following @hyndman2021, we will fit a dynamic regression model with a piecewise linear function of temperature (containing a knot at $18$ degrees) to generate $1$- to $7$-step-ahead point forecasts (i.e. $H=7$). The error series in the regression is assumed to follow an ARIMA model to contain autocorrelation. Under the sequential split and online learning settings, we use two years of data as training sets to fit dynamic regression models, and use $100$ data points for calibration sets.
+
+We present the results in @fig-elec_cov and @fig-elec_box, comparing the rolling coverage and interval width of each method. These computations are based on a rolling window of size $100$. First, we observe that DR (dynamic regression) consistently achieves a significantly higher coverage than the $90\%$ target coverage, resulting in much wider intervals than other methods for $h=1,2,3,4$. Secondly, MSCP, MWCP, and MACP fail to sustain the target coverage and noticeably undercover after September 2014 for all forecast horizons, thus leading to narrower intervals than others. Thirdly, MPI, MPID, and AcMCP offer prediction intervals that are wider than those of other conformal prediction methods, effectively mitigating or avoiding the undercoverage issue observed after September 2014. Additionally, we notice that MPID performs slightly worse than MPI and AcMCP in terms of coverage for $h=3,4,7$, despite leading to wider intervals. Finally, MPI and AcMCP coverage display similar pattern, but AcMCP is capable of constructing narrower intervals than MPI.
 
 ```{r}
 #| label: fig-elec_cov
@@ -667,9 +683,9 @@ P_elec_data
 #| message: false
 #| warning: false
 #| results: hide
-#| fig-width: 15
-#| fig-height: 7
-#| fig-cap: Daily electricity demand
+#| fig-width: 13
+#| fig-height: 8
+#| fig-cap: Electricity demand data results showing rolling coverage, mean and median interval width for each forecast horizon. The dynamic regression model is abbreviated to DR. The displayed curves are smoothed over a rolling window of size $100$. The black dashed line indicates the target level of $1-\alpha=0.9$.
 
 P_elec_cov <- readRDS("../result/P_elec_cov.rds")
 P_elec_cov
@@ -681,13 +697,15 @@ P_elec_cov
 #| message: false
 #| warning: false
 #| results: hide
-#| fig-width: 8
-#| fig-height: 10
-#| fig-cap: Daily electricity demand
+#| fig-width: 7
+#| fig-height: 7
+#| fig-cap: Electricity demand data results showing boxplots of the rolling coverage and interval width for each method across different forecast horizons. The dynamic regression model is abbreviated to DR. The red dashed lines show the target coverage level, while the blue dashed lines indicate the median interval width of the AcMCP method.
 
 P_elec_box <- readRDS("../result/P_elec_box.rds")
 P_elec_box
 ```
+
+We present the forecast interval bounds for MACP, MPI, and AcMCP in @fig-elec_timeplot. The plot shows that MACP intervals are too narrow to adequately hug the true values, particularly from September to November of 2014. In contrast, MPI and AcMCP perform better by widening their intervals, resulting in narrower swings away from the $90\%$ target level. The differences between MPI and AcMCP prediction intervals are most pronounced in the $5$-, $6$-, and $7$-step-ahead forecast results. For $5$-step-ahead forecasting, from May to July of 2014, the upper bounds of MPI intervals struggle to capture the true values. AcMCP addresses this undercoverage by construct larger upper bounds. In August and September, AcMCP constructs smaller upper bounds than MPI while still capturing the true values effectively. For $6$-step-ahead forecasting from May to July, AcMCP offers smaller upper bounds than MPI, which provides upper bounds that are far away from the truth. Similar reaction is observed for $7$-step-ahead forecasting during August and September.
 
 ```{r}
 #| label: fig-elec_timeplot
@@ -697,37 +715,73 @@ P_elec_box
 #| results: hide
 #| fig-width: 8
 #| fig-height: 10
-#| fig-cap: Daily electricity demand
+#| fig-cap: Electricity demand data results showing the forecast interval bounds for MACP, MPI, and AcMCP over the whole test set.
 
 P_elec_timeplot <- readRDS("../result/P_elec_timeplot.rds")
 P_elec_timeplot
 ```
 
-The ELEC2 dataset:
+@fig-elec_winkler presents Winkler scores of each method across different forecast horizons. DR and MPID consistently perform worse in terms of Winkler scores. For $1$-, $2$-, and $3$-step ahead forecasting, MPI and AcMCP deliver comparable or even better results than MSCP, MWCP, and MACP, while still providing more precise coverage. For $4$-, $5$-, $6$-, and $7$-step ahead forecasting, MPI and AcMCP yield much larger Winkler scores than other conformal prediction methods, whereas the competing methods suffer from severe undercoverage issues. Thus, MPI and AcMCP are able to provide valid prediction intervals. We also notice that AcMCP outperforms MPI for $h=6$ and $h=7$, where both methods offer similar coverage.
 
--   Date: date between 7 May 1996 to 5 December 1998. Here normalized between 0 and 1
+```{r}
+#| label: fig-elec_winkler
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 5
+#| fig-height: 3
+#| fig-cap: Electricity demand data results showing Winkler scores of each method across different forecast horizons.
 
--   Day: day of the week (1-7)
+P_elec_winkler <- readRDS("../result/P_elec_winkler.rds")
+P_elec_winkler
+```
 
--   Period: time of the measurement (1-48) in half hour intervals over 24 hours. Here normalized between 0 and 1
+### Eating out expenditure data
 
--   NSWprice: New South Wales electricity price, normalized between 0 and 1
+Finally, we apply the conformal prediction methods to predict the eating out expenditure (\$million) in Victoria, Australia. The data set includes monthly expenditure on cafes, restaurants and takeaway food services in Victoria from April 1982 up to December 2019, as shown in @fig-cafe_data. The data shows an overall upward trend, obvious anuual seasonal patterns, and variability proportional to the data level.
 
--   NSWdemand: New South Wales electricity demand, normalized between 0 and 1
+```{r}
+#| label: fig-cafe_data
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 8
+#| fig-height: 4
+#| fig-cap: Monthly expenditure on cafes, restaurants and takeaway food services in Victoria, Australia, from April 1982 to December 2019.
 
--   VICprice: Victoria electricity price, normalized between 0 and 1
+P_cafe_data <- readRDS("../result/P_cafe_data.rds")
+P_cafe_data
+```
 
--   VICdemand: Victoria electricity demand, normalized between 0 and 1
+We consider three models: ARIMA with logarithmic transformation, ETS, and STL-ETS [@hyndman2021], and then output their simple average as final point forecasts. STL-ETS involves forecasting using the STL decomposition method, applying ETS to forecast the seasonally adjusted series. All three models can be automatically trained using the **forecast** R package. Our goal is to forecast $12$ months ahead, i.e. $H=12$. Under the sequential split and online learning settings, we use $20$ years of data for training the models and $5$ years of data points for calibration sets. The whole test set only has a length of $152$ months. Therefore, we will not compute rolling coverage and interval width in this experiment, but rather compute the coverage and interval width averaged over the entire test set.
 
-transfer: scheduled electricity transfer between both states, normalized between 0 and 1
+We summarize the average coverage, interval width, and Winkler score for each method and each forecast horizon in @fig-cafe_result. The results first show that MSCP, MWCP and MACP provide valid prediction intervals for smaller forecast horizon but fail to achieve the desired coverage for larger forecast horizons ($h>5$). Secondly, for $h \leq 5$, MPI and AcMCP can approximately achieve the desired coverage and provide comparable mean interval widths and Winkler scores with other methods, except for MPID. Thirdly, the coverage of MSCP, MWCP and MACP declines gradually as the forecast horizon increases, while MPI and AcMCP maintain coverage within a tighter range, albeit at the cost of interval efficiency. Lastly, compared to MPI, AcMCP exhibits less deviation from the desired coverage across most forecast horizons.
+
+```{r}
+#| label: fig-cafe_result
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+#| fig-width: 5
+#| fig-height: 7
+#| fig-cap: Eating out expenditure data results showing coverage gap, interval width, and Winkler scores averaged over the entire test set for each forecast horizon. The black dashed line in the top panel indicates no difference from the $90\%$ target level.
+
+P_cafe_result <- readRDS("../result/P_cafe_result.rds")
+P_cafe_result
+```
 
 # Discussion
 
 -   Large forecast horizon
 
--   Evaluation of multi-step intervals
+-   Learning rate determination
 
--   Use the forecasts of predictors, introducing more variability
+-   Variability introduced by the forecasts of predictors
+
+-   Efficiency of prediction intervals
 
 # References {.unnumbered}
 
