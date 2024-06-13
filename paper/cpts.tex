@@ -130,9 +130,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -1560,7 +1560,7 @@ that it is not straightforward for neural networks to derive interval
 forecasts, thus we do not include neural network models when presenting
 the results.
 
-Figure~\ref{fig-elec_cov} illustrates the rolling coverage and interval
+Figure~\ref{fig-NL_cov} illustrates the rolling coverage and interval
 width of each method, with calculations based on a rolling window of
 size \(100\). We see that MPID and AcMCP are able to maintain minor
 fluctionations around the target coverage of \(90\%\) across all time
