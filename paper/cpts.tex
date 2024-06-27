@@ -146,6 +146,7 @@
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
 \makeatother
+
 \ifLuaTeX
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
@@ -259,7 +260,8 @@ quantile estimate},
 %% PAGE BREAKING to avoid widows and orphans
 \clubpenalty = 2000
 \widowpenalty = 2000
-\usepackage{microtype}% Placement of logos
+\usepackage{microtype}
+% Placement of logos
 
 \RequirePackage[absolute,overlay]{textpos}
 \setlength{\TPHorizModule}{1cm}
@@ -270,7 +272,7 @@ quantile estimate},
 
 \title{Online conformal inference for multi-step time series
 forecasting}
-\date{13 June 2024}
+\date{27 June 2024}
 
 \def\Date{\number\day}
 \def\Month{\ifcase\month\or
@@ -370,7 +372,7 @@ forecasting}
       \\[0.5cm]%
    %
    }%
-   \lfoot{\sf Wang, Hyndman: 13 June 2024}
+   \lfoot{\sf Wang, Hyndman: 27 June 2024}
 
 % Keywords
 
@@ -392,6 +394,7 @@ A brief summary
 inference; Nonexchangeability; Valid prediction interval; 
   Weighted quantile estimate.
 \end{keywords}
+
 
 \setstretch{1}
 \section{Introduction}\label{sec-intro}
@@ -1952,6 +1955,7 @@ coefficients of all AR\((j-1)\) models, for \(j = 1,2,\ldots,h-1\). So
 we conclude that the \(h\)-step-ahead forecast error sequence
 \(\{e_{t+h|t}\}\) follows an MA\((h-1)\) process.
 \end{proof}
+
 
 
 
