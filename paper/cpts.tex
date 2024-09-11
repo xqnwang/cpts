@@ -130,9 +130,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{theorem}{Theorem}[section]
-\theoremstyle{plain}
 \newtheorem{proposition}{Proposition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -270,7 +270,7 @@ quantile estimate},
 
 \title{Online conformal inference for multi-step time series
 forecasting}
-\date{10 September 2024}
+\date{11 September 2024}
 
 \def\Date{\number\day}
 \def\Month{\ifcase\month\or
@@ -345,7 +345,7 @@ forecasting}
 
 % Authors
 
-
+\nocover
   \author{Xiaoqian Wang, Rob J Hyndman}
   \addresses{%
     %
@@ -370,7 +370,7 @@ forecasting}
       \\[0.5cm]%
    %
    }%
-   \lfoot{\sf Wang, Hyndman: 10 September 2024}
+   \lfoot{\sf Wang, Hyndman: 11 September 2024}
 
 % Keywords
 
@@ -561,15 +561,19 @@ without the assumption of exchangeability of the data, where
 \(\mathrm{d}_{\mathrm{TV}}\) denotes the total variation distance
 between two distributions.
 
-Moreover, if we assume additionally that the nonconformity scores on
-\(\mathcal{D}_{\text{cal}}\) are distinct with probability one, then the
-probability also has the upper bound:
+Moreover, if we assume that the nonconformity scores on the calibration
+and test sets are distinct with probability one, then the probability
+also has the upper bound:
 
 \[
 \mathbb{P}\left\{Y_{n+1} \in \hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right)\right\} < 1-\alpha+\tilde{w}_{n+1}+\sum_{i \in \mathcal{D}_{\text{cal}}} \tilde{w}_i \cdot \mathrm{d}_{\mathrm{TV}}\left(\mathcal{S}(Z), \mathcal{S}\left(Z^i\right)\right).
 \]
 
 \end{theorem}
+
+We observe that the NexCP method permits conformal prediction beyond the
+realm of exchangeability, with the coverage gap characterized by the
+total variation between the swapped nonconformity score vectors.
 
 \subsubsection{Adaptive conformal
 prediction}\label{adaptive-conformal-prediction}
@@ -578,8 +582,8 @@ The \textbf{adaptive conformal prediction} (ACP) proposed by
 \textcite{gibbs2021} accounts for nonexchangeability by updating the
 quantile level in an online manner. Specifically, it treats \(\alpha\)
 as a tunable parameter and estimates it recursively based on the
-historical performance. ACP can be used to deal with arbitrary online
-distribution shifts.
+historical coverage performance. ACP can be used to deal with arbitrary
+online distribution shifts.
 
 Similar to SCP, the initial step involves a random split on the observed
 data, yielding a training set for fitting a regression model and a
@@ -615,12 +619,12 @@ strategies have been proposed to avoid the necessity of selecting
 \(\gamma\). For example, \textcite{zaffran2022} use an adaptive
 aggregation of multiple ACPs with a set of candidate values for
 \(\gamma\) , determining weights based on their historical performance.
-\textcite{bastani2022} propose the multivalid prediction algorithm in
+\textcite{bastani2022} propose a multivalid prediction algorithm in
 which the prediction set is established by selecting a threshold from a
 sequence of candidate thresholds. However, \textcite{gibbs2024} have
 empirically shown that both previous methods fail to promptly adapt to
 the local changes. To address this limitation, \textcite{gibbs2024}
-propose adaptively tuning the step size parameter \(\gamma\) in an
+suggest adaptively tuning the step size parameter \(\gamma\) in an
 online setting, choosing an ``optimal'' value for \(\gamma\) from a
 candidate set of values by assessing their historical performance.
 
@@ -662,10 +666,10 @@ as PID.
 The iteration of the PID method is given by
 
 \[
-q_{t+1}=\underbrace{q_t+\eta \left(\mathrm{err}_t-\alpha\right)}_{\mathrm{P}}+\underbrace{r_t\left(\sum_{i=1}^t \left(\mathrm{err}_i-\alpha\right)\right)}_{\mathrm{I}}+\underbrace{g_t^{\prime}}_{\mathrm{D}}.
+q_{t+1}=\underbrace{q_t+\eta\left(\mathrm{err}_t-\alpha\right)}_{\mathrm{P}}+\underbrace{r_t\left(\sum_{i=1}^t \left(\mathrm{err}_i-\alpha\right)\right)}_{\mathrm{I}}+\underbrace{g_t^{\prime}}_{\mathrm{D}}.
 \]
 
-The PID method integrates three modules, namely quantile tracking (P
+The PID iteration integrates three modules, namely quantile tracking (P
 control), error integration (I control), and scorecasting (D control).
 
 The P control module updates the quantile iteratively with a constant
@@ -708,9 +712,10 @@ Assume that the nonconformity scores are bounded within \([-b, b]\), for
 x \geq c \cdot g(t) \Longrightarrow r_t(x) \geq b, \quad \text {and} \quad x \leq-c \cdot g(t) \Longrightarrow r_t(x) \leq -b,
 }\end{equation}
 
-for positive constants \(b, c\) and an admissible function \(g\). Then
-for any \(\alpha \in (0,1)\), and any \(T \geq 1\) the I control
-iteration satisfies
+for positive constants \(b, c\) and an admissible (i.e.~sublinear,
+nonnegative, and nondecreasing) function \(g\). Then for any
+\(\alpha \in (0,1)\), and any \(T \geq 1\) the I control iteration
+satisfies
 
 \[
 |\frac{1}{T}\sum_{t=1}^{T}\mathrm{err}_t - \alpha| \leq \frac{c \cdot g(T)+1}{T}.
@@ -723,13 +728,13 @@ i.e.~\(\lim _{T \rightarrow \infty} \frac{1}{T} \sum_{t=1}^T \mathrm{err}_t = \a
 \end{theorem}
 
 Finally, the D control \(g_t^{\prime}\) is the forecast of \(q_{t+1}\)
-produced by a scorecaster (forecasting model) fitted using the
-nonconformity scores available up to and including time \(t\). Instead
-of reacting to the past miscoverage events, this module looks forward
-and identifies the leftover signal not captured by the regression model
-\(\hat{\mu}\). However, it may introduce variability and result in wider
-prediction sets if the scorecaster is aggressive or if there is not much
-leftover signal in the nonconformity scores.
+produced by a scorecaster (which can be any forecasting model) fitted
+using the nonconformity scores available up to and including time \(t\).
+Instead of reacting to the past miscoverage events, this module looks
+forward and identifies the leftover signal not captured by the
+regression model \(\hat{\mu}\). However, it may introduce variability
+and result in wider prediction sets if the scorecaster is aggressive or
+if there is not much leftover signal in the nonconformity scores.
 
 \subsection{Conformal prediction for time series}\label{sec-review_ts}
 
@@ -770,7 +775,7 @@ predictors. The task is to employ conformal inference to build
 \(\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}\left(z_{1:t},\bm{x}_{t+1:h}\right)\}_{h\in[H]}\),
 at the target coverage level \(1-\alpha\). For brevity, we will use
 \(\hat{\mathcal{C}}_{t+h|t}^{\alpha}\) to denote the \(h\)-step-ahead
-prediction interval produced using the information up to time \(t\).
+prediction interval.
 
 \textbf{Sequential split.} In time series context, it is infeasible to
 perform random splitting in split conformal due to the temporal
@@ -781,26 +786,23 @@ points, \(z_{1:t}\), are sequentially split into two consecutive sets, a
 proper training set \(\mathcal{D}_{\text{tr}} \subset \{1,\ldots,t_r\}\)
 and a calibration set
 \(\mathcal{D}_{\text{cal}} \subset \{t_r+1,\ldots,t\}\), where
-\(t-t_r \gg h\).
+\(t_c=t-t_r \gg H\).
 
 \textbf{Online learning.} Here we consider a generic online learning
 framework to adapt to all conformal prediction methods we will discuss
 in subsequent sections. The framework adopts a standard rolling window
-evaluation strategy. Let the length of the training set be denoted as
-\(t_r\)\hspace{0pt} and the calibration set length as
-\(t_c\)\hspace{0pt}. The online learning framework consists of the
-following steps.
+evaluation strategy and consists of the following steps.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \item
   Initialization. Train a forecasting model on the initial proper
-  training set \(z_{t-t_r+1:t}\), setting \(t=t_r\). Then generate
-  \(H\)-step point forecasts \(\{\hat{y}_{t_r+h|t_r}\}_{h\in[H]}\) and
+  training set \(z_{(1+t-t_r):t}\), setting \(t=t_r\). Then generate
+  \(H\)-step point forecasts \(\{\hat{y}_{t+h|t}\}_{h\in[H]}\) and
   compute the corresponding nonconformity scores
-  \(\{s_{t_r+h|t_r}=\mathcal{S}(z_{1:t_r}, y_{t_r+h})\}_{h\in[H]}\)
+  \(\{s_{t+h|t}=\mathcal{S}(z_{(1+t-t_r):t}, y_{t+h})\}_{h\in[H]}\)
   based on the true values \(H\) time steps ahead,
-  i.e.~\(\{y_{t_r+h}\}_{h\in[H]}\).
+  i.e.~\(\{y_{t+h}\}_{h\in[H]}\).
 \item
   Recurring procedure. Roll the training set forward by one data point
   by setting \(t \rightarrow t+1\). Then repeat the step 1 until the
@@ -813,13 +815,14 @@ following steps.
   quantile estimation and compute \(H\)-step prediction intervals on the
   test set.
 \item
-  Online updating. Recursively roll the training set and calibration set
-  forward by one data point to update the nonconformity scores for
+  Online updating. Continuously roll the training set and calibration
+  set forward by one data point to update the nonconformity scores for
   calibration, and then repeat the step 3 until prediction intervals for
   the entire test set are obtained, i.e.,
   \(\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}\}_{t_r+t_c \leq t \leq T-h}\)
-  for \(h \in [H]\), where \(T-t_r-t_c\) is the length of the test set.
-  Therefore, our goal is to achieve long-run coverage in time.
+  for \(h \in [H]\), where \(T-t_r-t_c\) is the length of the test set
+  used for testing coverage. Therefore, our goal is to achieve long-run
+  coverage in time.
 \end{enumerate}
 
 For simplicity, so far we have only presented the nonconformity score
@@ -866,7 +869,7 @@ intervals on the test set:
 \hat{\mathcal{C}}_{t+h|t}^{\alpha} = \left\{y\in\mathbb{R}: s_{t+h|t}^{y} \leq Q_{1-\alpha}\left(\sum_{i=t-t_c+1}^{t}\frac{1}{t_c+1}\cdot\delta_{s_{i|i-h}}+\frac{1}{t_c+1}\cdot\delta_{+\infty}\right)\right\},
 }\end{equation}
 
-where \(s_{t+h|t}^{y}:=\mathcal{S}(z_{1:t}, y)\) denote the
+where \(s_{t+h|t}^{y}:=\mathcal{S}(z_{1:t}, y)\) denotes the
 \(h\)-step-ahead nonconformity score calculated at time \(t\) using a
 hypothesized test observation \(y\).
 
@@ -881,10 +884,11 @@ hypothesized test observation \(y\).
 prediction}\label{online-multi-step-weighted-conformal-prediction}
 
 The online \textbf{multi-step weighted conformal prediction} (MWCP)
-method adapts the NexCP method to the online setting. MWCP uses weighted
-quantile estimate for constructing prediction intervals, contrasting
-with the MSCP definitions where all nonconformity scores for calibration
-are implicitly assigned equal weight.
+method adapts the NexCP method to the online setting for time series
+forecasting. MWCP uses weighted quantile estimate for constructing
+prediction intervals, contrasting with the MSCP definitions where all
+nonconformity scores for calibration are implicitly assigned equal
+weight.
 
 We choose fixed weights \(w_i = b^{t+1-i}\), \(b \in (0, 1)\) and
 \(i=t-t_c+1,\ldots,t\), for nonconformity scores on the corresponding
@@ -919,7 +923,7 @@ In the online learning framework outlined in Section~\ref{sec-setup}, we
 extend the ACP method to address multi-step time series forecasting,
 introducing the \textbf{multi-step adaptive conformal prediction} (MACP)
 method. Specifically, for each \(h \in [H]\), we iteratively estimate
-\(\alpha^{*}\) (treated as a tunable parameter) using the update
+\(\alpha_{t+h|t}^{*}\) (treated as a tunable parameter) using the update
 equation
 
 \begin{equation}\phantomsection\label{eq-macp}{
@@ -928,28 +932,30 @@ equation
 
 and compute the \(h\)-step-ahead prediction interval using
 Equation~\ref{eq-mscp} by setting \(\alpha = \alpha_{t+h|t}\). Here,
-\(\gamma > 0\) denotes a fixed step size parameter, \(\alpha_{h+1|1}\)
+\(\gamma > 0\) denotes a fixed step size parameter, \(\alpha_{2h|h}\)
 denotes the initial estimate typically set to \(\alpha\), and
 \(\mathrm{err}_{t|t-h}\) denotes the miscoverage event
 \(\mathrm{err}_{t|t-h} = \mathbb{1}\left\{y_t \notin \hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}\right\}\).
 
-Equation~\ref{eq-mscp} indicates that the correction to the estimation
-of \(\alpha\) at time \(t+h\) is determined by the historical
-miscoverage frequency up to time \(t\). At each iteration, we raise the
-estimate of \(\alpha\) used for quantile estimation at time \(t+h\) if
+Equation~\ref{eq-macp} indicates that the correction to the estimation
+of \(\alpha_{t+h|t}^{*}\) at time \(t+h\) is determined by the
+historical miscoverage frequency up to time \(t\). At each iteration, we
+raise the estimate of \(\alpha_{t+h|t}^{*}\) used for quantile
+estimation at time \(t+h\) if
 \(\hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}\) covered \(y_t\), whereas
 we lower the estimate if \(\hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}\)
 miscovered \(y_t\). Thus the miscoverage event has a delayed impact on
-the estimation of \(\alpha\) over \(h\) periods, indicating that the
-correction of the \(\alpha\) estimate becomes less prompt with
-increasing values of \(h\). Particularly, Equation~\ref{eq-macp} reduces
-to the update for ACP as given by Equation~\ref{eq-acp} for \(h=1\).
+the estimation of \(\alpha_{t+h|t}^{*}\) over \(h\) periods, indicating
+that the correction of the \(\alpha_{t+h|t}^{*}\) estimate becomes less
+prompt with increasing values of \(h\). Particularly,
+Equation~\ref{eq-macp} reduces to the update for ACP as given by
+Equation~\ref{eq-acp} for \(h=1\).
 
-It should be noted that the update equation
+It should be noted that we did not consider the update equation
 \(\alpha_{t+1|t-h+1} := \alpha_{t|t-h} + \gamma\left(\alpha - \mathrm{err}_{t|t-h}\right)\)
-is not utilized in this context. This arises from its limitation that
-the available information at time \(t\) is insufficient to derive the
-\(\alpha\) estimate for forecasting \(h\) steps ahead.
+in this context because the available information at time \(t\) is
+insufficient to estimate \(\alpha_{t+h|t}^{*}\) used for forecasting
+\(h\) steps ahead.
 
 \begin{itemize}
 \tightlist
@@ -962,7 +968,7 @@ control}\label{multi-step-conformal-pid-control}
 
 We propose \textbf{multi-step conformal PID control} method (referred to
 as MPID hereafter), a generalization of the PID method to deal with
-multi-step forecasting.
+multi-step time series forecasting.
 
 For each individual forecast horizon \(h\in[H]\), the iteration of the
 \(h\)-step-ahead quantile estimate is given by
@@ -979,22 +985,22 @@ x \geq c \cdot g(t-h) \Longrightarrow r_t(x) \geq b, \quad \text {and} \quad x \
 }\end{equation}
 
 for constant \(b, c > 0\), and an admissible function \(g\) that is
-sublinear, nonnegative, nondecreasing. Here, we define
+sublinear, nonnegative, and nondecreasing. Here, we define
 \(\hat{s}_{t+h|t}\) as the \(h\)-step-ahead forecast of the
-nonconformity score (defined as the forecast error), produced by any
-suitable scorecaster (forecasting model) trained using the
+nonconformity score (defined as the forecast error here), produced by
+any suitable scorecaster (forecasting model) trained using the
 \(h\)-step-ahead nonconformity scores available up to and including time
 \(t\). With this updating equation, we can obtain all required
 \(h\)-step-ahead prediction intervals using information available up to
 time \(t\).
 
-The P control in MPID shows a delayed correction of the \(\alpha\)
+The P control in MPID shows a delayed correction of the quantile
 estimate for a length of \(h\) periods. The I control accounts for the
 cumulative historical coverage errors associated with \(h\)-step-ahead
 prediction intervals during the update process, thereby enhancing the
 stability of the interval coverage. Moreover, the D control performs
-\(h\)-step-ahead forecasting, which tends to result in increased
-forecast variance for larger forecast horizon \(h\).
+\(h\)-step-ahead forecasting, which however tends to result in increased
+forecast variance for a larger forecast horizon \(h\).
 
 \begin{itemize}
 \tightlist
@@ -1007,7 +1013,7 @@ prediction}\label{sec-acmcp}
 
 In the PID method proposed by \textcite{angelopoulos2024}, a notable
 feature is the inclusion of a scorecaster, a model trained on the score
-sequence, to forecast the next score. The rationale behind it is to
+sequence, to forecast the future score. The rationale behind it is to
 residualize out any leftover signal in the score distribution not
 captured by the base forecasting model, such as trend and seasonality.
 However, in the context of time series forecasting, good forecasts are
@@ -1017,9 +1023,10 @@ errors (defined as nonconformity scores in this paper). If the forecasts
 are not optimal, the forecasting model should be improved to enhance its
 performance. Hence, we typically assume the use of a good forecasting
 model, and therefore, relying on another model to predict forecast
-errors to capture leftover information is not a commonly used solution.
-Moreover, the inclusion of a scorecaster often only introduces variance
-to the quantile estimate, resulting in wider prediction intervals.
+errors to capture leftover information is not a commonly applicable
+solution. Moreover, the inclusion of a scorecaster often only introduces
+variance to the quantile estimate, resulting in inefficient (wider)
+prediction intervals.
 
 On the other hand, in our general setup outlined in
 Section~\ref{sec-intro} and Section~\ref{sec-setup}, the DGP of a time
@@ -1096,65 +1103,6 @@ non-decreasing in \(h\), and the intercept \(c=0\), given the property
 that optimal forecasts are unbiased.
 
 \end{proposition}
-
-\begin{proof}
-Let \(\hat{y}_{t+h|t}\) be the optimal \(h\)-step-ahead point forecast,
-and \(e_{t+h|t}\) be the \(h\)-step-ahead forecast error. Denote
-\(\bm{u}_{t+h}=\bm{x}_{(t-k+h):(t+h)}\). Then we have
-
-\[
-\begin{aligned}
-\hat{y}_{t+h|t}=\begin{cases}
-      f_{t+1}\left(y_t,\cdots,y_{t-d+1},\bm{u}_{t+1}\right) & \text{ if } h=1, \\
-      f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_t,\cdots,y_{t+h-d},\bm{u}_{t+h}\right) &  \text{ if } 1 < h \leq d, \\
-      f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}\right) & \text{ if } h > d.\\
-    \end{cases}\\
-\end{aligned}
-\]
-
-For \(h=1\), we simply have \(e_{t+1|t} = \epsilon_{t+1}\).
-
-For \(1<h\leq d\), applying the first order Taylor series expansion, we
-can write
-
-\[
-\begin{aligned}
-y_{t+h}
-=&f_{t+h}\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
-=&f_{t+h}\left(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+1|t}+e_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
-\underset{\text{te}}{\approx}&f_{t+h}\left(\bm{a}\right)+\operatorname{D}f_{t+h}\left(\bm{a}\right)\left(\bm{v}-\bm{a}\right)+
-\epsilon_{t+h} \\
-=&f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right) \\
-&+e_{t+h-1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_1}+\cdots+e_{t+2|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{h-2}}+e_{t+1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{h-1}}+\epsilon_{t+h} \\
-=&\hat{y}_{t+h|t}+e_{t+h|t},
-\end{aligned}
-\]
-
-where \(\bm{v}=\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)\),
-\(\bm{a} =\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)\),
-\(\operatorname{D}f_{t+h}\left(\bm{a}\right)\) denotes the matrix of
-partial derivative of \(f_{t+h}(\bm{v})\) at \(\bm{v}=\bm{a}\), and
-\(\frac{\partial}{\partial v_i}\) denotes the partial derivative with
-respect to the \(i\)th component in \(f_{t+h}\).
-
-Similarly, for \(h > d\), we can write
-
-\[
-\begin{aligned}
-y_{t+h}
-=&f_{t+h}\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
-=&f_{t+h}\left(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t}+e_{t+h-d|t},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
-\underset{\text{te}}{\approx}&f_{t+h}\left(\bm{a}\right)+\operatorname{D}f_{t+h}\left(\bm{a}\right)\left(\bm{v}-\bm{a}\right)+
-\epsilon_{t+h} \\
-=&f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}\right) \\
-&+e_{t+h-1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_1}+e_{t+h-d|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{d}}+\epsilon_{t+h} \\
-=&\hat{y}_{t+h|t}+e_{t+h|t},
-\end{aligned}
-\]
-
-Therefore, the forecast errors of optimal \(h\)-step-ahead forecasts are
-at most an approximate AR(\(h-1\)) process.
-\end{proof}
 
 Proposition~\ref{prp-ar} can be viewed as an extension of
 Proposition~\ref{prp-ma}. It suggests that the \(h\)-step ahead forecast
@@ -1248,83 +1196,6 @@ iteration yield long-run coverage, i.e.,
 
 \end{proposition}
 
-\begin{proof}
-Let \(E_T=\sum_{t=h+1}^{T}\left(\mathrm{err}_{t|t-h}-\alpha\right)\).
-The inequality given by Equation~\ref{eq-cov_rt} can be expressed as
-\(\left|E_T\right| \leq c \cdot g(T-h) + h\). We will prove one side of
-the absolute inequality, specifically \(E_T \leq c \cdot g(T-h) + h\),
-with the other side following analogously. We proceed with the proof
-using induction.
-
-For \(T=h+1,\ldots,2h\),
-\(E_T = \sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha) \leq (T-h)-(T-h)\alpha \leq T-h \leq h \leq cg(T-h) + h\)
-as \(c>0\), \(h\geq 1\), \(g\) is nonnegative, and
-\(\mathrm{err}_{t|t-h} \leq 1\). Thus, Equation~\ref{eq-cov_rt} holds
-for \(T=h+1,\ldots,2h\).
-
-Now, assuming Equation~\ref{eq-cov_rt} is true up to \(T\). We partition
-the argument into \(h+1\) cases:
-
-\[
-\begin{cases}
-cg(T-h)+h-1 < E_T \leq cg(T-h)+h, & \ldots \text { case (1) } \\
-cg(T-h)+h-2 < E_T \leq cg(T-h)+h-1, & \ldots \text { case (2) } \\
-\qquad \cdots \\
-cg(T-h) < E_T \leq cg(T-h)+1, & \ldots \text { case (h) } \\
-E_T \leq cg(T-h). & \ldots \text { case (h+1) }
-\end{cases}
-\]
-
-In case (1), we observe that \(E_T > cg(T-h)+h-1 > cg(T-h)\), implying
-\(q_{T+h|T} = r_t(E_{T}) \geq b\) according to
-Equation~\ref{eq-saturation_h}. Thus, \(s_{T+h|T} \leq q_{T+h|T}\) and
-\(\mathrm{err}_{T+h|T} = 0\). Furthermore, we have
-\(E_{T-1} = E_T - (\mathrm{err}_{T|T-h} - \alpha) > cg(T-h)+h-2 > cg(T-h-1)\)
-as \(g\) is nondecreasing. This implies
-\(q_{T+h-1|T-1} = r_t(E_{T-1}) \geq b\), hence
-\(s_{T+h-1|T-1} \leq q_{T+h-1|T-1}\) and
-\(\mathrm{err}_{T+h-1|T-1} = 0\). Similarly,
-\(E_{T-2} = E_{T-1} - (\mathrm{err}_{T-1|T-h-1} - \alpha) > cg(T-h)+h-3 > cg(T-h-2)\),
-thus \(\mathrm{err}_{T+h-2|T-2} = 0\). This process iterates, leading to
-\(\mathrm{err}_{T+h|T} = \mathrm{err}_{T+h-1|T-1} = \cdots = \mathrm{err}_{T+1|T-h+1} = 0\).
-Consequently,
-
-\[
-E_{T+h} = E_T+\sum_{t=T+1}^{T+h}(\mathrm{err}_{t|t-h}-\alpha) \leq cg(T-h)+h-h\alpha \leq cg(T)+h,
-\]
-
-which is the desired result at \(T+h\).
-
-In case (2), we observe that \(E_T > cg(T-h)+h-2 > cg(T-h)\), thus
-\(s_{T+h|T} \leq q_{T+h|T}\) and \(\mathrm{err}_{T+h|T} = 0\). Moving
-forward, we have
-\(\mathrm{err}_{T+h|T} = \mathrm{err}_{T+h-1|T-1} = \cdots = \mathrm{err}_{T+2|T-h+2} = 0\).
-Along with \(\mathrm{err}_{T+1|T-h+1} \leq 1\), this means that
-
-\[
-E_{T+h} = E_T+\sum_{t=T+1}^{T+h}(\mathrm{err}_{t|t-h}-\alpha) \leq cg(T-h)+h-1+1-h\alpha \leq cg(T)+h,
-\]
-
-which again gives the desired result at \(T+h\).
-
-Similarly, in cases (3)-(h), we can always get the desired result at
-\(T+h\).
-
-In case (h+1), noticing \(E_T \leq cg(T-h)\), and simply using
-\(\mathrm{err}_{T+h-i|T-i} \leq 1\) for \(i=0,\ldots,h-1\), we have
-
-\[
-E_{T+h} = E_T+\sum_{t=T+1}^{T+h}(\mathrm{err}_{t|t-h}-\alpha) \leq cg(T-h)+h-h\alpha \leq cg(T)+h.
-\]
-
-Therefore, we can deduce the desired outcome at any \(T \geq h+1\). This
-completes the proof for the first part of Proposition~\ref{prp-cov_rt}.
-
-Regarding the second part, \(g(t-h)/(t-h) \rightarrow 0\) as
-\(t \rightarrow \infty\) due to the sublinearity of the admissible
-function \(g\). Hence the second part holds trivially.
-\end{proof}
-
 The quantile iteration
 \(q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)\)
 can be seen as a particular instance of the iteration outlined in
@@ -1351,17 +1222,6 @@ iteration yield long-run coverage, i.e.,
 \(\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha\).
 
 \end{proposition}
-
-\begin{proof}
-We set \(q_{2h|h}=0\) without losing generality, the iteration
-\(q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)\)
-simplifies to
-\(q_{t+h|t}=\eta \sum_{i=h+1}^{t}\left(\mathrm{err}_{i|i-h}-\alpha\right)\).
-Let \(r_t(x) = \eta x\) and the admissible function \(g(t-h) = b\),
-Equation~\ref{eq-saturation_h} holds for \(c=\frac{1}{\eta}\). Then
-Proposition~\ref{prp-cov_rt} applies and we can easily derive the
-desired result.
-\end{proof}
 
 More importantly, Proposition~\ref{prp-cov_rt} is also adequate for
 establishing the coverage guarantee of the proposed AcMCP method given
@@ -1395,19 +1255,6 @@ Equation~\ref{eq-acmcp_1} yield long-run coverage, i.e.,
 \(\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha\).
 
 \end{proposition}
-
-\begin{proof}
-Let \(q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}\), then
-Equation~\ref{eq-acmcp_1} transforms into an update process
-\(q_{t+h|t}^{*}=r_t\left(\sum_{i=h+1}^t \left(\mathrm{err}_{i|i-h}-\alpha\right)\right)\),
-which is an update with respect to \(q_{t+h|t}^{*}\). Under this new
-framework, the nonconformity score becomes
-\(s_{t+h|t}^{*}=s_{t+h|t}-\hat{q}_{t+h|t}\), with values ranging in
-\([-b,b]\), given the assumption that both \(s_{t+h|t}\) and
-\(\hat{q}_{t+h|t}\) fall within \([-\frac{b}{2},\frac{b}{2}]\). Thus,
-Proposition~\ref{prp-cov_qt} can be directly applied to establish the
-long-run coverage achieved by the AcMCP method.
-\end{proof}
 
 \begin{itemize}
 \item
@@ -1965,6 +1812,178 @@ where \(\theta_{i}\) is a complex function derived from the AR
 coefficients of all AR\((j-1)\) models, for \(j = 1,2,\ldots,h-1\). So
 we conclude that the \(h\)-step-ahead forecast error sequence
 \(\{e_{t+h|t}\}\) follows an MA\((h-1)\) process.
+\end{proof}
+
+\subsection{\texorpdfstring{Proof of
+Proposition~\ref{prp-ar}}{Proof of Proposition~}}\label{sec-proof_ar}
+
+\begin{proof}
+Let \(\hat{y}_{t+h|t}\) be the optimal \(h\)-step-ahead point forecast,
+and \(e_{t+h|t}\) be the \(h\)-step-ahead forecast error. Denote
+\(\bm{u}_{t+h}=\bm{x}_{(t-k+h):(t+h)}\). Then we have
+
+\[
+\begin{aligned}
+\hat{y}_{t+h|t}=\begin{cases}
+      f_{t+1}\left(y_t,\cdots,y_{t-d+1},\bm{u}_{t+1}\right) & \text{ if } h=1, \\
+      f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_t,\cdots,y_{t+h-d},\bm{u}_{t+h}\right) &  \text{ if } 1 < h \leq d, \\
+      f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}\right) & \text{ if } h > d.\\
+    \end{cases}\\
+\end{aligned}
+\]
+
+For \(h=1\), we simply have \(e_{t+1|t} = \epsilon_{t+1}\).
+
+For \(1<h\leq d\), applying the first order Taylor series expansion, we
+can write
+
+\[
+\begin{aligned}
+y_{t+h}
+=&f_{t+h}\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
+=&f_{t+h}\left(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+1|t}+e_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
+\underset{\text{te}}{\approx}&f_{t+h}\left(\bm{a}\right)+\operatorname{D}f_{t+h}\left(\bm{a}\right)\left(\bm{v}-\bm{a}\right)+
+\epsilon_{t+h} \\
+=&f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right) \\
+&+e_{t+h-1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_1}+\cdots+e_{t+2|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{h-2}}+e_{t+1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{h-1}}+\epsilon_{t+h} \\
+=&\hat{y}_{t+h|t}+e_{t+h|t},
+\end{aligned}
+\]
+
+where \(\bm{v}=\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)\),
+\(\bm{a} =\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)\),
+\(\operatorname{D}f_{t+h}\left(\bm{a}\right)\) denotes the matrix of
+partial derivative of \(f_{t+h}(\bm{v})\) at \(\bm{v}=\bm{a}\), and
+\(\frac{\partial}{\partial v_i}\) denotes the partial derivative with
+respect to the \(i\)th component in \(f_{t+h}\).
+
+Similarly, for \(h > d\), we can write
+
+\[
+\begin{aligned}
+y_{t+h}
+=&f_{t+h}\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
+=&f_{t+h}\left(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t}+e_{t+h-d|t},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
+\underset{\text{te}}{\approx}&f_{t+h}\left(\bm{a}\right)+\operatorname{D}f_{t+h}\left(\bm{a}\right)\left(\bm{v}-\bm{a}\right)+
+\epsilon_{t+h} \\
+=&f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}\right) \\
+&+e_{t+h-1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_1}+e_{t+h-d|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{d}}+\epsilon_{t+h} \\
+=&\hat{y}_{t+h|t}+e_{t+h|t},
+\end{aligned}
+\]
+
+Therefore, the forecast errors of optimal \(h\)-step-ahead forecasts are
+at most an approximate AR(\(h-1\)) process.
+\end{proof}
+
+\subsection{\texorpdfstring{Proof of
+Proposition~\ref{prp-cov_rt}}{Proof of Proposition~}}\label{sec-proof_cov_rt}
+
+\begin{proof}
+Let \(E_T=\sum_{t=h+1}^{T}\left(\mathrm{err}_{t|t-h}-\alpha\right)\).
+The inequality given by Equation~\ref{eq-cov_rt} can be expressed as
+\(\left|E_T\right| \leq c \cdot g(T-h) + h\). We will prove one side of
+the absolute inequality, specifically \(E_T \leq c \cdot g(T-h) + h\),
+with the other side following analogously. We proceed with the proof
+using induction.
+
+For \(T=h+1,\ldots,2h\),
+\(E_T = \sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha) \leq (T-h)-(T-h)\alpha \leq T-h \leq h \leq cg(T-h) + h\)
+as \(c>0\), \(h\geq 1\), \(g\) is nonnegative, and
+\(\mathrm{err}_{t|t-h} \leq 1\). Thus, Equation~\ref{eq-cov_rt} holds
+for \(T=h+1,\ldots,2h\).
+
+Now, assuming Equation~\ref{eq-cov_rt} is true up to \(T\). We partition
+the argument into \(h+1\) cases:
+
+\[
+\begin{cases}
+cg(T-h)+h-1 < E_T \leq cg(T-h)+h, & \ldots \text { case (1) } \\
+cg(T-h)+h-2 < E_T \leq cg(T-h)+h-1, & \ldots \text { case (2) } \\
+\qquad \cdots \\
+cg(T-h) < E_T \leq cg(T-h)+1, & \ldots \text { case (h) } \\
+E_T \leq cg(T-h). & \ldots \text { case (h+1) }
+\end{cases}
+\]
+
+In case (1), we observe that \(E_T > cg(T-h)+h-1 > cg(T-h)\), implying
+\(q_{T+h|T} = r_t(E_{T}) \geq b\) according to
+Equation~\ref{eq-saturation_h}. Thus, \(s_{T+h|T} \leq q_{T+h|T}\) and
+\(\mathrm{err}_{T+h|T} = 0\). Furthermore, we have
+\(E_{T-1} = E_T - (\mathrm{err}_{T|T-h} - \alpha) > cg(T-h)+h-2 > cg(T-h-1)\)
+as \(g\) is nondecreasing. This implies
+\(q_{T+h-1|T-1} = r_t(E_{T-1}) \geq b\), hence
+\(s_{T+h-1|T-1} \leq q_{T+h-1|T-1}\) and
+\(\mathrm{err}_{T+h-1|T-1} = 0\). Similarly,
+\(E_{T-2} = E_{T-1} - (\mathrm{err}_{T-1|T-h-1} - \alpha) > cg(T-h)+h-3 > cg(T-h-2)\),
+thus \(\mathrm{err}_{T+h-2|T-2} = 0\). This process iterates, leading to
+\(\mathrm{err}_{T+h|T} = \mathrm{err}_{T+h-1|T-1} = \cdots = \mathrm{err}_{T+1|T-h+1} = 0\).
+Consequently,
+
+\[
+E_{T+h} = E_T+\sum_{t=T+1}^{T+h}(\mathrm{err}_{t|t-h}-\alpha) \leq cg(T-h)+h-h\alpha \leq cg(T)+h,
+\]
+
+which is the desired result at \(T+h\).
+
+In case (2), we observe that \(E_T > cg(T-h)+h-2 > cg(T-h)\), thus
+\(s_{T+h|T} \leq q_{T+h|T}\) and \(\mathrm{err}_{T+h|T} = 0\). Moving
+forward, we have
+\(\mathrm{err}_{T+h|T} = \mathrm{err}_{T+h-1|T-1} = \cdots = \mathrm{err}_{T+2|T-h+2} = 0\).
+Along with \(\mathrm{err}_{T+1|T-h+1} \leq 1\), this means that
+
+\[
+E_{T+h} = E_T+\sum_{t=T+1}^{T+h}(\mathrm{err}_{t|t-h}-\alpha) \leq cg(T-h)+h-1+1-h\alpha \leq cg(T)+h,
+\]
+
+which again gives the desired result at \(T+h\).
+
+Similarly, in cases (3)-(h), we can always get the desired result at
+\(T+h\).
+
+In case (h+1), noticing \(E_T \leq cg(T-h)\), and simply using
+\(\mathrm{err}_{T+h-i|T-i} \leq 1\) for \(i=0,\ldots,h-1\), we have
+
+\[
+E_{T+h} = E_T+\sum_{t=T+1}^{T+h}(\mathrm{err}_{t|t-h}-\alpha) \leq cg(T-h)+h-h\alpha \leq cg(T)+h.
+\]
+
+Therefore, we can deduce the desired outcome at any \(T \geq h+1\). This
+completes the proof for the first part of Proposition~\ref{prp-cov_rt}.
+
+Regarding the second part, \(g(t-h)/(t-h) \rightarrow 0\) as
+\(t \rightarrow \infty\) due to the sublinearity of the admissible
+function \(g\). Hence the second part holds trivially.
+\end{proof}
+
+\subsection{\texorpdfstring{Proof of
+Proposition~\ref{prp-cov_qt}}{Proof of Proposition~}}\label{sec-proof_cov_qt}
+
+\begin{proof}
+We set \(q_{2h|h}=0\) without losing generality, the iteration
+\(q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)\)
+simplifies to
+\(q_{t+h|t}=\eta \sum_{i=h+1}^{t}\left(\mathrm{err}_{i|i-h}-\alpha\right)\).
+Let \(r_t(x) = \eta x\) and the admissible function \(g(t-h) = b\),
+Equation~\ref{eq-saturation_h} holds for \(c=\frac{1}{\eta}\). Then
+Proposition~\ref{prp-cov_rt} applies and we can easily derive the
+desired result.
+\end{proof}
+
+\subsection{\texorpdfstring{Proof of
+Proposition~\ref{prp-cov_acmcp}}{Proof of Proposition~}}\label{sec-proof_cov_acmcp}
+
+\begin{proof}
+Let \(q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}\), then
+Equation~\ref{eq-acmcp_1} transforms into an update process
+\(q_{t+h|t}^{*}=r_t\left(\sum_{i=h+1}^t \left(\mathrm{err}_{i|i-h}-\alpha\right)\right)\),
+which is an update with respect to \(q_{t+h|t}^{*}\). Under this new
+framework, the nonconformity score becomes
+\(s_{t+h|t}^{*}=s_{t+h|t}-\hat{q}_{t+h|t}\), with values ranging in
+\([-b,b]\), given the assumption that both \(s_{t+h|t}\) and
+\(\hat{q}_{t+h|t}\) fall within \([-\frac{b}{2},\frac{b}{2}]\). Thus,
+Proposition~\ref{prp-cov_qt} can be directly applied to establish the
+long-run coverage achieved by the AcMCP method.
 \end{proof}
 
 
