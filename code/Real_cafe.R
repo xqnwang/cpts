@@ -242,7 +242,8 @@ P_cafe_covdiff <- cafe_info |>
     legend.position = "bottom",
     panel.grid.minor = element_blank()
   ) +
-  guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
+  guides(colour = guide_legend(nrow = 1, keyheight = 0.5))
+  # + guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
 
 P_cafe_width <- cafe_info |>
   mutate(horizon = str_sub(horizon, start = 3, end = -1) |> as.numeric()) |>
@@ -260,7 +261,8 @@ P_cafe_width <- cafe_info |>
     legend.position = "bottom",
     panel.grid.minor = element_blank()
   ) +
-  guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
+  guides(colour = guide_legend(nrow = 1, keyheight = 0.5))
+  # + guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
 
 P_cafe_winkler <- cafe_info |>
   mutate(horizon = str_sub(horizon, start = 3, end = -1) |> as.numeric()) |>
@@ -278,12 +280,18 @@ P_cafe_winkler <- cafe_info |>
     legend.position = "bottom",
     panel.grid.minor = element_blank()
   ) +
-  guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
+  guides(colour = guide_legend(nrow = 1, keyheight = 0.5))
+  # + guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
 
 P_cafe_result <- ggpubr::ggarrange(P_cafe_covdiff, P_cafe_width, P_cafe_winkler,
                                    ncol = 1, nrow = 3,
                                    common.legend = TRUE, legend = "bottom")
 saveRDS(P_cafe_result, file = "result/P_cafe_result.rds")
+
+P_cafe_cov <- ggpubr::ggarrange(P_cafe_covdiff, P_cafe_width,
+                                ncol = 2, nrow = 1,
+                                common.legend = TRUE, legend = "bottom")
+saveRDS(P_cafe_cov, file = "result/P_cafe_cov.rds")
 
 #--------------------------
 # Plots: Coverage and width
