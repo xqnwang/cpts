@@ -168,7 +168,7 @@ $$
 x \geq c \cdot g(t-h) \Longrightarrow r_t(x) \geq b, \quad \text {and} \quad x \leq-c \cdot g(t-h) \Longrightarrow r_t(x) \leq -b,
 $$ {#eq-saturation_h}
 
-for constant $b, c > 0$, and an admissible function $g$ that is sublinear, nonnegative, and nondecreasing. With this updating equation, we can obtain all required $h$-step-ahead prediction intervals using information available up to time $t$. Notably, when $h=1$, @eq-mpid simplifies to the PID update, which guarantees long-run coverage. More importantly, @eq-mpid represents a specific instance of @eq-acmcp_1, thereby ensuring long-run coverage for each individual forecast horizon $h$.
+for constant $b, c > 0$, and an admissible function $g$ that is sublinear, nonnegative, and nondecreasing. With this updating equation, we can obtain all required $h$-step-ahead prediction intervals using information available up to time $t$. Notably, when $h=1$, @eq-mpid simplifies to the PID update, which guarantees long-run coverage. More importantly, @eq-mpid represents a specific instance of @eq-acmcp_1 that we will introduce later, thereby ensuring long-run coverage for each individual forecast horizon $h$.
 
 The P control in MPID shows a delayed correction of the quantile estimate for a length of $h$ periods. The underlying intuition is similar to that of MACP: it increases (or decreases) the $h$-step-ahead quantile estimate if the prediction set at time $t$ miscovered (or covered) the corresponding realization. MACP can be considered as a special case of the P control, while the P control has the ability to prevent the generation of null or infinite prediction sets after a sequence of miscoverage events.
 
@@ -255,6 +255,8 @@ for any $T \geq h+1$, where $c>0$ is the constant in @eq-saturation_h.
 
 In particular, this means the prediction intervals obtained by the iteration yield long-run coverage, i.e., $\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha$.
 :::
+
+@prp-cov_rt indicates that, for $t \ll \infty$, increasing the forecast horizon $h$ tends to amplify deviations from the target coverage because $g(T-h)/(t-h)$ is non-increasing, given that the admissible function $g$ is sublinear, nonnegative, and nondecreasing. This is consistent with expectations, as extending the forecast horizon generally increases forecast uncertainty. As predictions extend further into the future, more factors contribute to variability and uncertainty. In this case, conformal prediction intervals may not scale perfectly with the increasing uncertainty, leading to a larger discrepancy between the desired and actual coverage.
 
 The quantile iteration $q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)$ can be seen as a particular instance of the iteration outlined in @prp-cov_rt if we set $q_{2h|h}=0$ without losing generality. Thus, its coverage bounds can be easily derived as a result of @prp-cov_rt.
 
@@ -707,5 +709,5 @@ We set $q_{2h|h}=0$ without losing generality, the iteration $q_{t+h|t}=q_{t+h-1
 ## Proof of @prp-cov_acmcp {#sec-proof_cov_acmcp}
 
 ::: proof
-Let $q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}$, then @eq-acmcp_1 transforms into an update process $q_{t+h|t}^{*}=r_t\left(\sum_{i=h+1}^t \left(\mathrm{err}_{i|i-h}-\alpha\right)\right)$, which is an update with respect to $q_{t+h|t}^{*}$. Under this new framework, the nonconformity score becomes $s_{t+h|t}^{*}=s_{t+h|t}-\hat{q}_{t+h|t}$, with values ranging in $[-b,b]$, given the assumption that both $s_{t+h|t}$ and $\hat{q}_{t+h|t}$ fall within $[-\frac{b}{2},\frac{b}{2}]$. Thus, @prp-cov_qt can be directly applied to establish the long-run coverage achieved by the AcMCP method.
+Let $q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}$, then @eq-acmcp_1 transforms into an update process $q_{t+h|t}^{*}=r_t\left(\sum_{i=h+1}^t \left(\mathrm{err}_{i|i-h}-\alpha\right)\right)$, which is an update with respect to $q_{t+h|t}^{*}$. Under this new framework, the nonconformity score becomes $s_{t+h|t}^{*}=s_{t+h|t}-\hat{q}_{t+h|t}$, with values ranging in $[-b,b]$, given the assumption that both $s_{t+h|t}$ and $\hat{q}_{t+h|t}$ fall within $[-\frac{b}{2},\frac{b}{2}]$. Thus, @prp-cov_rt can be directly applied to establish the long-run coverage achieved by the AcMCP method.
 :::

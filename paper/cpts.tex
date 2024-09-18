@@ -271,7 +271,7 @@ quantile estimate},
 
 \title{Online conformal inference for multi-step time series
 forecasting}
-\date{17 September 2024}
+\date{18 September 2024}
 
 \def\Date{\number\day}
 \def\Month{\ifcase\month\or
@@ -371,7 +371,7 @@ forecasting}
       \\[0.5cm]%
    %
    }%
-   \lfoot{\sf Wang, Hyndman: 17 September 2024}
+   \lfoot{\sf Wang, Hyndman: 18 September 2024}
 
 % Keywords
 
@@ -731,8 +731,9 @@ we can obtain all required \(h\)-step-ahead prediction intervals using
 information available up to time \(t\). Notably, when \(h=1\),
 Equation~\ref{eq-mpid} simplifies to the PID update, which guarantees
 long-run coverage. More importantly, Equation~\ref{eq-mpid} represents a
-specific instance of Equation~\ref{eq-acmcp_1}, thereby ensuring
-long-run coverage for each individual forecast horizon \(h\).
+specific instance of Equation~\ref{eq-acmcp_1} that we will introduce
+later, thereby ensuring long-run coverage for each individual forecast
+horizon \(h\).
 
 The P control in MPID shows a delayed correction of the quantile
 estimate for a length of \(h\) periods. The underlying intuition is
@@ -775,11 +776,11 @@ variance to the quantile estimate, resulting in inefficient (wider)
 prediction intervals.
 
 On the other hand, in our general setup outlined in
-Section~\ref{sec-intro} and Section~\ref{sec-setup}, the DGP of a time
-series may depend on its own past, along with other exogenous predictors
-and their histories. Consequently, the \(h\)-step-ahead forecast errors
-\(e_{t+h|t}\) may depend on the forecast errors from the past \(h-1\)
-steps, i.e.~\(e_{t+1|t}, \ldots, e_{t+h-1|t}\), and forecast errors may
+Section~\ref{sec-setup}, the DGP of a time series may depend on its own
+past, along with other exogenous predictors and their histories.
+Consequently, the \(h\)-step-ahead forecast errors \(e_{t+h|t}\) may
+depend on the forecast errors from the past \(h-1\) steps,
+i.e.~\(e_{t+1|t}, \ldots, e_{t+h-1|t}\), and forecast errors may
 accumulate over the forecast horizon. However, no conformal prediction
 methods have taken this potential dependence into account in their
 methodological construction.
@@ -942,6 +943,17 @@ iteration yield long-run coverage, i.e.,
 \(\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha\).
 
 \end{proposition}
+
+Proposition~\ref{prp-cov_rt} indicates that, for \(t \ll \infty\),
+increasing the forecast horizon \(h\) tends to amplify deviations from
+the target coverage because \(g(T-h)/(t-h)\) is non-increasing, given
+that the admissible function \(g\) is sublinear, nonnegative, and
+nondecreasing. This is consistent with expectations, as extending the
+forecast horizon generally increases forecast uncertainty. As
+predictions extend further into the future, more factors contribute to
+variability and uncertainty. In this case, conformal prediction
+intervals may not scale perfectly with the increasing uncertainty,
+leading to a larger discrepancy between the desired and actual coverage.
 
 The quantile iteration
 \(q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)\)
@@ -1652,7 +1664,7 @@ framework, the nonconformity score becomes
 \(s_{t+h|t}^{*}=s_{t+h|t}-\hat{q}_{t+h|t}\), with values ranging in
 \([-b,b]\), given the assumption that both \(s_{t+h|t}\) and
 \(\hat{q}_{t+h|t}\) fall within \([-\frac{b}{2},\frac{b}{2}]\). Thus,
-Proposition~\ref{prp-cov_qt} can be directly applied to establish the
+Proposition~\ref{prp-cov_rt} can be directly applied to establish the
 long-run coverage achieved by the AcMCP method.
 \end{proof}
 
