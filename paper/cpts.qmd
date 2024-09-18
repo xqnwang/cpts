@@ -168,7 +168,7 @@ $$
 x \geq c \cdot g(t-h) \Longrightarrow r_t(x) \geq b, \quad \text {and} \quad x \leq-c \cdot g(t-h) \Longrightarrow r_t(x) \leq -b,
 $$ {#eq-saturation_h}
 
-for constant $b, c > 0$, and an admissible function $g$ that is sublinear, nonnegative, and nondecreasing. With this updating equation, we can obtain all required $h$-step-ahead prediction intervals using information available up to time $t$. Notably, when $h=1$, @eq-mpid simplifies to the PID update, which guarantees long-run coverage. More importantly, @eq-mpid represents a specific instance of @eq-acmcp_1 that we will introduce later, thereby ensuring long-run coverage for each individual forecast horizon $h$.
+for constant $b, c > 0$, and an admissible function $g$ that is sublinear, nonnegative, and nondecreasing. With this updating equation, we can obtain all required $h$-step-ahead prediction intervals using information available up to time $t$. Notably, when $h=1$, @eq-mpid simplifies to the PID update, which guarantees long-run coverage. More importantly, @eq-mpid represents a specific instance of @eq-acmcp_1 that we will introduce later, thereby ensuring long-run coverage for each individual forecast horizon $h$ according to @prp-cov_acmcp.
 
 The P control in MPID shows a delayed correction of the quantile estimate for a length of $h$ periods. The underlying intuition is similar to that of MACP: it increases (or decreases) the $h$-step-ahead quantile estimate if the prediction set at time $t$ miscovered (or covered) the corresponding realization. MACP can be considered as a special case of the P control, while the P control has the ability to prevent the generation of null or infinite prediction sets after a sequence of miscoverage events.
 
@@ -256,7 +256,7 @@ for any $T \geq h+1$, where $c>0$ is the constant in @eq-saturation_h.
 In particular, this means the prediction intervals obtained by the iteration yield long-run coverage, i.e., $\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha$.
 :::
 
-@prp-cov_rt indicates that, for $t \ll \infty$, increasing the forecast horizon $h$ tends to amplify deviations from the target coverage because $g(T-h)/(t-h)$ is non-increasing, given that the admissible function $g$ is sublinear, nonnegative, and nondecreasing. This is consistent with expectations, as extending the forecast horizon generally increases forecast uncertainty. As predictions extend further into the future, more factors contribute to variability and uncertainty. In this case, conformal prediction intervals may not scale perfectly with the increasing uncertainty, leading to a larger discrepancy between the desired and actual coverage.
+**Remark.** @prp-cov_rt indicates that, for $t \ll \infty$, increasing the forecast horizon $h$ tends to amplify deviations from the target coverage because $g(T-h)/(t-h)$ is non-increasing, given that the admissible function $g$ is sublinear, nonnegative, and nondecreasing. This is consistent with expectations, as extending the forecast horizon generally increases forecast uncertainty. As predictions extend further into the future, more factors contribute to variability and uncertainty. In this case, conformal prediction intervals may not scale perfectly with the increasing uncertainty, leading to a larger discrepancy between the desired and actual coverage.
 
 The quantile iteration $q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)$ can be seen as a particular instance of the iteration outlined in @prp-cov_rt if we set $q_{2h|h}=0$ without losing generality. Thus, its coverage bounds can be easily derived as a result of @prp-cov_rt.
 
@@ -318,7 +318,7 @@ P_AR2_cov +
 #| label: fig-AR2_box
 #| results: hide
 #| fig-width: 9
-#| fig-height: 3
+#| fig-height: 3.5
 #| fig-cap: AR(2) simulation results showing boxplots of the rolling coverage and interval width for each method across different forecast horizons. The red dashed lines show the target coverage level, while the blue dashed lines indicate the median interval width of the AcMCP method.
 
 P_AR2_box <- readRDS(here::here("result/P_AR2_box.rds"))
@@ -434,7 +434,7 @@ We present the results in @fig-elec_cov and @fig-elec_box, comparing the rolling
 #| label: fig-elec_cov
 #| results: hide
 #| fig-width: 12
-#| fig-height: 6
+#| fig-height: 7
 #| fig-cap: Electricity demand data results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $100$. The black dashed line indicates the target level of $1-\alpha=0.9$.
 
 P_elec_cov <- readRDS(here::here("result/P_elec_cov.rds"))
@@ -446,7 +446,7 @@ P_elec_cov +
 #| label: fig-elec_box
 #| results: hide
 #| fig-width: 10
-#| fig-height: 6
+#| fig-height: 6.5
 #| fig-cap: Electricity demand data results showing boxplots of the rolling coverage and interval width for each method across different forecast horizons. The red dashed lines show the target coverage level, while the blue dashed lines indicate the median interval width of the AcMCP method.
 
 P_elec_box <- readRDS(here::here("result/P_elec_box.rds"))

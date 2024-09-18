@@ -733,7 +733,7 @@ Equation~\ref{eq-mpid} simplifies to the PID update, which guarantees
 long-run coverage. More importantly, Equation~\ref{eq-mpid} represents a
 specific instance of Equation~\ref{eq-acmcp_1} that we will introduce
 later, thereby ensuring long-run coverage for each individual forecast
-horizon \(h\).
+horizon \(h\) according to Proposition~\ref{prp-cov_acmcp}.
 
 The P control in MPID shows a delayed correction of the quantile
 estimate for a length of \(h\) periods. The underlying intuition is
@@ -944,14 +944,14 @@ iteration yield long-run coverage, i.e.,
 
 \end{proposition}
 
-Proposition~\ref{prp-cov_rt} indicates that, for \(t \ll \infty\),
-increasing the forecast horizon \(h\) tends to amplify deviations from
-the target coverage because \(g(T-h)/(t-h)\) is non-increasing, given
-that the admissible function \(g\) is sublinear, nonnegative, and
-nondecreasing. This is consistent with expectations, as extending the
-forecast horizon generally increases forecast uncertainty. As
-predictions extend further into the future, more factors contribute to
-variability and uncertainty. In this case, conformal prediction
+\textbf{Remark.} Proposition~\ref{prp-cov_rt} indicates that, for
+\(t \ll \infty\), increasing the forecast horizon \(h\) tends to amplify
+deviations from the target coverage because \(g(T-h)/(t-h)\) is
+non-increasing, given that the admissible function \(g\) is sublinear,
+nonnegative, and nondecreasing. This is consistent with expectations, as
+extending the forecast horizon generally increases forecast uncertainty.
+As predictions extend further into the future, more factors contribute
+to variability and uncertainty. In this case, conformal prediction
 intervals may not scale perfectly with the increasing uncertainty,
 leading to a larger discrepancy between the desired and actual coverage.
 
