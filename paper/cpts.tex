@@ -271,7 +271,7 @@ quantile estimate},
 
 \title{Online conformal inference for multi-step time series
 forecasting}
-\date{19 September 2024}
+\date{20 September 2024}
 
 \def\Date{\number\day}
 \def\Month{\ifcase\month\or
@@ -371,7 +371,7 @@ forecasting}
       \\[0.5cm]%
    %
    }%
-   \lfoot{\sf Wang, Hyndman: 19 September 2024}
+   \lfoot{\sf Wang, Hyndman: 20 September 2024}
 
 % Keywords
 
@@ -516,33 +516,26 @@ prediction interval so that \(y_{t+h}\) falls within the prediction
 interval \(\hat{\mathcal{C}}_{t+h|t}\) at least \(100(1-\alpha)\%\) of
 the time.
 
-In this paper,
-
-\begin{itemize}
-\item
-  multi-step, univariate time series forecasting; online learning and
-  split cp framework (A recent line of work develops online conformal
-  prediction methods for the setting where the data arrives in a
-  sequential order)
-\item
-  generalization of existing methods (easy-to-use)
-\item
-  properties of multi-step forecast errors in a general non-stationary
-  autoregressive process, thus AcMCP, theoretical long-run coverage
-  guarantee without any assumption on distributional shift
-\item
-  show experimentally that
-\end{itemize}
-
-Paper structure.
-
-In the following sections, we first introduce the setup for time series
-forecasting problems, and then generalize some existing conformal
-prediction methods to deal with multi-step time series forecasting.
-Finally, we explore the properties of forecast errors for optimal
-multi-step forecasts, and then propose the \textbf{autocorrelated
-multi-step conformal prediction} (AcMCP) method to account for the
-serial correlation of multi-step forecast errors.
+In this paper, our goal is to achieve long-run coverage for multi-step
+univariate time series forecasting. Our methods are all grounded in the
+split conformal prediction framework and an online learning scheme,
+which are well-suited to the sequential nature of time series data.
+First, we extend several widely-used conformal prediction methods that
+are originally designed for single-step forecasting to accommodate
+multi-step forecasting scenarios. Second, we provide theoretical proofs
+demonstrating that the forecast errors of optimal \(h\)-step-ahead
+forecasts approximate an AR process when we assume a general
+non-stationary autoregressive data generating process. Third, we
+introduce the autocorrelated multi-step conformal prediction method,
+which accounts for the autocorrelations of multi-step forecast errors.
+Our method is proven to achieve long-run coverage guarantees without
+making any assumptions on data distribution shifts. We also highlight
+that for \(t \ll \infty\), increasing the forecast horizon \(h\)
+generally leads to greater deviations from the target coverage, which
+aligns with our expectations. Finally, we illustrate the practical
+utility of these proposed methods through two simulations and two
+real-data experiments on electricity demand and eating out expenditure
+forecasting.
 
 \section{Setup}\label{sec-setup}
 
