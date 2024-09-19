@@ -51,26 +51,33 @@ library(ggplot2)
 
 # Introduction {#sec-intro}
 
-Motivation: Why conformal prediction?
+Conformal prediction [@vovk2005] stands as a powerful and flexible tool for uncertainty quantification, distinguished by its simplicity, generality, and ease of implementation. It constructs valid prediction intervals that achieve nominal coverage without imposing stringent assumptions on the data generating distribution, other than requiring the data to be i.i.d. or, more generally, exchangeable. Its credibility and potential make it widely applicable for quantifying the uncertainty of forecasts produced by any black-box machine learning model [@shafer2008; @papadopoulos2008; @barber2021] or non-parametric method [@lei2014].
 
--   Machine Learning, non-parametric models
--   Applications: @shafer2008, @lei2014, @chernozhukov2018, @tibshirani2019, @lei2021, @guan2022, @guan2023, @oliveira2024
+Three key classes of conformal prediction methods are widely used for constructing distribution-free prediction intervals, i.e., split conformal prediction [@vovk2005], full conformal prediction [@vovk2005], and jackknife+ [@barber2021]. The split conformal method, which relies on a holdout set, offers computational efficiency but sacrifices some statistical accuracy due to data splitting. In contrast, full conformal prediction avoids data splitting, providing higher accuracy at the cost of increased computational complexity. Jackknife+ strikes a balance between these methods, offering a compromise between statistical precision and computational demands. All three methods guarantee coverage at the target level under the assumption of data exchangeability.
 
-Background: Development and popularity of conformal prediction
+Nevertheless, the data exchangeability assumption is often violated in real-world contexts, where challenges such as non-stationarity, distributional drift, temporal and spatial dependencies are prevalent. In response, several extensions to conformal prediction have been proposed to accommodate non-exchangeable data. Notable examples include methods for handling covariate shift [@tibshirani2019; @lei2021; @yang2024], online distribution shift [@gibbs2021; @zaffran2022; @bastani2022], label shift [@podkopaev2021], time series data [@chernozhukov2018; @gibbs2021; @xu2021; @xu2023; @zaffran2022], and spatial prediction [@mao2024], and methods based on certain distributional assumptions of the data rather than exchangeability [@oliveira2024; @xu2021; @xu2023]. Additionally, some methods propose weighting the nonconformity scores differently, either using non-data-dependent weights [@barber2023] or weights based on observed feature values [@tibshirani2019; @guan2023; @hore2023].
 
-Brief literature review of conformal prediction methods or applications on time series data.: @stankeviciute2021, @xu2021, @yu2022, @schlembach2022, @xu2023, @yang2024
+Recently, several attempts have been made to enable conformal prediction on time series data, where exchangeability obviously fails due to inherent temporal dependencies. One line of research has focused on developing conformal-type methods that offer coverage guarantees under certain relaxations of exchangeability. For example, within the full conformal prediction framework, @chernozhukov2018 and @yu2022 construct prediction sets for time series by using a group of permutations that are specifically designed to preserve the dependence structure in the data, ensuring validity under weak assumptions on the nonconformity score. In the split conformal prediction framework, @xu2021 and @xu2023 extend conformal prediction methods under classical nonparametric assumptions to achieve asymptotic valid conditional coverage for time series. @barber2023 use weighted residual distributions to provide robustness against distribution drift. Additionally, @oliveira2024 introduce a general framework based on concentration inequalities and data decoupling properties of the data to retain asymptotic coverage guarantees across several dependent data settings.
 
-Challenges and limitations: Multi-step conformal prediction.
+In a separate strand of research, @gibbs2021 develop adaptive conformal inference in an online manner to manage temporal distribution shifts and ensure long-run coverage guarantees. The basic idea is to adapt the miscoverage rate, $\alpha$, based on historical miscoverage frequencies. Follow-up work has refined this idea by introducing time-dependent step sizes to respond to arbitrary distribution shifts, as seen in studies by @bastani2022, @zaffran2022, @gibbs2024, and @angelopoulos2024online. However, these methods may produce prediction intervals that are either infinite or null. To address this issue, recent research has proposed a generalized updating process that tracks the quantile of the nonconformity score sequence, as discussed by @bhatnagar2023, @angelopoulos2024, and @angelopoulos2024online.
+
+Existing conformal prediction methods for time series primarily focus on single-step forecasting. However, many real-world problems require forecasts for multiple future time steps, not just one. Research into multi-step time series forecasting is limited and does not account for the temporal dependencies inherent in multi-step forecasts. For example, @stankeviciute2021 integrate conformal prediction with recurrent neural networks for multi-step forecasting and apply Bonferroni correction to achieve the desired coverage rate. This approach, however, assumes data independence, which is not often unrealistic for time series data. @yang2024ts propose Bellman conformal inference, an extension of adaptive conformal prediction, to control multi-step miscoverage rates at each time point $t$ by minimizing a loss function that balances average interval length across forecast horizons with miscoverage. While this method considers multi-step intervals, it does not account for their temporal dependencies. Additionally, @schlembach2022 and @sun2022 apply conformal prediction to multi-step time series forecasting with multivariate targets.
 
 We consider a general sequential setting in which we observe a time series $\{y_t\}_{t \geq 1}$ generated by an unknown data generating process (DGP), which may depend on its own past, along with other exogenous predictors, $\bm{x}_t=(x_{1,t},\ldots,x_{p,t})^{\prime}$, and their histories. The distribution of $\{(\bm{x}_t, y_t)\}_{t \geq 1} \subseteq \mathbb{R}^p \times \mathbb{R}$ is obviously allowed to vary over time in time series context. At each time point $t$, we aim to forecast $H$ steps into the future, providing a *prediction set* (which is a prediction interval in this setting), $\hat{\mathcal{C}}_{t+h|t}$, for the realization $y_{t+h}$ for each $h\in[H]$. The $h$-step-ahead forecast uses the previously observed data $\{(\bm{x}_i, y_i)\}_{1 \leq i \leq t}$ along with the new information of the exogenous predictors $\{\bm{x}_{t+j}\}_{1\leq j\leq h}$. Note that we can generate ex-ante forecasts by using forecasts of the predictors based on information available up to and including time $t$. Alternatively, ex-post forecasts are generated assuming that actual observations of the predictors from the forecast period are available. Given a nominal *miscoverage rate* $\alpha \in (0,1)$ specified by the user, we expect the output $\hat{\mathcal{C}}_{t+h|t}$ to be a *valid* prediction interval so that $y_{t+h}$ falls within the prediction interval $\hat{\mathcal{C}}_{t+h|t}$ at least $100(1-\alpha)\%$ of the time.
 
-Contribution: Overview of proposed methods
+In this paper,
 
-Some notes such as we use split conformal prediction throughout this paper, and uniform notation.
+-   multi-step, univariate time series forecasting; online learning and split cp framework (A recent line of work develops online conformal prediction methods for the setting where the data arrives in a sequential order)
+
+-   generalization of existing methods (easy-to-use)
+
+-   properties of multi-step forecast errors in a general non-stationary autoregressive process, thus AcMCP, theoretical long-run coverage guarantee without any assumption on distributional shift
+
+-   show experimentally that
 
 Paper structure.
 
-In the following sections, we first introduce the setup for time series forecasting problems, and then generalize the existing conformal prediction methods described in @sec-review_reg to deal with multi-step time series forecasting. Finally, we explore the properties of forecast errors for optimal multi-step forecasts, and then propose the **autocorrelated multi-step conformal prediction** (AcMCP) method to account for the serial correlation of multi-step forecast errors.
+In the following sections, we first introduce the setup for time series forecasting problems, and then generalize some existing conformal prediction methods to deal with multi-step time series forecasting. Finally, we explore the properties of forecast errors for optimal multi-step forecasts, and then propose the **autocorrelated multi-step conformal prediction** (AcMCP) method to account for the serial correlation of multi-step forecast errors.
 
 # Setup {#sec-setup}
 
@@ -116,7 +123,7 @@ where $s_{t+h|t}^{y}:=\mathcal{S}(z_{1:t}, y)$ denotes the $h$-step-ahead noncon
 
 ## Online multi-step weighted conformal prediction
 
-In the regression setting, @barber2023 propose nonexchangeable conformal prediction (NexCP) that generalizes the SCP method to allow for some sources of nonexchangeability. The core idea is that a higher weight should be assigned to a data point that is believed to originate from the same distribution as the test data. Note that NexCP assumes the weights are fixed and data-independent. When the data are exchangeable, NexCP offers the same coverage guarantees as SCP, while the coverage gap is characterized by the total variation between the swapped nonconformity score vectors when exchangeability is violated.
+In the regression setting, @barber2023 propose nonexchangeable conformal prediction (NexCP) that generalizes the SCP method to allow for some sources of nonexchangeability. The core idea is that a higher weight should be assigned to a data point that is believed to originate from the same distribution as the test data. Note that NexCP assumes the weights are fixed and data-independent. When the data are exchangeable, NexCP offers the same coverage guarantees as SCP, while the coverage gap is characterized by the total variation between the swapped nonconformity score vectors when exchangeability is violated. Thus the coverage gap may be quite large in time series contexts.
 
 The online **multi-step weighted conformal prediction** (MWCP) method we propose here adapts the NexCP method to the online setting for time series forecasting. MWCP uses weighted quantile estimate for constructing prediction intervals, contrasting with the MSCP definitions where all nonconformity scores for calibration are implicitly assigned equal weight.
 
@@ -148,7 +155,7 @@ Then the $h$-step-ahead prediction interval is computed using @eq-mscp by settin
 
 We did not consider the update equation $\alpha_{t+1|t-h+1} := \alpha_{t|t-h} + \gamma\left(\alpha - \mathrm{err}_{t|t-h}\right)$ in this context, as in this case the available information at time $t$ is insufficient to estimate $\alpha_{t+h|t}^{*}$ used for forecasting $h$ steps.
 
-Selecting the parameter $\gamma$ is pivotal yet challenging. @gibbs2021 suggests setting $\gamma$ in proportion to the degree of variation of the unknown $\alpha_{t}^{*}$ over time. Several strategies have been proposed to avoid the necessity of selecting $\gamma$. For example, @zaffran2022 use an adaptive aggregation of multiple ACPs with a set of candidate values for $\gamma$ , determining weights based on their historical performance. @bastani2022 propose a multivalid prediction algorithm in which the prediction set is established by selecting a threshold from a sequence of candidate thresholds. However, both previous methods fail to promptly adapt to the local changes. To address this limitation, @gibbs2024 suggest adaptively tuning the step size parameter $\gamma$ in an online setting, choosing an "optimal" value for $\gamma$ from a candidate set of values by assessing their historical performance.
+Selecting the parameter $\gamma$ is pivotal yet challenging. @gibbs2021 suggest setting $\gamma$ in proportion to the degree of variation of the unknown $\alpha_{t}^{*}$ over time. Several strategies have been proposed to avoid the necessity of selecting $\gamma$. For example, @zaffran2022 use an adaptive aggregation of multiple ACPs with a set of candidate values for $\gamma$ , determining weights based on their historical performance. @bastani2022 propose a multivalid prediction algorithm in which the prediction set is established by selecting a threshold from a sequence of candidate thresholds. However, both previous methods fail to promptly adapt to the local changes. To address this limitation, @gibbs2024 suggest adaptively tuning the step size parameter $\gamma$ in an online setting, choosing an "optimal" value for $\gamma$ from a candidate set of values by assessing their historical performance.
 
 **Remark.** The theoretical coverage properties of ACP suggest that a larger value for $\gamma$ generally results in less deviation from the target coverage. As there is no restriction on $\alpha_{t+h|t}$ and it can drift below $0$ or above $1$, a larger $\gamma$ may lead to frequent output of null or infinite prediction sets in order to quickly adapt to the current miscoverage status.
 
@@ -286,7 +293,9 @@ Let $\{\hat{q}_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-\fra
 
 # Experiments
 
-In this section, we examine the empirical performance of the previously proposed multi-step conformal prediction methods using two simulated data settings and two real data examples. Throughout the experiments, we adhere to the following parameter settings: we focus on the target coverage level $1-\alpha=0.9$; for the MWCP method, we use $b=0.99$ as per @barber2023; following @angelopoulos2024, we use a step size parameter of $\gamma=0.005$ for the MACP method, a Theta model as the scorecaster in the MPID method, and a learning rate of $\eta=0.01\hat{B}_t$ for quantile tracking in the MPID and AcMCP methods, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\cdots,s_{t|t-h}\}$ is the highest score over a tailing window and the window length $\Delta$ is set to be same as the length of the calibration set; we consider a clipped version of MACP by imputing infinite intervals with the largest score seen so far.
+In this section, we examine the empirical performance of the previously proposed multi-step conformal prediction methods using two simulated data settings and two real data examples.
+
+Throughout the experiments, we adhere to the following parameter settings: we focus on the target coverage level $1-\alpha=0.9$; for the MWCP method, we use $b=0.99$ as per @barber2023; following @angelopoulos2024, we use a step size parameter of $\gamma=0.005$ for the MACP method, a Theta model as the scorecaster in the MPID method, and a learning rate of $\eta=0.01\hat{B}_t$ for quantile tracking in the MPID and AcMCP methods, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\cdots,s_{t|t-h}\}$ is the highest score over a tailing window and the window length $\Delta$ is set to be same as the length of the calibration set; we consider a clipped version of MACP by imputing infinite intervals with the largest score seen so far.
 
 ## Simulated examples
 
@@ -532,6 +541,10 @@ P_cafe_result
 ````
 
 # Discussion
+
+@oliveira2024: obtain very strong empirical coverage guarantees, but have no marginal coverage guarantees, and the online aspect of their method, which requires updates at every step, may be undesirable, e.g., in deployed applications.
+
+Comparison with bootstrap. Advantages.
 
 -   Learning rate determination
 
