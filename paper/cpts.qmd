@@ -555,10 +555,6 @@ We also discuss the limitations of our work. Notably, we restrict our focus to e
 \setcounter{figure}{0}
 \setcounter{table}{0}
 ```
-# Weighted quantile estimation {#appendix-wq}
-
--   median-unbiased estimates
-
 # Proof {#sec-proof}
 
 ## Proof of @prp-ma {#sec-proof_ma}
