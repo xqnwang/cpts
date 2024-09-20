@@ -285,7 +285,7 @@ Let $\{\hat{q}_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-\fra
 
 In this section, we examine the empirical performance of the previously proposed multi-step conformal prediction methods using two simulated data settings and two real data examples.
 
-Throughout the experiments, we adhere to the following parameter settings: we focus on the target coverage level $1-\alpha=0.9$; for the MWCP method, we use $b=0.99$ as per @barber2023; following @angelopoulos2024, we use a step size parameter of $\gamma=0.005$ for the MACP method, a Theta model as the scorecaster in the MPID method, and a learning rate of $\eta=0.01\hat{B}_t$ for quantile tracking in the MPID and AcMCP methods, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\cdots,s_{t|t-h}\}$ is the highest score over a tailing window and the window length $\Delta$ is set to be same as the length of the calibration set; we consider a clipped version of MACP by imputing infinite intervals with the largest score seen so far.
+Throughout the experiments, we adhere to the following parameter settings: we focus on the target coverage level $1-\alpha=0.9$; for the MWCP method, we use $b=0.99$ as per @barber2023; following @angelopoulos2024, we use a step size parameter of $\gamma=0.005$ for the MACP method, a Theta model as the scorecaster in the MPID method, and a learning rate of $\eta=0.01\hat{B}_t$ for quantile tracking in the MPID and AcMCP methods, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\cdots,s_{t|t-h}\}$ is the highest score over a tailing window and the window length $\Delta$ is set to be same as the length of the calibration set; we adopt a nonlinear saturation function defined as $r_t(x)=K_1 \tan \left(x \log (t) /\left(t C_{\text {sat }}\right)\right)$, where $\tan (x)=\operatorname{sign}(x) \cdot \infty$ for $x \notin[-\pi / 2, \pi / 2]$, and constants $C_{\text {sat }}, K_{\mathrm{I}}>0$ are chosen heuristically, as suggested by @angelopoulos2024; we consider a clipped version of MACP by imputing infinite intervals with the largest score seen so far.
 
 ## Simulated examples
 
@@ -530,19 +530,13 @@ P_cafe_result
 -->
 ````
 
-# Discussion
+# Conclusion and discussion
 
-@oliveira2024: obtain very strong empirical coverage guarantees, but have no marginal coverage guarantees, and the online aspect of their method, which requires updates at every step, may be undesirable, e.g., in deployed applications.
+This paper establishes a unified notation to formalize the mathematical representation of conformal prediction specifically within the context of time series data. We focus specifically on conformal inference for multi-step time series forecasting in a generic online learning framework. To begin, we extend several accessible conformal prediction methods to address the challenges of multi-step forecasting scenarios.
 
-Comparison with bootstrap. Advantages.
+We prove that the optimal multi-step-ahead forecast errors can be approximated by an AR process under the assumption of a general non-stationary autoregressive DGP. Building on this foundation, we introduce a novel method, AcMCP, which accounts for the autocorrelations inherent in multi-step forecast errors. We indicate that as the forecast horizon increases, deviations from the target coverage also tend to increase. Notably, our method achieves long-run coverage guarantees without imposing assumptions regarding data distribution shifts. On both simulations and real-world experiments, our proposed method achieves coverage closer to the target within local windows while offering adaptive prediction intervals that respond effectively to varying conditions.
 
--   Learning rate determination
-
--   Efficiency/sharpness of prediction intervals
-
--   Large forecast horizon. Is it possible to get coverage guarantee with respect to a large forecast horizon?
-
--   Variability introduced by the forecasts of predictors
+We also discuss the limitations of our work. Notably, we restrict our focus to ex-post forecasting, operating under the assumption that actual observations of the exogenous predictors during the forecast period are accessible. Additionally, our methodology does not incorporate an algorithmic approach to tuning the learning rate parameter. These considerations pave the way for numerous avenues for future research. Potential directions include the introduction of a time-dependent learning rate parameter to minimize interval width while maintaining the guaranteed coverage rate, as well as the development of refined methodologies that account for variability introduced by forecasting predictors in ex-ante scenarios.
 
 # References {.unnumbered}
 
