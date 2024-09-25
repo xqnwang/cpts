@@ -26,7 +26,7 @@ wpnumber: no/24
 jelcodes: C53,C22,C14
 blind: false
 cover: false
-linestretch: 1
+linestretch: 1.1
 fontsize: 11pt
 include-in-header:
   - text: |
@@ -176,7 +176,7 @@ y_t = f_{t}\left(y_{(t-d):(t-1)},\bm{x}_{(t-k):t}\right) + \epsilon_t,
 $$ {#eq-dgp}
 where $f_{t}$ is considered a nonlinear function in $d$ lagged values of $y_t$ (i.e. $y_{(t-d):(t-1)}$) and the current value along with the preceding $k$ values of the exogenous predictors (i.e. $\bm{x}_{(t-k):t}$), and $\epsilon_t$ is white noise.
 
-It is well-established in the forecasting literature that, for optimal $h$-step-ahead forecasts, the sequence of forecast errors is *at most* an MA$(h-1)$ process [@harvey1997; @diebold2017]. We now present the property under the assumption of a non-stationary autoregressive DGP, and provide its proof in @sec-proof_ma based on the proof of @prp-ar that we will introduce later.
+It is well-established in the forecasting literature that, for optimal $h$-step-ahead forecasts, the sequence of forecast errors is *at most* an MA$(h-1)$ process [@harvey1997; @diebold2024]. We now present the property under the assumption of a non-stationary autoregressive DGP, and provide its proof in @sec-proof_ma based on the proof of @prp-ar that we will introduce later.
 
 ::: {#prp-ma}
 ## MA$(h-1)$ process for $h$-step-ahead optimal forecast errors
@@ -503,7 +503,7 @@ P_cafe_result
 
 This paper establishes a unified notation to formalize the mathematical representation of conformal prediction specifically within the context of time series data. We focus specifically on conformal inference for multi-step time series forecasting in a generic online learning framework. To begin, we extend several accessible conformal prediction methods to address the challenges of multi-step forecasting scenarios.
 
-We prove that the optimal multi-step-ahead forecast errors can be approximated by an AR process under the assumption of a general non-stationary autoregressive DGP. Building on this foundation, we introduce a novel method, AcMCP, which accounts for the autocorrelations inherent in multi-step forecast errors. We indicate that as the forecast horizon increases, deviations from the target coverage also tend to increase. Notably, our method achieves long-run coverage guarantees without imposing assumptions regarding data distribution shifts. On both simulations and real-world experiments, our proposed method achieves coverage closer to the target within local windows while offering adaptive prediction intervals that respond effectively to varying conditions.
+We prove that the optimal multi-step-ahead forecast errors can be approximated by an AR process under the assumption of a general non-stationary autoregressive DGP. Building on this foundation, we introduce a novel method, AcMCP, which accounts for the autocorrelations inherent in multi-step forecast errors. We indicate that as the forecast horizon increases, deviations from the target coverage also tend to increase. Notably, our method achieves long-run coverage guarantees without imposing assumptions regarding data distribution shifts. In both simulations and applications to data, our proposed method achieves coverage closer to the target within local windows while offering adaptive prediction intervals that respond effectively to varying conditions.
 
 We also discuss the limitations of our work. Notably, we restrict our focus to ex-post forecasting, operating under the assumption that actual observations of the exogenous predictors during the forecast period are accessible. Additionally, our methodology does not incorporate an algorithmic approach to tuning the learning rate parameter. These considerations pave the way for numerous avenues for future research. Potential directions include the introduction of a time-dependent learning rate parameter to minimize interval width while maintaining the guaranteed coverage rate, as well as the development of refined methodologies that account for variability introduced by forecasting predictors in ex-ante scenarios.
 
