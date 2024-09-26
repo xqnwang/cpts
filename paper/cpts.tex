@@ -259,7 +259,7 @@ quantile estimate},
 
 \title{Online conformal inference for multi-step time series
 forecasting}
-\date{25 September 2024}
+\date{26 September 2024}
 
 \def\Date{\number\day}
 \def\Month{\ifcase\month\or
@@ -359,7 +359,7 @@ forecasting}
       \\[0.5cm]%
    %
    }%
-   \lfoot{\sf Wang, Hyndman: 25 September 2024}
+   \lfoot{\sf Wang, Hyndman: 26 September 2024}
 
 % Keywords
 
@@ -531,7 +531,7 @@ Our goal is to achieve long-run coverage for multi-step univariate time
 series forecasting. All the proposed methods are grounded in the split
 conformal prediction framework and an online learning scheme, which are
 well-suited to the sequential nature of time series data. First, we
-extend several widely-used conformal prediction methods that are
+extend several widely used conformal prediction methods that are
 originally designed for single-step forecasting to accommodate
 multi-step forecasting scenarios. Second, we provide theoretical proofs
 demonstrating that the forecast errors of optimal \(h\)-step-ahead
@@ -590,7 +590,8 @@ learning framework for all conformal prediction methods to be discussed
 in later sections. This framework updates prediction intervals as new
 data points arrive, allowing us to assess their long-run coverage
 behavior. It adopts a standard rolling window evaluation strategy and
-consists of the following steps.
+consists of the following
+steps.\todo{Why a rolling window rather than an expanding window?}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -669,7 +670,7 @@ exchangeability assumption, thereby compromising its coverage guarantee.
 Here we introduce online \textbf{multi-step split conformal prediction}
 (MSCP) as a generalization of SCP to recursively update all \(H\)-step
 prediction intervals over time. Instead of assuming exchangeability,
-MSCP applys conformal inference in an online fashion, updating
+MSCP applies conformal inference in an online fashion, updating
 prediction intervals as new data points are received. Specifically, for
 each \(h \in [H]\), we consider the following simple online update to
 construct prediction intervals on the test set:
@@ -1369,12 +1370,12 @@ width of the AcMCP method.}
 We present the forecast interval bounds for MACP, MPI, and AcMCP in
 Figure~\ref{fig-elec_timeplot}. The plot shows that MACP intervals are
 too narrow to adequately hug the true values, particularly from
-September to November of 2014. In contrast, MPI and AcMCP perform better
-by widening their intervals, resulting in narrower swings away from the
+September to November 2014. In contrast, MPI and AcMCP perform better by
+widening their intervals, resulting in narrower swings away from the
 \(90\%\) target level. The differences between MPI and AcMCP prediction
 intervals are most pronounced in the \(5\)-, \(6\)-, and
 \(7\)-step-ahead forecast results. For \(5\)-step-ahead forecasting,
-from May to July of 2014, the upper bounds of MPI intervals struggle to
+from May to July 2014, the upper bounds of MPI intervals struggle to
 capture the true values. AcMCP addresses this undercoverage by construct
 larger upper bounds. In August and September, AcMCP constructs smaller
 upper bounds than MPI while still capturing the true values effectively.
