@@ -72,6 +72,7 @@
 \makeatother
 
 \usepackage{todonotes}
+\usepackage[section]{placeins}
 \usepackage{orcidlink}
 \definecolor{mypink}{RGB}{219, 48, 122}
 \makeatletter
@@ -1030,33 +1031,41 @@ Equation~\ref{eq-acmcp_1} yield the correct long-run coverage; i.e.,
 
 \section{Experiments}\label{experiments}
 
-We examine the empirical performance of the previously proposed
-multi-step conformal prediction methods using two simulated data
-settings and two real data examples.
+We examine the empirical performance of the proposed multi-step
+conformal prediction methods using two simulated data settings and two
+real data examples.
 
 Throughout the experiments, we adhere to the following parameter
-settings: we focus on the target coverage level \(1-\alpha=0.9\); for
-the MWCP method, we use \(b=0.99\) as per \textcite{barber2023};
-following \textcite{angelopoulos2024}, we use a step size parameter of
-\(\gamma=0.005\) for the MACP method, a Theta model as the scorecaster
-in the MPID method, and a learning rate of \(\eta=0.01\hat{B}_t\) for
-quantile tracking in the MPID and AcMCP methods, where
-\(\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\cdots,s_{t|t-h}\}\) is
-the highest score over a tailing window and the window length \(\Delta\)
-is set to be same as the length of the calibration set; we adopt a
-nonlinear saturation function defined as
-\(r_t(x)=K_1 \tan \left(x \log (t) / (t C_{\text {sat }})\right)\),
-where \(\tan (x)=\operatorname{sign}(x) \cdot \infty\) for
-\(x \notin[-\pi / 2, \pi / 2]\), and constants
-\(C_{\text {sat }}, K_{\mathrm{I}}>0\) are chosen heuristically, as
-suggested by \textcite{angelopoulos2024}; we consider a clipped version
-of MACP by imputing infinite intervals with the largest score seen so
-far.
+settings:
 
-\subsection{Simulated examples}\label{simulated-examples}
+\begin{itemize}
+\tightlist
+\item
+  we focus on the target coverage level \(1-\alpha=0.9\);
+\item
+  for the MWCP method, we use \(b=0.99\) as per \textcite{barber2023};
+\item
+  following \textcite{angelopoulos2024}, we use a step size parameter of
+  \(\gamma=0.005\) for the MACP method, a Theta model as the scorecaster
+  in the MPID method, and a learning rate of \(\eta=0.01\hat{B}_t\) for
+  quantile tracking in the MPID and AcMCP methods, where
+  \(\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\dots,s_{t|t-h}\}\) is
+  the highest score over a tailing window and the window length
+  \(\Delta\) is set to be same as the length of the calibration set;
+\item
+  we adopt a nonlinear saturation function defined as
+  \(r_t(x)=K_1 \tan \left(x \log (t) / (t C_{\text {sat }})\right)\),
+  where \(\tan (x)=\operatorname{sign}(x) \cdot \infty\) for
+  \(x \notin[-\pi / 2, \pi / 2]\), and constants
+  \(C_{\text {sat }}, K_{\mathrm{I}}>0\) are chosen heuristically, as
+  suggested by \textcite{angelopoulos2024};
+\item
+  we consider a clipped version of MACP by imputing infinite intervals
+  with the largest score seen so far.
+\end{itemize}
 
-\subsubsection{Linear autoregressive
-process}\label{linear-autoregressive-process}
+\subsection{Simulated linear autoregressive
+process}\label{simulated-linear-autoregressive-process}
 
 We first consider a simulated stationary time series which is generated
 from a simple AR\((2)\) process \[
@@ -1068,19 +1077,20 @@ settings, we create training sets \(\mathcal{D}_{\text{tr}}\) and
 calibration sets \(\mathcal{D}_{\text{cal}}\), each with a length of
 \(500\). We use AR\((2)\) models to generate \(1\)- to \(3\)-step-ahead
 point forecasts (i.e.~\(H=3\)) with the automated algorithm implemented
-in the \textbf{forecast} R package \autocite{hyndman2024}. The goal is
-to generate prediction intervals using various proposed conformal
-prediction methods and evaluate whether they can achieve the nominal
-long-run coverage for each separate forecast horizon.
+in the \textbf{forecast} R package
+\autocite{hyndman2024}.\todo{Since AR(2) is specified, what is automated?}
+The goal is to generate prediction intervals using various proposed
+conformal prediction methods and evaluate whether they can achieve the
+nominal long-run coverage for each separate forecast horizon.
 
 Figure~\ref{fig-AR2_cov} presents the rolling coverage and interval
 width of each method for each forecast horizon, with metrics computed
-over a rolling window of size \(500\). In terms of coverage, we observe
-that MPID and AcMCP achieve approximately the desired \(90\%\) coverage
-level over the rolling windows, while other methods, including the AR
-model, undergo much wider swings away from the desired level, showing
-large troughs and peaks in coverage as time changes. Turning to the
-prediction interval width, the trajectories of the rolling mean and
+over a rolling window of size \(500\). The analytic (and optimal)
+intervals obtained from the AR model are also shown. We observe that
+MPID and AcMCP achieve approximately the desired \(90\%\) coverage level
+over the rolling windows, while other methods, including the AR model,
+undergo much wider swings away from the desired level, showing high
+coverage volatility over time. The trajectories of the rolling mean and
 median of the interval widths for each method are largely consistent.
 AcMCP constructs narrower prediction intervals than MPID, despite both
 methods achieving similar coverage. Moreover, we see that AcMCP tends to
@@ -1089,9 +1099,9 @@ especially when competing methods undercover, which is to be expected.
 In short, AcMCP intervals offer greater adaptivity and more precise
 coverage compared to AR, MSCP, MWCP and MACP. However, MPID achieves
 tight coverage but at the cost of constructing wider prediction
-intervals. This is due to the fact that the inclusion of a second model
-(scorecaster) is likely to introduce large variance into the generated
-prediction intervals. The results can be further elucidated with
+intervals. This is due to the inclusion of a second model (scorecaster)
+which introduces additional variance into the generated prediction
+intervals. The results can be further elucidated with
 Figure~\ref{fig-AR2_box}, which presents boxplots of rolling coverage
 and interval width for each method and each forecast horizon.
 
@@ -1126,20 +1136,22 @@ AcMCP method.}
 
 \end{figure}%
 
-We note that the inclusion of the last term \(\tilde{e}_{t+h|t}\) in
-AcMCP should only result in a slight difference compared to the version
-without this term, which we henceforth refer to as MPI. This is because,
-the inclusion of \(\tilde{e}_{t+h|t}\) aims to capture autocorrelations
+\todo[inline]{I suggest using `patchwork` rather than `ggpubr` to combine the plots as it gives better alignment. The time axes in the local coverage levels do not align with the lower plots.}
+
+The inclusion of the last term \(\tilde{e}_{t+h|t}\) in AcMCP should
+only result in a slight difference compared to the version without this
+term, which we henceforth refer to as MPI. This is because, the
+inclusion of \(\tilde{e}_{t+h|t}\) aims to capture autocorrelations
 inherent in multi-step forecast errors and focuses on the mean of
 forecast errors, whereas the whole update of AcMCP operates on quantiles
 of scores. To illustrate the subtle difference in their results and
-explore their origins, we visualize their prediction interval over a
+explore their origins, we visualize their prediction intervals over a
 truncated period of length \(500\), as shown in
 Figure~\ref{fig-AR2_timeplot}. We observe that AcMCP and MPI indeed
 construct similar prediction intervals so their lower and upper bounds
-mostly overlap with each other. The main differences may occur around
-the time 1320 and during the period 1470-1500, where AcMCP tends to have
-a fanning-out effect, increasing the interval width as the forecast
+mostly overlap with each other. The main differences occur around the
+time 1320 and during the period 1470-1500, where AcMCP tends to have a
+fanning-out effect, increasing the interval width as the forecast
 horizon increases, compared to MPI. Figure~\ref{fig-AR2_timeplot} also
 presents the prediction interval bounds given by MACP. The prediction
 intervals of both AcMCP and MACP can capture certain patterns in the
@@ -1160,12 +1172,11 @@ truncated period of length 500.}
 
 \end{figure}%
 
-\subsubsection{Nonlinear autoregressive
-process}\label{nonlinear-autoregressive-process}
+\subsection{Simulated nonlinear autoregressive
+process}\label{simulated-nonlinear-autoregressive-process}
 
-We then consider the case of a nonlinear data generation process, which
-happens in many practical time series applications. We specify the true
-DGP as \[
+Next consider the case of a nonlinear data generation process, defined
+as \[
 y_t = \sin(y_{t-1}) + 0.5\log(y_{t-2} + 1) + 0.1y_{t-1}x_{1,t} + 0.3x_{2,t} + \varepsilon_{t},
 \] where \(x_{1,t}\) and \(x_{2,t}\) are uniformly distributed on
 \([0,1]\), and \(\varepsilon_{t}\) is white noise with error variance
@@ -1180,10 +1191,10 @@ training sets \(\mathcal{D}_{\text{tr}}\) and calibration sets
 nonlinear structure of the DGP, we use feed-forward neural networks with
 a single hidden layer and lagged inputs to generate \(1\)- to
 \(3\)-step-ahead point forecasts (i.e.~\(H=3\)) with the automated
-algorithm implemented in the \textbf{forecast} R package. Note that it
-is not straightforward for neural networks to derive interval forecasts,
-thus we do not include neural network models when presenting the
-results.
+algorithm implemented in the \texttt{nnetar()} function from the
+\textbf{forecast} R package \autocite{hyndman2024}. Note that it is not
+possible to derive analytic intervals for neural networks, thus we do
+not include neural network models when presenting the results.
 
 Figure~\ref{fig-NL_cov} illustrates the rolling coverage and interval
 width of each method, with calculations based on a rolling window of
@@ -1196,11 +1207,10 @@ construct adaptive prediction intervals. They widen intervals in
 response to undercoverage and narrow them when overcoverage occurs.
 Notably, MPID and AcMCP demonstrate greater adaptability, displaying
 higher variability in interval widths compared to competing methods in
-order to uphold the desired coverage. Lastly, AcMCP intervals are
-evidently narrower than MPID intervals for \(2\)-step-ahead forecasting
-but wider for \(3\)-step-ahead forecasting. AcMCP intervals appear to be
-more reasonable, as they tend to widen with increasing forecast
-horizons.
+order to uphold the desired coverage. AcMCP intervals are evidently
+narrower than MPID intervals for \(2\)-step-ahead forecasting but wider
+for \(3\)-step-ahead forecasting. AcMCP intervals appear to be more
+reasonable, as they tend to widen with increasing forecast horizons.
 
 \begin{figure}
 
@@ -1240,22 +1250,24 @@ width of the AcMCP method.}
 
 \end{figure}%
 
-\subsection{Real data examples}\label{real-data-examples}
+\FloatBarrier
 
-\subsubsection{Electricity demand data}\label{electricity-demand-data}
+\subsection{Electricity demand data}\label{electricity-demand-data}
 
-Now we examine empirical performance of the conformal prediction methods
-using an electricity demand data set. The data set tracks daily
+We apply the conformal prediction methods using data comprising daily
 electricity demand (GW), daily maximum temperature (degrees Celsius),
 and holiday information for the state of Victoria, Australia, spanning a
-three-year period from 2012 to 2014. The left panel of
-Figure~\ref{fig-elec_data} displays the daily electricity demand during
-2012-2014, along with temperatures. The right panel shows a nonlinear
-relationship between electricity demand and temperature, with demand
-increasing for low temperatures (due to heating) and increasing for high
-temperatures (due to cooling).
+three-year period from 2012 to 2014. Temperatures are taken from the
+Melbourne Regional Office weather station in the capital city of
+Victoria. The left panel of Figure~\ref{fig-elec_data} displays the
+daily electricity demand during 2012--2014, along with temperatures. The
+right panel shows a nonlinear relationship between electricity demand
+and temperature, with demand increasing for low temperatures (due to
+heating) and increasing for high temperatures (due to cooling). The two
+clouds of points in the right panel correspond to working days and
+non-working days.
 
-\begin{figure}
+\begin{figure}[!b]
 
 \centering{
 
@@ -1278,23 +1290,6 @@ degrees) to generate \(1\)- to \(7\)-step-ahead point forecasts
 an ARIMA model to contain autocorrelation. We use two years of data as
 training sets to fit dynamic regression models, and use \(100\) data
 points for calibration sets.
-
-We present the results in Figure~\ref{fig-elec_cov} and
-Figure~\ref{fig-elec_box}, comparing the rolling coverage and interval
-width of each method. These computations are based on a rolling window
-of size \(100\). First, we observe that DR (dynamic regression)
-consistently achieves a significantly higher coverage than the \(90\%\)
-target coverage, resulting in much wider intervals than other methods
-for \(h=1,2,3,4\). Secondly, MSCP, MWCP, and MACP fail to sustain the
-target coverage and noticeably undercover after September 2014 for all
-forecast horizons, thus leading to narrower intervals than others.
-Thirdly, MPI, MPID, and AcMCP offer prediction intervals that are wider
-than those of other conformal prediction methods, effectively mitigating
-or avoiding the undercoverage issue observed after September 2014.
-Additionally, we notice that MPID performs slightly worse than MPI and
-AcMCP in terms of coverage for \(h=3,4,7\), despite leading to wider
-intervals. Finally, MPI and AcMCP coverage display similar pattern, but
-AcMCP is capable of constructing narrower intervals than MPI.
 
 \begin{figure}
 
@@ -1328,6 +1323,38 @@ width of the AcMCP method.}
 
 \end{figure}%
 
+\begin{figure}
+
+\centering{
+
+\includegraphics{cpts_files/figure-pdf/fig-elec_timeplot-1.pdf}
+
+}
+
+\caption{\label{fig-elec_timeplot}Electricity demand data results
+showing the forecast interval bounds for MACP, MPI, and AcMCP over the
+whole test set.}
+
+\end{figure}%
+
+We present the results in Figure~\ref{fig-elec_cov} and
+Figure~\ref{fig-elec_box}, comparing the rolling coverage and interval
+width of each method. These computations are based on a rolling window
+of size \(100\). The DR method corresponds to the analytic intervals
+obtained from the dynamic regression model. First, we observe that DR
+consistently achieves a significantly higher coverage than the \(90\%\)
+target coverage, resulting in much wider intervals than other methods
+for \(h=1,2,3,4\). Second, MSCP, MWCP, and MACP fail to sustain the
+target coverage and noticeably undercover after September 2014 for all
+forecast horizons, thus leading to narrower intervals than others.
+Third, MPI, MPID, and AcMCP offer prediction intervals that are wider
+than those of other conformal prediction methods, effectively mitigating
+or avoiding the undercoverage issue observed after September 2014.
+Additionally, we notice that MPID performs slightly worse than MPI and
+AcMCP in terms of coverage for \(h=3,4,7\), despite leading to wider
+intervals. Finally, MPI and AcMCP coverage display similar pattern, but
+AcMCP is capable of constructing narrower intervals than MPI.
+
 We present the forecast interval bounds for MACP, MPI, and AcMCP in
 Figure~\ref{fig-elec_timeplot}. The plot shows that MACP intervals are
 too narrow to adequately hug the true values, particularly from
@@ -1345,30 +1372,16 @@ upper bounds than MPI, which provides upper bounds that are far away
 from the truth. Similar reaction is observed for \(7\)-step-ahead
 forecasting during August and September.
 
-\begin{figure}
-
-\centering{
-
-\includegraphics{cpts_files/figure-pdf/fig-elec_timeplot-1.pdf}
-
-}
-
-\caption{\label{fig-elec_timeplot}Electricity demand data results
-showing the forecast interval bounds for MACP, MPI, and AcMCP over the
-whole test set.}
-
-\end{figure}%
-
-\subsubsection{Eating out expenditure
+\subsection{Eating out expenditure
 data}\label{eating-out-expenditure-data}
 
-Finally, we apply the conformal prediction methods to predict the eating
-out expenditure (\$million) in Victoria, Australia. The data set
-includes monthly expenditure on cafes, restaurants and takeaway food
-services in Victoria from April 1982 up to December 2019, as shown in
-Figure~\ref{fig-cafe_data}. The data shows an overall upward trend,
-obvious annual seasonal patterns, and variability proportional to the
-data level.
+In our final example, we apply the conformal prediction methods to
+forecast the eating out expenditure (\$million) in Victoria, Australia.
+The data set includes monthly expenditure on cafes, restaurants and
+takeaway food services in Victoria from April 1982 up to December 2019,
+as shown in Figure~\ref{fig-cafe_data}. The data shows an overall upward
+trend, obvious annual seasonal patterns, and variability proportional to
+the data level.
 
 \begin{figure}
 
@@ -1389,22 +1402,22 @@ and STL-ETS \autocite{hyndman2021}, and then output their simple average
 as final point forecasts. STL-ETS involves forecasting using the STL
 decomposition method, applying ETS to forecast the seasonally adjusted
 series. All three models can be automatically trained using the
-\textbf{forecast} R package. Our goal is to forecast \(12\) months
-ahead, i.e.~\(H=12\). We use \(20\) years of data for training the
-models and \(5\) years of data for calibration sets. The whole test set
-only has a length of \(152\) months. Therefore, we will not compute
-rolling coverage and interval width in this experiment, but rather
-compute the coverage and interval width averaged over the entire test
-set.
+\textbf{forecast} R package \autocite{hyndman2024}. Our goal is to
+forecast \(12\) months ahead, i.e.~\(H=12\). We use \(20\) years of data
+for training the models and \(5\) years of data for calibration sets.
+The whole test set only has a length of \(152\) months. Therefore, we
+will not compute rolling coverage and interval width in this experiment,
+but rather compute the coverage and interval width averaged over the
+entire test set.
 
 We summarize the average coverage and interval width for each method and
 each forecast horizon in Figure~\ref{fig-cafe_cov}. The results first
 show that MSCP, MWCP and MACP provide valid prediction intervals for
 smaller forecast horizon but fail to achieve the desired coverage for
-larger forecast horizons (\(h>5\)). Secondly, for \(h \leq 5\), MPI and
+larger forecast horizons (\(h>5\)). Second, for \(h \leq 5\), MPI and
 AcMCP can approximately achieve the desired coverage and provide
 comparable mean interval widths with other methods, except for MPID.
-Thirdly, the coverage of MSCP, MWCP and MACP declines gradually as the
+Third, the coverage of MSCP, MWCP and MACP declines gradually as the
 forecast horizon increases, while MPI and AcMCP maintain coverage within
 a tighter range, albeit at the cost of interval efficiency. Lastly,
 compared to MPI, AcMCP exhibits slightly less deviation from the desired
@@ -1427,37 +1440,40 @@ no difference from the \(90\%\) target level.}
 
 \section{Conclusion and discussion}\label{conclusion-and-discussion}
 
-This paper establishes a unified notation to formalize the mathematical
-representation of conformal prediction specifically within the context
-of time series data. We focus specifically on conformal inference for
-multi-step time series forecasting in a generic online learning
-framework. To begin, we extend several accessible conformal prediction
-methods to address the challenges of multi-step forecasting scenarios.
+We have introduced a unified notation to formalize the mathematical
+representation of conformal prediction within the context of time series
+data. We focus on conformal inference for multi-step time series
+forecasting in a generic online learning framework.
 
-We prove that the optimal multi-step-ahead forecast errors can be
+Several accessible conformal prediction methods have been extended to
+address the challenges of multi-step forecasting scenarios.
+
+We have shown that the optimal multi-step-ahead forecast errors can be
 approximated by an AR process under the assumption of a general
 non-stationary autoregressive DGP. Building on this foundation, we
 introduce a novel method, AcMCP, which accounts for the autocorrelations
-inherent in multi-step forecast errors. We indicate that as the forecast
-horizon increases, deviations from the target coverage also tend to
-increase. Notably, our method achieves long-run coverage guarantees
-without imposing assumptions regarding data distribution shifts. In both
-simulations and applications to data, our proposed method achieves
-coverage closer to the target within local windows while offering
-adaptive prediction intervals that respond effectively to varying
-conditions.
+inherent in multi-step forecast errors. Our method achieves long-run
+coverage guarantees without imposing assumptions regarding data
+distribution shifts. In both simulations and applications to data, our
+proposed method achieves coverage closer to the target within local
+windows while offering adaptive prediction intervals that respond
+effectively to varying conditions.
 
-We also discuss the limitations of our work. Notably, we restrict our
-focus to ex-post forecasting, operating under the assumption that actual
-observations of the exogenous predictors during the forecast period are
-accessible. Additionally, our methodology does not incorporate an
-algorithmic approach to tuning the learning rate parameter. These
-considerations pave the way for numerous avenues for future research.
-Potential directions include the introduction of a time-dependent
-learning rate parameter to minimize interval width while maintaining the
-guaranteed coverage rate, as well as the development of refined
-methodologies that account for variability introduced by forecasting
-predictors in ex-ante scenarios.
+The methods discussed here are limited to ex-post forecasting, operating
+under the assumption that actual values of the exogenous predictors
+during the forecast period are available. In many applications, this may
+not be true and the methods will need to be adapted to allow forecasts
+of the predictors to be used, and the resulting uncertainty to be
+included in the conformal inference. Additionally, our methodology does
+not incorporate an algorithmic approach to tuning the learning rate
+parameter.
+
+These considerations pave the way for numerous avenues for future
+research. Potential directions include the introduction of a
+time-dependent learning rate parameter to minimize interval width while
+maintaining the guaranteed coverage rate, as well as the development of
+refined methodologies that account for variability introduced by
+forecasting predictors in ex-ante scenarios.
 
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
@@ -1475,22 +1491,23 @@ predictors in ex-ante scenarios.
 \setcounter{figure}{0}
 \setcounter{table}{0}
 
-\section{Proof}\label{sec-proof}
+\section{Proofs}\label{sec-proof}
 
 \subsection{\texorpdfstring{Proof of
 Proposition~\ref{prp-ma}}{Proof of Proposition~}}\label{sec-proof_ma}
 
+\todo[inline]{This is not rigorous enough to be called a proof. The proofs seem to confuse the white noise innovation in the model with the forecast error. The latter is an estimate of the former. You could potentially define a different white noise series based on the one-step forecast errors without stating it is the innovation series.}
+
 \begin{proof}
 Here, we give the proof of Proposition~\ref{prp-ma} based on
-Proposition~\ref{prp-ar}, and the idea is motivated by
+Proposition~\ref{prp-ar}; the idea is motivated by
 \textcite{sommer2023}.
 
-For \(1\)-step-ahead optimal forecast, we have \[
+For a \(1\)-step-ahead optimal forecast, we have \[
 y_{t+1} = f_{t+1}(y_{(t-d+1):t},\bm{x}_{(t-k+1):(t+1)}) + \varepsilon_{t+1},
-\] so \(e_{t+1|t}=\varepsilon_{t+1}\).
+\] so \(e_{t+1|t}=\varepsilon_{t+1}\).\todo{Only approximately}
 
-Based on Proposition~\ref{prp-ar}, we have \[
-\begin{aligned}
+Based on Proposition~\ref{prp-ar}, we have \begin{align*}
 e_{t+2|t} &= \varepsilon_{t+2} + \phi_{1}^{(2)}e_{t+1|t} \\
 e_{t+3|t} &= \varepsilon_{t+3} + \phi_{1}^{(3)}e_{t+2|t} + \phi_{2}^{(3)}e_{t+1|t} \\
 \cdots \\
@@ -1498,14 +1515,14 @@ e_{t+d|t} &= \varepsilon_{t+d} + \phi_{1}^{(d)}e_{t+d-1|t} + \cdots + \phi_{d-1}
 e_{t+d+1|t} &= \varepsilon_{t+d+1} + \phi_{1}^{(d+1)}e_{t+d|t} + \cdots + \phi_{d-1}^{(d+1)}e_{t+2|t} + \phi_{d}^{(d+1)}e_{t+1|t} \\
 \cdots \\
 e_{t+H|t} &= \varepsilon_{t+H} + \phi_{1}^{(H)}e_{t+H-1|t} + \cdots + \phi_{d-1}^{(H)}e_{t+H-d+1|t} + \phi_{d}^{(H)}e_{t+H-d|t}, \quad H > d + 1. \\
-\end{aligned}
-\] Substituting all equations above into the following equation, we can
-obtain \[
+\end{align*} \todo[inline]{Define $\phi_i^{(j)}$} Substituting all
+equations above into the following equation, we can obtain \[
 e_{t+h|t} = \varepsilon_{t+h} + \sum_{i=1}^{h-1}\theta_{i}\varepsilon_{t+h-i}, \text{ for each } h\in[H],
 \] where \(\theta_{i}\) is a complex function derived from the AR
-coefficients of all AR\((j-1)\) models, for \(j = 1,2,\ldots,h-1\). So
-we conclude that the \(h\)-step-ahead forecast error sequence
-\(\{e_{t+h|t}\}\) follows an MA\((h-1)\) process.
+coefficients of all AR\((j-1)\) models,\todo{Too vague} for
+\(j = 1,2,\ldots,h-1\). So we conclude that the \(h\)-step-ahead
+forecast error sequence \(\{e_{t+h|t}\}\) follows an MA\((h-1)\)
+process.
 \end{proof}
 
 \subsection{\texorpdfstring{Proof of
@@ -1514,48 +1531,43 @@ Proposition~\ref{prp-ar}}{Proof of Proposition~}}\label{sec-proof_ar}
 \begin{proof}
 Let \(\hat{y}_{t+h|t}\) be the optimal \(h\)-step-ahead point forecast,
 and \(e_{t+h|t}\) be the \(h\)-step-ahead forecast error. Denote
-\(\bm{u}_{t+h}=\bm{x}_{(t-k+h):(t+h)}\). Then we have \[
-\begin{aligned}
+\(\bm{u}_{t+h}=\bm{x}_{(t-k+h):(t+h)}\). Then we have \begin{align*}
 \hat{y}_{t+h|t}=\begin{cases}
-      f_{t+1}(y_t,\cdots,y_{t-d+1},\bm{u}_{t+1}) & \text{ if } h=1, \\
-      f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_t,\cdots,y_{t+h-d},\bm{u}_{t+h}) &  \text{ if } 1 < h \leq d, \\
-      f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}) & \text{ if } h > d.\\
+      f_{t+1}(y_t,\dots,y_{t-d+1},\bm{u}_{t+1}) & \text{ if } h=1, \\
+      f_{t+h}(\hat{y}_{t+h-1|t},\dots,\hat{y}_{t+1|t},y_t,\dots,y_{t+h-d},\bm{u}_{t+h}) &  \text{ if } 1 < h \leq d, \\
+      f_{t+h}(\hat{y}_{t+h-1|t},\dots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}) & \text{ if } h > d.\\
     \end{cases}\\
-\end{aligned}
-\] For \(h=1\), we simply have \(e_{t+1|t} = \varepsilon_{t+1}\).
+\end{align*} For \(h=1\), we simply have
+\(e_{t+1|t} = \varepsilon_{t+1}\).\todo{Again, only approximately.}
 
 For \(1<h\leq d\), applying the first order Taylor series expansion, we
-can write \[
-\begin{aligned}
+can write \begin{align*}
 y_{t+h}
-=&f_{t+h}(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
-=&f_{t+h}(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+1|t}+e_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
-\underset{\text{te}}{\approx}&f_{t+h}(\bm{a})+\operatorname{D}f_{t+h}(\bm{a})(\bm{v}-\bm{a})+
+&= f_{t+h}(y_{t+h-1},\dots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+&= f_{t+h}(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\dots,\hat{y}_{t+1|t}+e_{t+1|t},y_{t},\dots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+&\underset{\text{te}}{\approx} f_{t+h}(\bm{a})+\operatorname{D}f_{t+h}(\bm{a})(\bm{v}-\bm{a})+
 \varepsilon_{t+h} \\
-=&f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}) \\
-&+e_{t+h-1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_1}+\cdots+e_{t+2|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{h-2}}+e_{t+1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{h-1}}+\varepsilon_{t+h} \\
-=&\hat{y}_{t+h|t}+e_{t+h|t},
-\end{aligned}
-\] where \(\bm{v}=(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h})\),
-\(\bm{a} =(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h})\),
+&= f_{t+h}(\hat{y}_{t+h-1|t},\dots,\hat{y}_{t+1|t},y_{t},\dots,y_{t+h-d},\bm{u}_{t+h}) \\
+&\mbox{}\qquad +e_{t+h-1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_1}+\dots+e_{t+2|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{h-2}}+e_{t+1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{h-1}}+\varepsilon_{t+h} \\
+&=\hat{y}_{t+h|t}+e_{t+h|t},
+\end{align*} where \(\bm{v}=(y_{t+h-1},\dots,y_{t+h-d},\bm{u}_{t+h})\),
+\(\bm{a} =(\hat{y}_{t+h-1|t},\dots,\hat{y}_{t+1|t},y_{t},\dots,y_{t+h-d},\bm{u}_{t+h})\),
 \(\operatorname{D}f_{t+h}(\bm{a})\) denotes the matrix of partial
 derivative of \(f_{t+h}(\bm{v})\) at \(\bm{v}=\bm{a}\), and
 \(\frac{\partial}{\partial v_i}\) denotes the partial derivative with
 respect to the \(i\)th component in \(f_{t+h}\).
 
-Similarly, for \(h > d\), we can write \[
-\begin{aligned}
+Similarly, for \(h > d\), we can write \begin{align*}
 y_{t+h}
-=&f_{t+h}(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
-=&f_{t+h}(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t}+e_{t+h-d|t},\bm{u}_{t+h})+\varepsilon_{t+h} \\
-\underset{\text{te}}{\approx}&f_{t+h}(\bm{a})+\operatorname{D}f_{t+h}(\bm{a})(\bm{v}-\bm{a})+
+&= f_{t+h}(y_{t+h-1},\dots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+&= f_{t+h}(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\dots,\hat{y}_{t+h-d|t}+e_{t+h-d|t},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+&\underset{\text{te}}{\approx} f_{t+h}(\bm{a})+\operatorname{D}f_{t+h}(\bm{a})(\bm{v}-\bm{a})+
 \varepsilon_{t+h} \\
-=&f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}) \\
-&+e_{t+h-1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_1}+e_{t+h-d|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{d}}+\varepsilon_{t+h} \\
-=&\hat{y}_{t+h|t}+e_{t+h|t},
-\end{aligned}
-\] Therefore, the forecast errors of optimal \(h\)-step-ahead forecasts
-are at most an approximate AR(\(h-1\)) process.
+&= f_{t+h}(\hat{y}_{t+h-1|t},\dots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}) \\
+&\mbox{}\qquad +e_{t+h-1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_1}+e_{t+h-d|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{d}}+\varepsilon_{t+h} \\
+&= \hat{y}_{t+h|t}+e_{t+h|t},
+\end{align*} Therefore, the forecast errors of optimal \(h\)-step-ahead
+forecasts are at most an approximate AR(\(h-1\)) process.
 \end{proof}
 
 \subsection{\texorpdfstring{Proof of
@@ -1578,11 +1590,11 @@ for \(T=h+1,\ldots,2h\).
 Now, assuming Equation~\ref{eq-cov_rt} is true up to \(T\). We partition
 the argument into \(h+1\) cases: \[
 \begin{cases}
-cg(T-h)+h-1 < E_T \leq cg(T-h)+h, & \ldots \text { case (1) } \\
-cg(T-h)+h-2 < E_T \leq cg(T-h)+h-1, & \ldots \text { case (2) } \\
+cg(T-h)+h-1 < E_T \leq cg(T-h)+h, & \quad \text { case (1) } \\
+cg(T-h)+h-2 < E_T \leq cg(T-h)+h-1, & \quad \text { case (2) } \\
 \qquad \cdots \\
-cg(T-h) < E_T \leq cg(T-h)+1, & \ldots \text { case (h) } \\
-E_T \leq cg(T-h). & \ldots \text { case (h+1) }
+cg(T-h) < E_T \leq cg(T-h)+1, & \quad \text { case (h) } \\
+E_T \leq cg(T-h). & \quad \text { case (h+1) }
 \end{cases}
 \] In case (1), we observe that \(E_T > cg(T-h)+h-1 > cg(T-h)\),
 implying \(q_{T+h|T} = r_t(E_{T}) \geq b\) according to

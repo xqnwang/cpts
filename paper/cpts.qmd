@@ -538,22 +538,24 @@ These considerations pave the way for numerous avenues for future research. Pote
 \setcounter{figure}{0}
 \setcounter{table}{0}
 ```
-# Proof {#sec-proof}
+
+# Proofs {#sec-proof}
 
 ## Proof of @prp-ma {#sec-proof_ma}
 
-::: proof
-Here, we give the proof of @prp-ma based on @prp-ar, and the idea is motivated by @sommer2023.
+\todo[inline]{This is not rigorous enough to be called a proof. The proofs seem to confuse the white noise innovation in the model with the forecast error. The latter is an estimate of the former. You could potentially define a different white noise series based on the one-step forecast errors without stating it is the innovation series.}
 
-For $1$-step-ahead optimal forecast, we have
+::: proof
+Here, we give the proof of @prp-ma based on @prp-ar; the idea is motivated by @sommer2023.
+
+For a $1$-step-ahead optimal forecast, we have
 $$
 y_{t+1} = f_{t+1}(y_{(t-d+1):t},\bm{x}_{(t-k+1):(t+1)}) + \varepsilon_{t+1},
 $$
-so $e_{t+1|t}=\varepsilon_{t+1}$.
+so $e_{t+1|t}=\varepsilon_{t+1}$.\todo{Only approximately}
 
 Based on @prp-ar, we have
-$$
-\begin{aligned}
+\begin{align*}
 e_{t+2|t} &= \varepsilon_{t+2} + \phi_{1}^{(2)}e_{t+1|t} \\
 e_{t+3|t} &= \varepsilon_{t+3} + \phi_{1}^{(3)}e_{t+2|t} + \phi_{2}^{(3)}e_{t+1|t} \\
 \cdots \\
@@ -561,58 +563,52 @@ e_{t+d|t} &= \varepsilon_{t+d} + \phi_{1}^{(d)}e_{t+d-1|t} + \cdots + \phi_{d-1}
 e_{t+d+1|t} &= \varepsilon_{t+d+1} + \phi_{1}^{(d+1)}e_{t+d|t} + \cdots + \phi_{d-1}^{(d+1)}e_{t+2|t} + \phi_{d}^{(d+1)}e_{t+1|t} \\
 \cdots \\
 e_{t+H|t} &= \varepsilon_{t+H} + \phi_{1}^{(H)}e_{t+H-1|t} + \cdots + \phi_{d-1}^{(H)}e_{t+H-d+1|t} + \phi_{d}^{(H)}e_{t+H-d|t}, \quad H > d + 1. \\
-\end{aligned}
-$$
+\end{align*}
+\todo[inline]{Define $\phi_i^{(j)}$}
 Substituting all equations above into the following equation, we can obtain
 $$
 e_{t+h|t} = \varepsilon_{t+h} + \sum_{i=1}^{h-1}\theta_{i}\varepsilon_{t+h-i}, \text{ for each } h\in[H],
 $$
-where $\theta_{i}$ is a complex function derived from the AR coefficients of all AR$(j-1)$ models, for $j = 1,2,\ldots,h-1$. So we conclude that the $h$-step-ahead forecast error sequence $\{e_{t+h|t}\}$ follows an MA$(h-1)$ process.
+where $\theta_{i}$ is a complex function derived from the AR coefficients of all AR$(j-1)$ models,\todo{Too vague} for $j = 1,2,\ldots,h-1$. So we conclude that the $h$-step-ahead forecast error sequence $\{e_{t+h|t}\}$ follows an MA$(h-1)$ process.
 :::
 
 ## Proof of @prp-ar {#sec-proof_ar}
 
 ::: proof
 Let $\hat{y}_{t+h|t}$ be the optimal $h$-step-ahead point forecast, and $e_{t+h|t}$ be the $h$-step-ahead forecast error. Denote $\bm{u}_{t+h}=\bm{x}_{(t-k+h):(t+h)}$. Then we have
-$$
-\begin{aligned}
+\begin{align*}
 \hat{y}_{t+h|t}=\begin{cases}
-      f_{t+1}(y_t,\cdots,y_{t-d+1},\bm{u}_{t+1}) & \text{ if } h=1, \\
-      f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_t,\cdots,y_{t+h-d},\bm{u}_{t+h}) &  \text{ if } 1 < h \leq d, \\
-      f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}) & \text{ if } h > d.\\
+      f_{t+1}(y_t,\dots,y_{t-d+1},\bm{u}_{t+1}) & \text{ if } h=1, \\
+      f_{t+h}(\hat{y}_{t+h-1|t},\dots,\hat{y}_{t+1|t},y_t,\dots,y_{t+h-d},\bm{u}_{t+h}) &  \text{ if } 1 < h \leq d, \\
+      f_{t+h}(\hat{y}_{t+h-1|t},\dots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}) & \text{ if } h > d.\\
     \end{cases}\\
-\end{aligned}
-$$
-For $h=1$, we simply have $e_{t+1|t} = \varepsilon_{t+1}$.
+\end{align*}
+For $h=1$, we simply have $e_{t+1|t} = \varepsilon_{t+1}$.\todo{Again, only approximately.}
 
 For $1<h\leq d$, applying the first order Taylor series expansion, we can write
-$$
-\begin{aligned}
+\begin{align*}
 y_{t+h}
-=&f_{t+h}(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
-=&f_{t+h}(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+1|t}+e_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
-\underset{\text{te}}{\approx}&f_{t+h}(\bm{a})+\operatorname{D}f_{t+h}(\bm{a})(\bm{v}-\bm{a})+
+&= f_{t+h}(y_{t+h-1},\dots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+&= f_{t+h}(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\dots,\hat{y}_{t+1|t}+e_{t+1|t},y_{t},\dots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+&\underset{\text{te}}{\approx} f_{t+h}(\bm{a})+\operatorname{D}f_{t+h}(\bm{a})(\bm{v}-\bm{a})+
 \varepsilon_{t+h} \\
-=&f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}) \\
-&+e_{t+h-1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_1}+\cdots+e_{t+2|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{h-2}}+e_{t+1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{h-1}}+\varepsilon_{t+h} \\
-=&\hat{y}_{t+h|t}+e_{t+h|t},
-\end{aligned}
-$$
-where $\bm{v}=(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h})$, $\bm{a} =(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h})$, $\operatorname{D}f_{t+h}(\bm{a})$ denotes the matrix of partial derivative of $f_{t+h}(\bm{v})$ at $\bm{v}=\bm{a}$, and $\frac{\partial}{\partial v_i}$ denotes the partial derivative with respect to the $i$th component in $f_{t+h}$.
+&= f_{t+h}(\hat{y}_{t+h-1|t},\dots,\hat{y}_{t+1|t},y_{t},\dots,y_{t+h-d},\bm{u}_{t+h}) \\
+&\mbox{}\qquad +e_{t+h-1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_1}+\dots+e_{t+2|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{h-2}}+e_{t+1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{h-1}}+\varepsilon_{t+h} \\
+&=\hat{y}_{t+h|t}+e_{t+h|t},
+\end{align*}
+where $\bm{v}=(y_{t+h-1},\dots,y_{t+h-d},\bm{u}_{t+h})$, $\bm{a} =(\hat{y}_{t+h-1|t},\dots,\hat{y}_{t+1|t},y_{t},\dots,y_{t+h-d},\bm{u}_{t+h})$, $\operatorname{D}f_{t+h}(\bm{a})$ denotes the matrix of partial derivative of $f_{t+h}(\bm{v})$ at $\bm{v}=\bm{a}$, and $\frac{\partial}{\partial v_i}$ denotes the partial derivative with respect to the $i$th component in $f_{t+h}$.
 
 Similarly, for $h > d$, we can write
-$$
-\begin{aligned}
+\begin{align*}
 y_{t+h}
-=&f_{t+h}(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
-=&f_{t+h}(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t}+e_{t+h-d|t},\bm{u}_{t+h})+\varepsilon_{t+h} \\
-\underset{\text{te}}{\approx}&f_{t+h}(\bm{a})+\operatorname{D}f_{t+h}(\bm{a})(\bm{v}-\bm{a})+
+&= f_{t+h}(y_{t+h-1},\dots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+&= f_{t+h}(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\dots,\hat{y}_{t+h-d|t}+e_{t+h-d|t},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+&\underset{\text{te}}{\approx} f_{t+h}(\bm{a})+\operatorname{D}f_{t+h}(\bm{a})(\bm{v}-\bm{a})+
 \varepsilon_{t+h} \\
-=&f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}) \\
-&+e_{t+h-1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_1}+e_{t+h-d|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{d}}+\varepsilon_{t+h} \\
-=&\hat{y}_{t+h|t}+e_{t+h|t},
-\end{aligned}
-$$
+&= f_{t+h}(\hat{y}_{t+h-1|t},\dots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}) \\
+&\mbox{}\qquad +e_{t+h-1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_1}+e_{t+h-d|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{d}}+\varepsilon_{t+h} \\
+&= \hat{y}_{t+h|t}+e_{t+h|t},
+\end{align*}
 Therefore, the forecast errors of optimal $h$-step-ahead forecasts are at most an approximate AR($h-1$) process.
 :::
 
@@ -626,11 +622,11 @@ For $T=h+1,\ldots,2h$, $E_T = \sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha) \leq
 Now, assuming @eq-cov_rt is true up to $T$. We partition the argument into $h+1$ cases:
 $$
 \begin{cases}
-cg(T-h)+h-1 < E_T \leq cg(T-h)+h, & \ldots \text { case (1) } \\
-cg(T-h)+h-2 < E_T \leq cg(T-h)+h-1, & \ldots \text { case (2) } \\
+cg(T-h)+h-1 < E_T \leq cg(T-h)+h, & \quad \text { case (1) } \\
+cg(T-h)+h-2 < E_T \leq cg(T-h)+h-1, & \quad \text { case (2) } \\
 \qquad \cdots \\
-cg(T-h) < E_T \leq cg(T-h)+1, & \ldots \text { case (h) } \\
-E_T \leq cg(T-h). & \ldots \text { case (h+1) }
+cg(T-h) < E_T \leq cg(T-h)+1, & \quad \text { case (h) } \\
+E_T \leq cg(T-h). & \quad \text { case (h+1) }
 \end{cases}
 $$
 In case (1), we observe that $E_T > cg(T-h)+h-1 > cg(T-h)$, implying $q_{T+h|T} = r_t(E_{T}) \geq b$ according to @eq-saturation_h. Thus, $s_{T+h|T} \leq q_{T+h|T}$ and $\mathrm{err}_{T+h|T} = 0$. Furthermore, we have $E_{T-1} = E_T - (\mathrm{err}_{T|T-h} - \alpha) > cg(T-h)+h-2 > cg(T-h-1)$ as $g$ is nondecreasing. This implies $q_{T+h-1|T-1} = r_t(E_{T-1}) \geq b$, hence $s_{T+h-1|T-1} \leq q_{T+h-1|T-1}$ and $\mathrm{err}_{T+h-1|T-1} = 0$. Similarly, $E_{T-2} = E_{T-1} - (\mathrm{err}_{T-1|T-h-1} - \alpha) > cg(T-h)+h-3 > cg(T-h-2)$, thus $\mathrm{err}_{T+h-2|T-2} = 0$. This process iterates, leading to $\mathrm{err}_{T+h|T} = \mathrm{err}_{T+h-1|T-1} = \cdots = \mathrm{err}_{T+1|T-h+1} = 0$. Consequently,
