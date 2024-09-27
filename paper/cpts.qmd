@@ -257,9 +257,9 @@ Let $\{\hat{q}_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-\fra
 
 # Experiments
 
-In this section, we examine the empirical performance of the previously proposed multi-step conformal prediction methods using two simulated data settings and two real data examples.
+We examine the empirical performance of the previously proposed multi-step conformal prediction methods using two simulated data settings and two real data examples.
 
-Throughout the experiments, we adhere to the following parameter settings: we focus on the target coverage level $1-\alpha=0.9$; for the MWCP method, we use $b=0.99$ as per @barber2023; following @angelopoulos2024, we use a step size parameter of $\gamma=0.005$ for the MACP method, a Theta model as the scorecaster in the MPID method, and a learning rate of $\eta=0.01\hat{B}_t$ for quantile tracking in the MPID and AcMCP methods, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\cdots,s_{t|t-h}\}$ is the highest score over a tailing window and the window length $\Delta$ is set to be same as the length of the calibration set; we adopt a nonlinear saturation function defined as $r_t(x)=K_1 \tan \left(x \log (t) /\left(t C_{\text {sat }}\right)\right)$, where $\tan (x)=\operatorname{sign}(x) \cdot \infty$ for $x \notin[-\pi / 2, \pi / 2]$, and constants $C_{\text {sat }}, K_{\mathrm{I}}>0$ are chosen heuristically, as suggested by @angelopoulos2024; we consider a clipped version of MACP by imputing infinite intervals with the largest score seen so far.
+Throughout the experiments, we adhere to the following parameter settings: we focus on the target coverage level $1-\alpha=0.9$; for the MWCP method, we use $b=0.99$ as per @barber2023; following @angelopoulos2024, we use a step size parameter of $\gamma=0.005$ for the MACP method, a Theta model as the scorecaster in the MPID method, and a learning rate of $\eta=0.01\hat{B}_t$ for quantile tracking in the MPID and AcMCP methods, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\cdots,s_{t|t-h}\}$ is the highest score over a tailing window and the window length $\Delta$ is set to be same as the length of the calibration set; we adopt a nonlinear saturation function defined as $r_t(x)=K_1 \tan \left(x \log (t) / (t C_{\text {sat }})\right)$, where $\tan (x)=\operatorname{sign}(x) \cdot \infty$ for $x \notin[-\pi / 2, \pi / 2]$, and constants $C_{\text {sat }}, K_{\mathrm{I}}>0$ are chosen heuristically, as suggested by @angelopoulos2024; we consider a clipped version of MACP by imputing infinite intervals with the largest score seen so far.
 
 ## Simulated examples
 
@@ -267,9 +267,9 @@ Throughout the experiments, we adhere to the following parameter settings: we fo
 
 We first consider a simulated stationary time series which is generated from a simple AR$(2)$ process
 $$
-y_t = 0.8y_{t-1} - 0.5y_{t-2} + \epsilon_t,
+y_t = 0.8y_{t-1} - 0.5y_{t-2} + \varepsilon_t,
 $$
-where $\epsilon_t$ is white noise with error variance $\sigma^2 = 1$. After an appropriate burn-in period, we generate $N=5000$ data points. Under the sequential split and online learning settings, we create training sets $\mathcal{D}_{\text{tr}}$ and calibration sets $\mathcal{D}_{\text{cal}}$, each with a length of $500$. We use AR$(2)$ models to generate $1$- to $3$-step-ahead point forecasts (i.e. $H=3$) with the automated algorithm implemented in the **forecast** R package [@hyndman2024]. The goal is to generate prediction intervals using various proposed conformal prediction methods and evaluate whether they can achieve the nominal long-run coverage for each separate forecast horizon.
+where $\varepsilon_t$ is white noise with error variance $\sigma^2 = 1$. After an appropriate burn-in period, we generate $N=5000$ data points. Under the sequential split and online learning settings, we create training sets $\mathcal{D}_{\text{tr}}$ and calibration sets $\mathcal{D}_{\text{cal}}$, each with a length of $500$. We use AR$(2)$ models to generate $1$- to $3$-step-ahead point forecasts (i.e. $H=3$) with the automated algorithm implemented in the **forecast** R package [@hyndman2024]. The goal is to generate prediction intervals using various proposed conformal prediction methods and evaluate whether they can achieve the nominal long-run coverage for each separate forecast horizon.
 
 @fig-AR2_cov presents the rolling coverage and interval width of each method for each forecast horizon, with metrics computed over a rolling window of size $500$. In terms of coverage, we observe that MPID and AcMCP achieve approximately the desired $90\%$ coverage level over the rolling windows, while other methods, including the AR model, undergo much wider swings away from the desired level, showing large troughs and peaks in coverage as time changes. Turning to the prediction interval width, the trajectories of the rolling mean and median of the interval widths for each method are largely consistent. AcMCP constructs narrower prediction intervals than MPID, despite both methods achieving similar coverage. Moreover, we see that AcMCP tends to offer adaptive prediction intervals, and results in wider intervals especially when competing methods undercover, which is to be expected. In short, AcMCP intervals offer greater adaptivity and more precise coverage compared to AR, MSCP, MWCP and MACP. However, MPID achieves tight coverage but at the cost of constructing wider prediction intervals. This is due to the fact that the inclusion of a second model (scorecaster) is likely to introduce large variance into the generated prediction intervals. The results can be further elucidated with @fig-AR2_box, which presents boxplots of rolling coverage and interval width for each method and each forecast horizon.
 
@@ -314,9 +314,9 @@ P_AR2_timeplot +
 
 We then consider the case of a nonlinear data generation process, which happens in many practical time series applications. We specify the true DGP as
 $$
-y_t = \sin(y_{t-1}) + 0.5\log(y_{t-2} + 1) + 0.1y_{t-1}x_{1,t} + 0.3x_{2,t} + \epsilon_{t},
+y_t = \sin(y_{t-1}) + 0.5\log(y_{t-2} + 1) + 0.1y_{t-1}x_{1,t} + 0.3x_{2,t} + \varepsilon_{t},
 $$
-where $x_{1,t}$ and $x_{2,t}$ are uniformly distributed on $[0,1]$, and $\epsilon_{t}$ is white noise with error variance $\sigma^2 = 0.1$. Thus, the time series $y_t$ nonlinearly depends on its lagged values $y_{t-1}$ and $y_{t-2}$, as well as exogenous variables $x_{1,t}$ and $x_{2,t}$.
+where $x_{1,t}$ and $x_{2,t}$ are uniformly distributed on $[0,1]$, and $\varepsilon_{t}$ is white noise with error variance $\sigma^2 = 0.1$. Thus, the time series $y_t$ nonlinearly depends on its lagged values $y_{t-1}$ and $y_{t-2}$, as well as exogenous variables $x_{1,t}$ and $x_{2,t}$.
 
 After an appropriate burn-in period, we generate $N=2000$ data points. Under the sequential split and online learning settings, we create training sets $\mathcal{D}_{\text{tr}}$ and calibration sets $\mathcal{D}_{\text{cal}}$, each with a length of $500$. Given the nonlinear structure of the DGP, we use feed-forward neural networks with a single hidden layer and lagged inputs to generate $1$- to $3$-step-ahead point forecasts (i.e. $H=3$) with the automated algorithm implemented in the **forecast** R package. Note that it is not straightforward for neural networks to derive interval forecasts, thus we do not include neural network models when presenting the results.
 
@@ -534,25 +534,25 @@ Here, we give the proof of @prp-ma based on @prp-ar, and the idea is motivated b
 
 For $1$-step-ahead optimal forecast, we have
 $$
-y_{t+1} = f_{t+1}(y_{(t-d+1):t},\bm{x}_{(t-k+1):(t+1)}) + \epsilon_{t+1},
+y_{t+1} = f_{t+1}(y_{(t-d+1):t},\bm{x}_{(t-k+1):(t+1)}) + \varepsilon_{t+1},
 $$
-so $e_{t+1|t}=\epsilon_{t+1}$.
+so $e_{t+1|t}=\varepsilon_{t+1}$.
 
 Based on @prp-ar, we have
 $$
 \begin{aligned}
-e_{t+2|t} &= \epsilon_{t+2} + \phi_{1}^{(2)}e_{t+1|t} \\
-e_{t+3|t} &= \epsilon_{t+3} + \phi_{1}^{(3)}e_{t+2|t} + \phi_{2}^{(3)}e_{t+1|t} \\
+e_{t+2|t} &= \varepsilon_{t+2} + \phi_{1}^{(2)}e_{t+1|t} \\
+e_{t+3|t} &= \varepsilon_{t+3} + \phi_{1}^{(3)}e_{t+2|t} + \phi_{2}^{(3)}e_{t+1|t} \\
 \cdots \\
-e_{t+d|t} &= \epsilon_{t+d} + \phi_{1}^{(d)}e_{t+d-1|t} + \cdots + \phi_{d-1}^{(d)}e_{t+1|t} \\
-e_{t+d+1|t} &= \epsilon_{t+d+1} + \phi_{1}^{(d+1)}e_{t+d|t} + \cdots + \phi_{d-1}^{(d+1)}e_{t+2|t} + \phi_{d}^{(d+1)}e_{t+1|t} \\
+e_{t+d|t} &= \varepsilon_{t+d} + \phi_{1}^{(d)}e_{t+d-1|t} + \cdots + \phi_{d-1}^{(d)}e_{t+1|t} \\
+e_{t+d+1|t} &= \varepsilon_{t+d+1} + \phi_{1}^{(d+1)}e_{t+d|t} + \cdots + \phi_{d-1}^{(d+1)}e_{t+2|t} + \phi_{d}^{(d+1)}e_{t+1|t} \\
 \cdots \\
-e_{t+H|t} &= \epsilon_{t+H} + \phi_{1}^{(H)}e_{t+H-1|t} + \cdots + \phi_{d-1}^{(H)}e_{t+H-d+1|t} + \phi_{d}^{(H)}e_{t+H-d|t}, \quad H > d + 1. \\
+e_{t+H|t} &= \varepsilon_{t+H} + \phi_{1}^{(H)}e_{t+H-1|t} + \cdots + \phi_{d-1}^{(H)}e_{t+H-d+1|t} + \phi_{d}^{(H)}e_{t+H-d|t}, \quad H > d + 1. \\
 \end{aligned}
 $$
 Substituting all equations above into the following equation, we can obtain
 $$
-e_{t+h|t} = \epsilon_{t+h} + \sum_{i=1}^{h-1}\theta_{i}\epsilon_{t+h-i}, \text{ for each } h\in[H],
+e_{t+h|t} = \varepsilon_{t+h} + \sum_{i=1}^{h-1}\theta_{i}\varepsilon_{t+h-i}, \text{ for each } h\in[H],
 $$
 where $\theta_{i}$ is a complex function derived from the AR coefficients of all AR$(j-1)$ models, for $j = 1,2,\ldots,h-1$. So we conclude that the $h$-step-ahead forecast error sequence $\{e_{t+h|t}\}$ follows an MA$(h-1)$ process.
 :::
@@ -564,39 +564,39 @@ Let $\hat{y}_{t+h|t}$ be the optimal $h$-step-ahead point forecast, and $e_{t+h|
 $$
 \begin{aligned}
 \hat{y}_{t+h|t}=\begin{cases}
-      f_{t+1}\left(y_t,\cdots,y_{t-d+1},\bm{u}_{t+1}\right) & \text{ if } h=1, \\
-      f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_t,\cdots,y_{t+h-d},\bm{u}_{t+h}\right) &  \text{ if } 1 < h \leq d, \\
-      f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}\right) & \text{ if } h > d.\\
+      f_{t+1}(y_t,\cdots,y_{t-d+1},\bm{u}_{t+1}) & \text{ if } h=1, \\
+      f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_t,\cdots,y_{t+h-d},\bm{u}_{t+h}) &  \text{ if } 1 < h \leq d, \\
+      f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}) & \text{ if } h > d.\\
     \end{cases}\\
 \end{aligned}
 $$
-For $h=1$, we simply have $e_{t+1|t} = \epsilon_{t+1}$.
+For $h=1$, we simply have $e_{t+1|t} = \varepsilon_{t+1}$.
 
 For $1<h\leq d$, applying the first order Taylor series expansion, we can write
 $$
 \begin{aligned}
 y_{t+h}
-=&f_{t+h}\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
-=&f_{t+h}\left(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+1|t}+e_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
-\underset{\text{te}}{\approx}&f_{t+h}\left(\bm{a}\right)+\operatorname{D}f_{t+h}\left(\bm{a}\right)\left(\bm{v}-\bm{a}\right)+
-\epsilon_{t+h} \\
-=&f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right) \\
-&+e_{t+h-1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_1}+\cdots+e_{t+2|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{h-2}}+e_{t+1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{h-1}}+\epsilon_{t+h} \\
+=&f_{t+h}(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+=&f_{t+h}(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+1|t}+e_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+\underset{\text{te}}{\approx}&f_{t+h}(\bm{a})+\operatorname{D}f_{t+h}(\bm{a})(\bm{v}-\bm{a})+
+\varepsilon_{t+h} \\
+=&f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}) \\
+&+e_{t+h-1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_1}+\cdots+e_{t+2|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{h-2}}+e_{t+1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{h-1}}+\varepsilon_{t+h} \\
 =&\hat{y}_{t+h|t}+e_{t+h|t},
 \end{aligned}
 $$
-where $\bm{v}=\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)$, $\bm{a} =\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)$, $\operatorname{D}f_{t+h}\left(\bm{a}\right)$ denotes the matrix of partial derivative of $f_{t+h}(\bm{v})$ at $\bm{v}=\bm{a}$, and $\frac{\partial}{\partial v_i}$ denotes the partial derivative with respect to the $i$th component in $f_{t+h}$.
+where $\bm{v}=(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h})$, $\bm{a} =(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+1|t},y_{t},\cdots,y_{t+h-d},\bm{u}_{t+h})$, $\operatorname{D}f_{t+h}(\bm{a})$ denotes the matrix of partial derivative of $f_{t+h}(\bm{v})$ at $\bm{v}=\bm{a}$, and $\frac{\partial}{\partial v_i}$ denotes the partial derivative with respect to the $i$th component in $f_{t+h}$.
 
 Similarly, for $h > d$, we can write
 $$
 \begin{aligned}
 y_{t+h}
-=&f_{t+h}\left(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
-=&f_{t+h}\left(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t}+e_{t+h-d|t},\bm{u}_{t+h}\right)+\epsilon_{t+h} \\
-\underset{\text{te}}{\approx}&f_{t+h}\left(\bm{a}\right)+\operatorname{D}f_{t+h}\left(\bm{a}\right)\left(\bm{v}-\bm{a}\right)+
-\epsilon_{t+h} \\
-=&f_{t+h}\left(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}\right) \\
-&+e_{t+h-1|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_1}+e_{t+h-d|t}\frac{\partial f_{t+h}\left(\bm{a}\right)}{\partial v_{d}}+\epsilon_{t+h} \\
+=&f_{t+h}(y_{t+h-1},\cdots,y_{t+h-d},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+=&f_{t+h}(\hat{y}_{t+h-1|t}+e_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t}+e_{t+h-d|t},\bm{u}_{t+h})+\varepsilon_{t+h} \\
+\underset{\text{te}}{\approx}&f_{t+h}(\bm{a})+\operatorname{D}f_{t+h}(\bm{a})(\bm{v}-\bm{a})+
+\varepsilon_{t+h} \\
+=&f_{t+h}(\hat{y}_{t+h-1|t},\cdots,\hat{y}_{t+h-d|t},\bm{u}_{t+h}) \\
+&+e_{t+h-1|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_1}+e_{t+h-d|t}\frac{\partial f_{t+h}(\bm{a})}{\partial v_{d}}+\varepsilon_{t+h} \\
 =&\hat{y}_{t+h|t}+e_{t+h|t},
 \end{aligned}
 $$
@@ -606,7 +606,7 @@ Therefore, the forecast errors of optimal $h$-step-ahead forecasts are at most a
 ## Proof of @prp-cov_rt {#sec-proof_cov_rt}
 
 ::: proof
-Let $E_T=\sum_{t=h+1}^{T}\left(\mathrm{err}_{t|t-h}-\alpha\right)$. The inequality given by @eq-cov_rt can be expressed as $\left|E_T\right| \leq c \cdot g(T-h) + h$. We will prove one side of the absolute inequality, specifically $E_T \leq c \cdot g(T-h) + h$, with the other side following analogously. We proceed with the proof using induction.
+Let $E_T=\sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha)$. The inequality given by @eq-cov_rt can be expressed as $|E_T| \leq c \cdot g(T-h) + h$. We will prove one side of the absolute inequality, specifically $E_T \leq c \cdot g(T-h) + h$, with the other side following analogously. We proceed with the proof using induction.
 
 For $T=h+1,\ldots,2h$, $E_T = \sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha) \leq (T-h)-(T-h)\alpha \leq T-h \leq h \leq cg(T-h) + h$ as $c>0$, $h\geq 1$, $g$ is nonnegative, and $\mathrm{err}_{t|t-h} \leq 1$. Thus, @eq-cov_rt holds for $T=h+1,\ldots,2h$.
 
@@ -646,11 +646,11 @@ Regarding the second part, $g(t-h)/(t-h) \rightarrow 0$ as $t \rightarrow \infty
 ## Proof of @prp-cov_qt {#sec-proof_cov_qt}
 
 ::: proof
-We set $q_{2h|h}=0$ without losing generality, the iteration $q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)$ simplifies to $q_{t+h|t}=\eta \sum_{i=h+1}^{t}\left(\mathrm{err}_{i|i-h}-\alpha\right)$. Let $r_t(x) = \eta x$ and the admissible function $g(t-h) = b$, @eq-saturation_h holds for $c=\frac{1}{\eta}$. Then @prp-cov_rt applies and we can easily derive the desired result.
+We set $q_{2h|h}=0$ without losing generality, the iteration $q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)$ simplifies to $q_{t+h|t}=\eta \sum_{i=h+1}^{t}(\mathrm{err}_{i|i-h}-\alpha)$. Let $r_t(x) = \eta x$ and the admissible function $g(t-h) = b$, @eq-saturation_h holds for $c=\frac{1}{\eta}$. Then @prp-cov_rt applies and we can easily derive the desired result.
 :::
 
 ## Proof of @prp-cov_acmcp {#sec-proof_cov_acmcp}
 
 ::: proof
-Let $q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}$, then @eq-acmcp_1 transforms into an update process $q_{t+h|t}^{*}=r_t\left(\sum_{i=h+1}^t \left(\mathrm{err}_{i|i-h}-\alpha\right)\right)$, which is an update with respect to $q_{t+h|t}^{*}$. Under this new framework, the nonconformity score becomes $s_{t+h|t}^{*}=s_{t+h|t}-\hat{q}_{t+h|t}$, with values ranging in $[-b,b]$, given the assumption that both $s_{t+h|t}$ and $\hat{q}_{t+h|t}$ fall within $[-\frac{b}{2},\frac{b}{2}]$. Thus, @prp-cov_rt can be directly applied to establish the long-run coverage achieved by the AcMCP method.
+Let $q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}$, then @eq-acmcp_1 transforms into an update process $q_{t+h|t}^{*}=r_t\left(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\right)$, which is an update with respect to $q_{t+h|t}^{*}$. Under this new framework, the nonconformity score becomes $s_{t+h|t}^{*}=s_{t+h|t}-\hat{q}_{t+h|t}$, with values ranging in $[-b,b]$, given the assumption that both $s_{t+h|t}$ and $\hat{q}_{t+h|t}$ fall within $[-\frac{b}{2},\frac{b}{2}]$. Thus, @prp-cov_rt can be directly applied to establish the long-run coverage achieved by the AcMCP method.
 :::
