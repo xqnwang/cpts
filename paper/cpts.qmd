@@ -19,7 +19,7 @@ author:
       postal-code: 3800
   email: rob.hyndman@monash.edu
 abstract: |
-  We consider the problem of constructing distribution-free prediction intervals for multi-step time series forecasting, with a focus on the temporal dependencies inherent in multi-step forecast errors. We establish that the forecast errors of optimal multi-step forecasts can be approximated by an autoregressive process under a general non-stationary autoregressive data generating process. To leverage these properties, we propose the Autocorrelated Multi-step Conformal Prediction (AcMCP) method, which effectively incorporates autocorrelations in multi-step forecast errors, resulting in more logically structured prediction intervals. This method ensures theoretical long-run coverage guarantees for multi-step forecasts, although we note that increased forecasting horizons may exacerbate deviations from the target coverage, particularly in the context of limited sample sizes. Additionally, we extend several easy-to-implement conformal prediction methods originally designed for single-step forecasting to accommodate multi-step scenarios. Through empirical evaluations, including simulations and applications to data, we demonstrate that AcMCP achieves coverage which closely aligns with the target within local windows, while providing adaptive prediction intervals that adjust effectively to varying conditions.
+  We consider the problem of constructing distribution-free prediction intervals for multi-step time series forecasting, with a focus on the temporal dependencies inherent in multi-step forecast errors. We establish that the forecast errors of optimal multi-step forecasts can be approximated by an autoregressive process under a general non-stationary autoregressive data generating process. To leverage these properties, we propose the Autocorrelated Multi-step Conformal Prediction (AcMCP) method, which effectively incorporates autocorrelations in multi-step forecast errors, resulting in more statistically efficient prediction intervals. This method ensures theoretical long-run coverage guarantees for multi-step forecasts, although we note that increased forecasting horizons may exacerbate deviations from the target coverage, particularly in the context of limited sample sizes. Additionally, we extend several easy-to-implement conformal prediction methods originally designed for single-step forecasting to accommodate multi-step scenarios. Through empirical evaluations, including simulations and applications to data, we demonstrate that AcMCP achieves coverage which closely aligns with the target within local windows, while providing adaptive prediction intervals that adjust effectively to varying conditions.
 keywords: [Conformal prediction, Coverage guarantee, Distribution-free inference, Exchangeability, Weighted quantile estimate]
 bibliography: references.bib
 wpnumber: no/24
@@ -73,9 +73,9 @@ We developed the `conformalForecast` package for R, available at <https://github
 
 Let $z_t = (\bm{x}_t, y_t)$ denote the data point (including the response $y_t$ and possibly predictors $\bm{x}_t$) at time $t$. Suppose that, at each time $t$, we have a forecasting model $\hat{f}_t$ trained using the historical data $z_{1:t}$. Throughout the paper, we assume that the predictors are known into the future. In this way, we perform ex-post forecasting and there is no additional uncertainty introduced from forecasting the exogenous predictors. Using the forecasting model $\hat{f}_t$, we are able to produce $H$-step point forecasts, $\{\hat{y}_{t+h|t}\}_{h\in[H]}$, using the future values for the predictors. We define the *nonconformity score* as the (signed) forecast error
 $$
-s_{t+h|t}=\mathcal{S}\left(z_{1:t}, y_{t+h}\right):=y_{t+h}-\hat{f}_t\left(z_{1:t},\bm{x}_{t+1:h}\right)=y_{t+h}-\hat{y}_{t+h|t}.
+s_{t+h|t}=\mathcal{S}(z_{1:t}, y_{t+h}):=y_{t+h}-\hat{f}_t(z_{1:t},\bm{x}_{t+1:h})=y_{t+h}-\hat{y}_{t+h|t}.
 $$
-The task is to employ conformal inference to build $H$-step prediction intervals, $\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}\left(z_{1:t},\bm{x}_{t+1:h}\right)\}_{h\in[H]}$, at the target coverage level $1-\alpha$. For brevity, we will use $\hat{\mathcal{C}}_{t+h|t}^{\alpha}$ to denote the $h$-step-ahead $100(1-\alpha)\%$ prediction interval.
+The task is to employ conformal inference to build $H$-step prediction intervals, $\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}(z_{1:t},\bm{x}_{t+1:h})\}_{h\in[H]}$, at the target coverage level $1-\alpha$. For brevity, we will use $\hat{\mathcal{C}}_{t+h|t}^{\alpha}$ to denote the $h$-step-ahead $100(1-\alpha)\%$ prediction interval.
 
 **Sequential split.** In a time series context, it is inappropriate to perform *random splitting*, a standard strategy in much of the conformal prediction literature, due to the temporal dependency present in the data. Instead, throughout the conformal prediction methods proposed in this paper, we use a *sequential split* to preserve the temporal structure. For example, the $t$ available data points, $z_{1:t}$, are sequentially split into two consecutive sets, a *proper\todo{What is a "proper" training set?} training set* $\mathcal{D}_{\text{tr}} \subset \{1,\ldots,t_r\}$ and a *calibration set* $\mathcal{D}_{\text{cal}} \subset \{t_r+1,\ldots,t\}$, where $t_c=t-t_r \gg H$. With sequential splitting, multiple $H$-step forecasts and their respective nonconformity scores can be computed on the calibration set.
 
@@ -94,6 +94,8 @@ The task is to employ conformal inference to build $H$-step prediction intervals
 # Extending conformal prediction methods to multi-step forecasting {#sec-ext}
 
 In this section, we apply the online learning framework outlined in @sec-setup to adapt several popular conformal prediction methods in order to allow for multi-step forecasting problems. One of the key properties of optimal forecast errors is that the variance of the forecast error $e_{t+h|t}$ is non-decreasing in $h$ [@diebold1996; @patton2007]. Therefore, we need to apply a separate conformal prediction procedure for each $h \in [H]$.
+
+\todo[inline]{We need to define what we mean by optimal forecast errors. I think you mean that the forecasts minimize the MSE. Also note that forecast variance is only guaranteed to increase with $h$ for linear models. Some nonlinear models do not have this property. See Tong's 1990 book.}
 
 ## Online multi-step split conformal prediction
 
@@ -124,13 +126,13 @@ $$
 
 Next we extend the adaptive conformal prediction (ACP) method proposed by @gibbs2021 to address multi-step time series forecasting, introducing the **multi-step adaptive conformal prediction** (MACP) method. Specifically, for each $h \in [H]$, we treat $\alpha$ as a tunable parameter and iteratively estimate $\alpha_{t+h|t}^{*}$ using the update equation\todo{How are $\alpha_{t+h|t}^{*}$ and $\alpha_{t+h|t}$ related?}
 $$
-\alpha_{t+h|t} := \alpha_{t+h-1|t-1} + \gamma\left(\alpha - \mathrm{err}_{t|t-h}\right).
+\alpha_{t+h|t} := \alpha_{t+h-1|t-1} + \gamma(\alpha - \mathrm{err}_{t|t-h}).
 $$ {#eq-macp}
 Then the $h$-step-ahead prediction interval is computed using @eq-mscp by setting $\alpha = \alpha_{t+h|t}$. Here, $\gamma > 0$ denotes a fixed step size parameter, $\alpha_{2h|h}$ denotes the initial estimate typically set to $\alpha$, and $\mathrm{err}_{t|t-h}$ denotes the miscoverage event $\mathrm{err}_{t|t-h} = \mathbb{1}\left\{y_t \notin \hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}\right\}$.
 
 @eq-macp indicates that the correction to the estimation of $\alpha_{t+h|t}^{*}$ at time $t+h$ is determined by the historical miscoverage frequency up to time $t$. At each iteration, we raise the estimate of $\alpha_{t+h|t}^{*}$ used for quantile estimation at time $t+h$ if $\hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}$ covered $y_t$, whereas we lower the estimate if $\hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}$ did not cover $y_t$. Thus the miscoverage event has a delayed impact on the estimation of $\alpha_{t+h|t}^{*}$ over $h$ periods, indicating that the correction of the $\alpha_{t+h|t}^{*}$ estimate becomes less prompt with increasing values of $h$. In particular, @eq-macp reduces to the update for ACP for $h=1$.
 
-We do not consider the update equation $\alpha_{t+1|t-h+1} := \alpha_{t|t-h} + \gamma\left(\alpha - \mathrm{err}_{t|t-h}\right)$ in this context, as the available information at time $t$ is insufficient to estimate $\alpha_{t+h|t}^{*}$ required for $h$-step forecasts.
+We do not consider the update equation $\alpha_{t+1|t-h+1} := \alpha_{t|t-h} + \gamma(\alpha - \mathrm{err}_{t|t-h})$ in this context, as the available information at time $t$ is insufficient to estimate $\alpha_{t+h|t}^{*}$ required for $h$-step forecasts.
 
 Selecting the parameter $\gamma$ is pivotal yet challenging. @gibbs2021 suggest setting $\gamma$ in proportion to the degree of variation of the unknown $\alpha_{t}^{*}$ over time. Several strategies have been proposed to avoid the necessity of selecting $\gamma$. For example, @zaffran2022 use an adaptive aggregation of multiple ACPs with a set of candidate values for $\gamma$ , determining weights based on their historical performance. @bastani2022 propose a multivalid prediction algorithm in which the prediction set is established by selecting a threshold from a sequence of candidate thresholds. However, both previous methods fail to promptly adapt to the local changes. To address this limitation, @gibbs2024 suggest adaptively tuning the step size parameter $\gamma$ in an online setting, choosing an "optimal" value for $\gamma$ from a candidate set of values by assessing their historical performance.
 
@@ -156,96 +158,101 @@ The D control involves $\hat{s}_{t+h|t}$ as the $h$-step-ahead forecast of the n
 
 # Autocorrelated multi-step conformal prediction {#sec-acmcp}
 
-In the PID method proposed by @angelopoulos2024, a notable feature is the inclusion of a scorecaster, a model trained on the score sequence, to forecast the future score. The rationale behind it is to residualize out any leftover signal in the score distribution not captured by the base forecasting model, such as trend and seasonality. However, in the context of time series forecasting, good forecasts are essential for making good decisions. We naturally expect to use a good forecasting model and ensure there is no useful signal in forecast errors (defined as nonconformity scores in this paper). If the forecasts are not optimal, the forecasting model should be improved to enhance its performance. Hence, we typically assume the use of a good forecasting model, and therefore, relying on another model to predict forecast errors to capture leftover information is not a commonly applicable solution. Moreover, the inclusion of a scorecaster often only introduces variance to the quantile estimate, resulting in inefficient (wider) prediction intervals.
+In the PID method proposed by @angelopoulos2024, a notable feature is the inclusion of a scorecaster, a model trained on the score sequence to forecast the future score. The rationale behind it is to identify any leftover signal in the score distribution not captured by the base forecasting model. While this is appropriate in the context of huge data sets and potentially weak learners, it is unlikely to be a useful strategy for time series models. We expect to use a  forecasting model that leaves only white noise in the residuals (equivalent to the one-step nonconformity scores). Moreover, the inclusion of a scorecaster often only introduces variance to the quantile estimate, resulting in inefficient (wider) prediction intervals.
 
-On the other hand, in our general setup outlined in @sec-setup, the DGP of a time series may depend on its own past, along with other exogenous predictors and their histories. Consequently, the $h$-step-ahead forecast errors $e_{t+h|t}$ may depend on the forecast errors from the past $h-1$ steps, i.e. $e_{t+1|t}, \ldots, e_{t+h-1|t}$, and forecast errors may accumulate over the forecast horizon. However, no conformal prediction methods have taken this potential dependence into account in their methodological construction.
+On the other hand, in any non-trivial context, multi-step forecasts are correlated with each other. Specifically, the $h$-step-ahead forecast errors $e_{t+h|t}$ will be correlated with the forecast errors from the past $h-1$ steps, as forecast errors accumulate over the forecast horizon. However, no conformal prediction methods have taken this potential dependence into account in their methodological construction.
 
-In this section, we will explore the properties of multi-step forecast errors and propose a novel conformal prediction method that considers the autocorrelations of multi-step forecast errors.
+In this section, we will explore the properties of multi-step forecast errors and propose a novel conformal prediction method that accounts for their autocorrelations.
 
 ## Properties of multi-step forecast errors {#sec-ppt}
 
 We assume that a time series $\{y_t\}_{t \geq 1}$ is generated by a general non-stationary autoregressive process given by:
 $$
-y_t = f_{t}\left(y_{(t-d):(t-1)},\bm{x}_{(t-k):t}\right) + \epsilon_t,
+y_t = f_{t}(y_{(t-d):(t-1)},\bm{x}_{(t-k):t}) + \varepsilon_t,
 $$ {#eq-dgp}
-where $f_{t}$ is considered a nonlinear function in $d$ lagged values of $y_t$ (i.e. $y_{(t-d):(t-1)}$) and the current value along with the preceding $k$ values of the exogenous predictors (i.e. $\bm{x}_{(t-k):t}$), and $\epsilon_t$ is white noise.
+where $f_{t}$ is a nonlinear function in $d$ lagged values of $y_t$, the current value of the exogenous predictors, along with the preceding $k$ values, and $\varepsilon_t$ is white noise.
 
-It is well-established in the forecasting literature that, for optimal $h$-step-ahead forecasts, the sequence of forecast errors is *at most* an MA$(h-1)$ process [@harvey1997; @diebold2024]. We now present the property under the assumption of a non-stationary autoregressive DGP, and provide its proof in @sec-proof_ma based on the proof of @prp-ar that we will introduce later.
+It is well-established in the forecasting literature that, for optimal $h$-step-ahead forecasts, the sequence of forecast errors is *at most* an MA$(h-1)$ process [@harvey1997; @diebold2024]. We state this result for non-stationary autoregressive processes in the following proposition, and provide its proof in @sec-proof_ma.
 
 ::: {#prp-ma}
 ## MA$(h-1)$ process for $h$-step-ahead optimal forecast errors
 
-Let $\{y_t\}_{t \geq 1}$ be a time series generated by a general non-stationary autoregressive process as given in @eq-dgp. Assume that the exogenous predictors are known into the future if applicable. The forecast errors of optimal $h$-step-ahead forecasts follow an approximate MA($h-1$) process:
+Let $\{y_t\}_{t \geq 1}$ be a time series generated by a general non-stationary autoregressive process as given in @eq-dgp, and assume that any exogenous predictors are known into the future. Then the forecast errors of optimal $h$-step-ahead forecasts follow an approximate MA($h-1$) process:
 $$
-e_{t+h|t} = m + \epsilon_{t+h} + \theta_1\epsilon_{t+h-1} + \cdots + \theta_{h-1}\epsilon_{t+1},
-$$
-where $m=0$, motivated by the property that optimal forecasts are unbiased.
+e_{t+h|t} = \varepsilon_{t+h} + \theta_1\varepsilon_{t+h-1} + \cdots + \theta_{h-1}\varepsilon_{t+1}.
+$$ {#eq-ma}
 :::
 
-We proceed by exploring the autocorrelations of multi-step forecast errors for optimal forecasts.
+\todo[inline]{Isn't this an exact result rather than an approximation? Do we need to provide a proof given it is stated elsewhere?}
+
+We can extend this result by exploring the autocorrelations of multi-step forecast errors for optimal forecasts.
 
 ::: {#prp-ar}
 ## Autocorrelations of multi-step optimal forecast errors
 
-Let $\{y_t\}_{t \geq 1}$ be a time series generated by a general non-stationary autoregressive process as given in @eq-dgp. Assume that the exogenous predictors are known into the future if applicable. The forecast errors of optimal $h$-step-ahead forecasts are [at most]{.underline} an approximate AR($h-1$) process given by:
+Let $\{y_t\}_{t \geq 1}$ be a time series generated by a general non-stationary autoregressive process as given in @eq-dgp, and assume that any exogenous predictors are known into the future. The forecast errors of optimal $h$-step-ahead forecasts are at most an approximate AR($h-1$) process given by:
 $$
-e_{t+h|t} = m + \epsilon_{t+h} + \phi_1e_{t+h-1|t} + \cdots + \phi_{h-1}e_{t+1|t},
+e_{t+h|t} = \varepsilon_{t+h} + \phi_1e_{t+h-1|t} + \cdots + \phi_{h-1}e_{t+1|t}.
 $$ {#eq-ar}
-where $e_{t+h|t}$ is the $h$-step-ahead forecast error with variance non-decreasing in $h$, and the intercept $m=0$, given the property that optimal forecasts are unbiased.
 :::
 
-@prp-ar can be viewed as an extension of @prp-ma. It suggests that the $h$-step ahead forecast error, $e_{t+h|t}$, is serially correlated with the forecast errors from at most the past $h-1$ steps, i.e., $e_{t+1|t}, \ldots, e_{t+h-1|t}$. However, we note that the autocorrelation among errors associated with optimal forecasts can not be used to improve forecasting performance, as it does not incorporate any new information available when the forecast was made. It is reasonable because if we could forecast the forecast error, we could improve the forecast, indicating that the initial forecast couldn’t have been optimal.
+\todo[inline]{This is not really an AR process. An AR process would be of the form
+$$e_{t+h|t} = \varepsilon_{t+h} + \phi_1e_{t+h-1|t-1} + \cdots + \phi_{h-1}e_{t+1|t-h+1}.$$
+Later you state that the index is $h$ rather than $t$, but even then I don't think it works as a process. Perhaps we could say ``the first $h$ values of an approximate AR($h-1$) process''?
+}
+
+@prp-ar can be viewed as an extension of @prp-ma. It suggests that the $h$-step ahead forecast error, $e_{t+h|t}$, is serially correlated with the forecast errors from at most the past $h-1$ steps, i.e., $e_{t+1|t}, \ldots, e_{t+h-1|t}$. However, the autocorrelation among errors associated with optimal forecasts can not be used to improve forecasting performance, as it does not incorporate any new information available when the forecast was made. If we could forecast the forecast error, then we could improve the forecast, indicating that the initial forecast couldn’t have been optimal.
 
 The proof of @prp-ar suggests that, if $f_t$ is a linear autoregressive model, then the AR coefficients in @eq-ar are the linear coefficients of the optimal forecasting model. However, when $f_t$ takes on a more complex nonlinear structure, the AR coefficients become complicated functions of observed data and unobserved model coefficients.
 
 ## The AcMCP method {#sec-novel}
 
-Inspired by the properties of multi-step forecast errors discussed in @sec-ppt, we now propose the **autocorrelated multi-step conformal prediction** (AcMCP) method. Unlike extensions of existing conformal prediction methods that treat multi-step forecasting as independent events (see @sec-ext), the AcMCP method integrates the autocorrelations inherent in multi-step forecast errors, thereby making the output multi-step prediction intervals more logically structured.
+We can exploit these properties of multi-step forecast errors, leading to a new method that we call the **autocorrelated multi-step conformal prediction** (AcMCP) method. Unlike extensions of existing conformal prediction methods, which treat multi-step forecasting as independent events (see @sec-ext), the AcMCP method integrates the autocorrelations inherent in multi-step forecast errors, thereby making the output multi-step prediction intervals more statistically efficient.
 
 The AcMCP method updates the quantile estimate $q_t$ in an online setting to achieve the goal of long-run coverage. Specifically, the iteration of the $h$-step-ahead quantile estimate is given by
 $$
-q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)+r_t\left(\sum_{i=h+1}^t \left(\mathrm{err}_{i|i-h}-\alpha\right)\right)+\tilde{e}_{t+h|t},
+q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)+r_t\Bigg(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\Bigg)+\tilde{e}_{t+h|t},
 $$ {#eq-acmcp}
 for $h\in[H]$. Obviously, the AcMCP method can be viewed as a further extension of the PID method. Nevertheless, AcMCP diverges from PID with several innovations and differences.
 
-First, we are no longer confined to predicting just one step forward. Instead, we can make multi-step forecasting with accompanying theoretical coverage guarantees, constructing distribution-free prediction intervals for steps $t+1,\ldots,t+H$ based on available information up to time $t$. This is highly important in the field of time series forecasting.
+First, we are no longer confined to predicting just one step ahead. Instead, we can make multi-step forecasts with accompanying theoretical coverage guarantees, constructing distribution-free prediction intervals for steps $t+1,\ldots,t+H$ based on available information up to time $t$.
 
-Additionally, in AcMCP, $\tilde{e}_{t+h|t}$ is a forecast combination of two simple models: one being an MA$(h-1)$ model trained on $h$-step-ahead forecast errors available up to and including time $t$ (i.e. $e_{1+h|1}, \ldots, e_{t|t-h}$), and the other an AR$(h-1)$ model (with respect to $h$ rather than $t$) trained by regressing $e_{t+h|t}$ on forecast errors from past steps (i.e. $e_{t+h-1|t}, \ldots, e_{t+1|t}$). Thus, we perform multi-step conformal prediction recursively, contrasting with the independent approach employed in MPID. Moreover, the inclusion of $\tilde{e}_{t+h|t}$ is not intended to forecast the nonconformity scores (i.e., forecast errors in this paper), but rather to incorporate autocorrelations present in multi-step forecast errors within the resulting multi-step prediction intervals. As previously explained, in the context of time series forecasting, we typically assume the use of a good base forecasting model, making it unnecessary to train an additional model to predict forecast errors in order to capture leftover information. If the forecasts are not optimal, the base forecasting model should be improved to enhance its performance.
+Additionally, in AcMCP, $\tilde{e}_{t+h|t}$ is a forecast combination of two simple models: one being an MA$(h-1)$ model trained on the $h$-step-ahead forecast errors available up to and including time $t$ (i.e. $e_{1+h|1}, \ldots, e_{t|t-h}$), and the other an AR$(h-1)$ model (with respect to $h$ rather than $t$) trained by regressing $e_{t+h|t}$ on forecast errors from past steps (i.e. $e_{t+h-1|t}, \ldots, e_{t+1|t}$). Thus, we perform multi-step conformal prediction recursively, contrasting with the independent approach employed in MPID. Moreover, the inclusion of $\tilde{e}_{t+h|t}$ is not intended to forecast the nonconformity scores (i.e., forecast errors), but rather to incorporate autocorrelations present in multi-step forecast errors within the resulting multi-step prediction intervals.
 
 ## Coverage guarantees
 
 ::: {#prp-cov_rt}
-Let $\{s_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-b, b]$ for any $h\in[H]$, where $b>0$, and may be infinite. Assume that $r_t$ is a saturation function obeying @eq-saturation_h, for an admissible function $g$. Then the iteration $q_{t+h|t}=r_t\left(\sum_{i=h+1}^t\left(\mathrm{err}_{i|i-h}-\alpha\right)\right)$ satisfies
+Let $\{s_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-b, b]$ for any $h\in[H]$, where $b>0$, and may be infinite. Assume that $r_t$ is a saturation function obeying @eq-saturation_h, for an admissible function $g$. Then the iteration $q_{t+h|t}=r_t\left(\sum_{i=h+1}^t(\mathrm{err}_{i|i-h}-\alpha)\right)$ satisfies
 $$
-\left|\frac{1}{T-h}\sum_{t=h+1}^{T}\left(\mathrm{err}_{t|t-h}-\alpha\right)\right| \leq \frac{c \cdot g(T-h) + h}{T-h},
+\left|\frac{1}{T-h}\sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha)\right| \leq \frac{c \cdot g(T-h) + h}{T-h},
 $$ {#eq-cov_rt}
 for any $T \geq h+1$, where $c>0$ is the constant in @eq-saturation_h.
 
-In particular, this means the prediction intervals obtained by the iteration yield long-run coverage, i.e., $\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha$.
+Therefore the prediction intervals obtained by the iteration yield the correct long-run coverage; i.e., $\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha$.
 :::
 
-**Remark.** @prp-cov_rt indicates that, for $t \ll \infty$, increasing the forecast horizon $h$ tends to amplify deviations from the target coverage because $g(T-h)/(t-h)$ is non-increasing, given that the admissible function $g$ is sublinear, nonnegative, and nondecreasing. This is consistent with expectations, as extending the forecast horizon generally increases forecast uncertainty. As predictions extend further into the future, more factors contribute to variability and uncertainty. In this case, conformal prediction intervals may not scale perfectly with the increasing uncertainty, leading to a larger discrepancy between the desired and actual coverage.
+@prp-cov_rt indicates that, for $t \ll \infty$, increasing the forecast horizon $h$ tends to amplify deviations from the target coverage because $g(T-h)/(t-h)$ is non-increasing, given that the admissible function $g$ is sublinear, nonnegative, and nondecreasing. This is consistent with expectations, as extending the forecast horizon generally increases forecast uncertainty. As predictions extend further into the future, more factors contribute to variability and uncertainty. In this case, conformal prediction intervals may not scale perfectly with the increasing uncertainty, leading to a larger discrepancy between the desired and actual coverage.
 
-The quantile iteration $q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)$ can be seen as a particular instance of the iteration outlined in @prp-cov_rt if we set $q_{2h|h}=0$ without losing generality. Thus, its coverage bounds can be easily derived as a result of @prp-cov_rt.
+The quantile iteration $q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)$ can be seen as a particular instance of the iteration outlined in @prp-cov_rt if we set $q_{2h|h}=0$ without losing generality. Thus, its coverage bounds can be easily derived as a result of @prp-cov_rt.
 
 ::: {#prp-cov_qt}
-Let $\{s_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-b, b]$ for any $h\in[H]$, where $b>0$, and may be infinite. Then the iteration $q_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)$ satisfies
+Let $\{s_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-b, b]$ for any $h\in[H]$, where $b>0$, and may be infinite. Then the iteration $q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)$ satisfies
 $$
-\left|\frac{1}{T-h}\sum_{t=h+1}^{T}\left(\mathrm{err}_{t|t-h}-\alpha\right)\right| \leq \frac{b + \eta h}{\eta\left(T-h\right)},
+\left|\frac{1}{T-h}\sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha)\right| \leq \frac{b + \eta h}{\eta(T-h)},
 $$
 for any learning rate $\eta > 0$ and $T \geq h+1$.
 
-In particular, this means the prediction intervals obtained by the iteration yield long-run coverage, i.e., $\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha$.
+Therefore the prediction intervals obtained by the iteration yield the correct long-run coverage; i.e., $\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha$.
 :::
 
-More importantly, @prp-cov_rt is also adequate for establishing the coverage guarantee of the proposed AcMCP method given by @eq-acmcp. Following the idea of @angelopoulos2024, we first reformulate @eq-acmcp as
+More importantly, @prp-cov_rt is also adequate for establishing the coverage guarantee of the proposed AcMCP method given by @eq-acmcp. Following @angelopoulos2024, we first reformulate @eq-acmcp as
 $$
-q_{t+h|t}=\hat{q}_{t+h|t}+r_t\left(\sum_{i=h+1}^t \left(\mathrm{err}_{i|i-h}-\alpha\right)\right),
+q_{t+h|t}=\hat{q}_{t+h|t}+r_t\left(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\right),
 $$ {#eq-acmcp_1}
-where $\hat{q}_{t+h|t}$ can be any function of the past observations $\{(\bm{x}_i, y_i)\}_{1 \leq i \leq t}$ and quantile estimates $q_{i+h|i}$ for $i \leq t-1$. Taking $\hat{q}_{t+h|t}=q_{t+h-1|t-1}+\eta \left(\mathrm{err}_{t|t-h}-\alpha\right)+\tilde{e}_{t+h|t}$ will recover @eq-acmcp. We can consider $\hat{q}_{t+h|t}$ as the forecast of the quantile $q_{t+h|t}$ based on available historical data. We then present the coverage guarantee for AcMCP given by @eq-acmcp_1.
+where $\hat{q}_{t+h|t}$ can be any function of the past observations $\{(\bm{x}_i, y_i)\}_{1 \leq i \leq t}$ and quantile estimates $q_{i+h|i}$ for $i \leq t-1$. Taking $\hat{q}_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)+\tilde{e}_{t+h|t}$ will recover @eq-acmcp. We can consider $\hat{q}_{t+h|t}$ as the forecast of the quantile $q_{t+h|t}$ based on available historical data. We then present the coverage guarantee for AcMCP given by @eq-acmcp_1.
 
 ::: {#prp-cov_acmcp}
-Let $\{\hat{q}_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-\frac{b}{2}, \frac{b}{2}]$, and $\{s_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-\frac{b}{2},\frac{b}{2}]$, for any $h\in[H]$, $b>0$ and may be infinite. Assume that $r_t$ is a saturation function obeying @eq-saturation_h, for an admissible function $g$. Then the prediction intervals obtained by the AcMCP iteration given by @eq-acmcp_1 yield long-run coverage, i.e., $\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha$.
+Let $\{\hat{q}_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-\frac{b}{2}, \frac{b}{2}]$, and $\{s_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-\frac{b}{2},\frac{b}{2}]$, for any $h\in[H]$, $b>0$ and may be infinite. Assume that $r_t$ is a saturation function obeying @eq-saturation_h, for an admissible function $g$. Then the prediction intervals obtained by the AcMCP iteration given by @eq-acmcp_1 yield the correct long-run coverage; i.e., $\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha$.
 :::
 
 # Experiments
