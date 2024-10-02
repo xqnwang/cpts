@@ -838,9 +838,11 @@ The D control involves \(\hat{s}_{t+h|t}\) as the \(h\)-step-ahead
 forecast of the nonconformity score (i.e., the forecast error), produced
 by any suitable forecasting model (or ``scorecaster'') trained using the
 \(h\)-step-ahead nonconformity scores available up to and including time
-\(t\). This module, however, tends to result in increased forecast
-variance for a larger forecast horizon
-\(h\).\todo{Why "however"? Isn't this what we want?}
+\(t\). This module provides additional benefits only when the
+scorecaster is well-designed and there are predictable patterns in the
+nonconformity scores; otherwise, it may increase variability in the
+coverage and prediction
+intervals.\todo{Why "however"? Isn't this what we want?}
 
 \section{Autocorrelated multi-step conformal
 prediction}\label{sec-acmcp}
