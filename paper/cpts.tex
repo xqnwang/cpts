@@ -733,10 +733,18 @@ prediction}\label{multi-step-adaptive-conformal-prediction}
 Next we extend the adaptive conformal prediction (ACP) method proposed
 by \textcite{gibbs2021} to address multi-step time series forecasting,
 introducing the \textbf{multi-step adaptive conformal prediction} (MACP)
-method. Specifically, for each \(h \in [H]\), we treat \(\alpha\) as a
-tunable parameter and iteratively estimate \(\alpha_{t+h|t}^{*}\) using
-the update
-equation\todo{How are $\alpha_{t+h|t}^{*}$ and $\alpha_{t+h|t}$ related?}
+method. Assuming that
+\(\beta \mapsto \mathbb{P}(y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}^{\beta})\)
+is continuous and non-increasing, with
+\(\mathbb{P}(y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}^{0}) = 1\) and
+\(\mathbb{P}(y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}^{1}) = 0\), an
+optimal value \(\alpha_{t+h|t}^{*} \in [0,1]\) exists such that the
+realized miscoverage rate of the corresponding prediction interval
+closely approximates the nominal miscoverage rate \(\alpha\).
+Specifically, for each \(h \in [H]\), we iteratively estimate
+\(\alpha_{t+h|t}^{*}\) by updating a parameter \(\alpha_{t+h|t}\)
+through a sequential adjustment
+process\todo{How are $\alpha_{t+h|t}^{*}$ and $\alpha_{t+h|t}$ related?}
 \begin{equation}\phantomsection\label{eq-macp}{
 \alpha_{t+h|t} := \alpha_{t+h-1|t-1} + \gamma(\alpha - \mathrm{err}_{t|t-h}).
 }\end{equation} Then the \(h\)-step-ahead prediction interval is
