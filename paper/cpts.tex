@@ -878,7 +878,8 @@ general non-stationary autoregressive process given by:
 y_t = f_{t}(y_{(t-d):(t-1)},\bm{x}_{(t-k):t}) + \varepsilon_t,
 }\end{equation} where \(f_{t}\) is a nonlinear function in \(d\) lagged
 values of \(y_t\), the current value of the exogenous predictors, along
-with the preceding \(k\) values, and \(\varepsilon_t\) is white noise.
+with the preceding \(k\) values, and \(\varepsilon_t\) is white noise
+innovation with mean zero and constant variance.
 
 It is well-established in the forecasting literature that, for optimal
 \(h\)-step-ahead forecasts, the sequence of forecast errors is \emph{at
@@ -1113,8 +1114,8 @@ y_t = 0.8y_{t-1} - 0.5y_{t-2} + \varepsilon_t,
 settings, we create training sets \(\mathcal{D}_{\text{tr}}\) and
 calibration sets \(\mathcal{D}_{\text{cal}}\), each with a length of
 \(500\). We use AR\((2)\) models to generate \(1\)- to \(3\)-step-ahead
-point forecasts (i.e.~\(H=3\)) with the automated algorithm implemented
-in the \textbf{forecast} R package
+point forecasts (i.e.~\(H=3\)), using the \texttt{Arima()} function from
+the \texttt{forecast} R package
 \autocite{hyndman2024}.\todo{Since AR(2) is specified, what is automated?}
 The goal is to generate prediction intervals using various proposed
 conformal prediction methods and evaluate whether they can achieve the
@@ -1227,11 +1228,11 @@ training sets \(\mathcal{D}_{\text{tr}}\) and calibration sets
 \(\mathcal{D}_{\text{cal}}\), each with a length of \(500\). Given the
 nonlinear structure of the DGP, we use feed-forward neural networks with
 a single hidden layer and lagged inputs to generate \(1\)- to
-\(3\)-step-ahead point forecasts (i.e.~\(H=3\)) with the automated
-algorithm implemented in the \texttt{nnetar()} function from the
-\textbf{forecast} R package \autocite{hyndman2024}. Note that it is not
-possible to derive analytic intervals for neural networks, thus we do
-not include neural network models when presenting the results.
+\(3\)-step-ahead point forecasts (i.e.~\(H=3\)), using the
+\texttt{nnetar()} function from the \texttt{forecast} R package
+\autocite{hyndman2024}. Note that it is not possible to derive analytic
+intervals for neural networks, thus we do not include neural network
+models when presenting the results.
 
 Figure~\ref{fig-NL_cov} illustrates the rolling coverage and interval
 width of each method, with calculations based on a rolling window of
@@ -1439,7 +1440,7 @@ and STL-ETS \autocite{hyndman2021}, and then output their simple average
 as final point forecasts. STL-ETS involves forecasting using the STL
 decomposition method, applying ETS to forecast the seasonally adjusted
 series. All three models can be automatically trained using the
-\textbf{forecast} R package \autocite{hyndman2024}. Our goal is to
+\texttt{forecast} R package \autocite{hyndman2024}. Our goal is to
 forecast \(12\) months ahead, i.e.~\(H=12\). We use \(20\) years of data
 for training the models and \(5\) years of data for calibration sets.
 The whole test set only has a length of \(152\) months. Therefore, we
@@ -1567,8 +1568,8 @@ Proposition~\ref{prp-ar}}{Proof of Proposition~}}\label{sec-proof_ar}
 
 \begin{proof}
 Let \(\hat{y}_{t+h|t}\) be the optimal \(h\)-step-ahead point forecast,
-and \(e_{t+h|t}\) be the \(h\)-step-ahead forecast error. Denote
-\(\bm{u}_{t+h}=\bm{x}_{(t-k+h):(t+h)}\). Then we have \begin{align*}
+and \(e_{t+h|t}\) be the optimal \(h\)-step-ahead forecast error. Denote
+\(\bm{u}_{t+h}=\bm{x}_{(t-k+h):(t+h)}\), then we have \begin{align*}
 \hat{y}_{t+h|t}=\begin{cases}
       f_{t+1}(y_t,\dots,y_{t-d+1},\bm{u}_{t+1}) & \text{ if } h=1, \\
       f_{t+h}(\hat{y}_{t+h-1|t},\dots,\hat{y}_{t+1|t},y_t,\dots,y_{t+h-d},\bm{u}_{t+h}) &  \text{ if } 1 < h \leq d, \\
