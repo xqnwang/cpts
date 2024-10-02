@@ -1,4 +1,5 @@
 library(ggplot2)
+library(patchwork)
 library(forecast)
 library(conformalForecast)
 
@@ -214,11 +215,10 @@ cov_plot <- cov |>
   labs(
     x = "Time",
     y = "",
-    title = "Local coverage level",
-    colour = "Methods"
+    title = "Local coverage level"
   ) +
-  guides(colour = guide_legend(nrow = 1)) +
-  theme_bw()
+  theme_bw() +
+  theme(legend.position="none")
 
 wid_me_plot <- wid_me |>
   filter(index >= fit_window + cal_window + calc_window) |>
@@ -234,7 +234,8 @@ wid_me_plot <- wid_me |>
     y = "",
     title = "Mean interval width"
   ) +
-  theme_bw()
+  theme_bw() +
+  theme(legend.position="none")
 
 wid_md_plot <- wid_md |>
   filter(index >= fit_window + cal_window + calc_window) |>
@@ -248,13 +249,14 @@ wid_md_plot <- wid_md |>
   labs(
     x = "Time",
     y = "",
-    title = "Median interval width"
+    title = "Median interval width",
+    colour = "Methods"
   ) +
-  theme_bw()
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  guides(colour = guide_legend(nrow = 1))
 
-P_AR2_cov <- ggpubr::ggarrange(cov_plot, wid_me_plot, wid_md_plot,
-                               ncol = 1, nrow = 3,
-                               common.legend = TRUE, legend = "bottom")
+P_AR2_cov <- cov_plot / wid_me_plot / wid_md_plot
 saveRDS(P_AR2_cov, file = "result/P_AR2_cov.rds")
 
 #--------------------------
