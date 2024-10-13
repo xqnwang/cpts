@@ -491,7 +491,7 @@ control multi-step miscoverage rates simultaneously at each time point
 length across forecast horizons with miscoverage. While this method
 considers multi-step intervals, it does not account for their temporal
 dependencies and may be computationally intensive when solving the
-associated optimization problems at each time step. Additionally,
+associated optimisation problems at each time step. Additionally,
 several extensions to multivariate targets have been explored, see,
 e.g., \textcite{schlembach2022} and \textcite{sun2022}.
 
@@ -507,7 +507,7 @@ is allowed to vary over time, to accommodate non-stationary processes.
 At each time point \(t\), we aim to forecast \(H\) steps into the
 future, providing a \emph{prediction set} (which is a prediction
 interval in this setting), \(\hat{\mathcal{C}}_{t+h|t}\), for the
-realization \(y_{t+h}\) for each \(h\in[H]\). The \(h\)-step-ahead
+realisation \(y_{t+h}\) for each \(h\in[H]\). The \(h\)-step-ahead
 forecast uses the previously observed data
 \(\{(\bm{x}_i, y_i)\}_{1 \leq i \leq t}\) along with the new information
 of the exogenous predictors \(\{\bm{x}_{t+j}\}_{1\leq j\leq h}\). Note
@@ -597,7 +597,7 @@ in later sections. The entire procedure for the online learning
 framework with sequential splits is also illustrated in
 Figure~\ref{fig-flowchart}. This framework updates prediction intervals
 as new data points arrive, allowing us to assess their long-run coverage
-behavior. It adopts a standard rolling window evaluation strategy,
+behaviour. It adopts a standard rolling window evaluation strategy,
 although expanding windows could easily be used instead.
 
 \begin{enumerate}
@@ -735,7 +735,7 @@ is continuous and non-increasing, with
 \(\mathbb{P}(y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}^{0}) = 1\) and
 \(\mathbb{P}(y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}^{1}) = 0\), an
 optimal value \(\alpha_{t+h|t}^{*} \in [0,1]\) exists such that the
-realized miscoverage rate of the corresponding prediction interval
+realised miscoverage rate of the corresponding prediction interval
 closely approximates the nominal miscoverage rate \(\alpha\).
 Specifically, for each \(h \in [H]\), we iteratively estimate
 \(\alpha_{t+h|t}^{*}\) by updating a parameter \(\alpha_{t+h|t}\)
@@ -821,7 +821,7 @@ The P control in MPID shows a delayed correction of the quantile
 estimate for a length of \(h\) periods. The underlying intuition is
 similar to that of MACP: it increases (or decreases) the
 \(h\)-step-ahead quantile estimate if the prediction set at time \(t\)
-miscovered (or covered) the corresponding realization. MACP can be
+miscovered (or covered) the corresponding realisation. MACP can be
 considered as a special case of the P control, while the P control has
 the ability to prevent the generation of null or infinite prediction
 sets after a sequence of miscoverage events.
@@ -1436,7 +1436,7 @@ will not compute rolling coverage and interval width in this experiment,
 but rather compute the coverage and interval width averaged over the
 entire test set.
 
-We summarize the average coverage and interval width for each method and
+We summarise the average coverage and interval width for each method and
 each forecast horizon in Figure~\ref{fig-cafe_cov}. The results first
 show that MSCP, MWCP and MACP provide valid prediction intervals for
 smaller forecast horizon but fail to achieve the desired coverage for
