@@ -4,9 +4,8 @@
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
 %
 \documentclass[
-  12pt,
-  a4paper,
-]{article}
+  11pt,
+  12pt]{article}
 
 \usepackage{amsmath,amssymb}
 \usepackage{setspace}
@@ -41,9 +40,31 @@
   \KOMAoptions{parskip=half}}
 \makeatother
 \usepackage{xcolor}
-\usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,left=2cm,right=2cm]{geometry}
 \setlength{\emergencystretch}{3em} % prevent overfull lines
-\setcounter{secnumdepth}{3}
+\setcounter{secnumdepth}{5}
+% Make \paragraph and \subparagraph free-standing
+\makeatletter
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}{
+    \@ifstar
+      \xxxParagraphStar
+      \xxxParagraphNoStar
+  }
+  \newcommand{\xxxParagraphStar}[1]{\oldparagraph*{#1}\mbox{}}
+  \newcommand{\xxxParagraphNoStar}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}{
+    \@ifstar
+      \xxxSubParagraphStar
+      \xxxSubParagraphNoStar
+  }
+  \newcommand{\xxxSubParagraphStar}[1]{\oldsubparagraph*{#1}\mbox{}}
+  \newcommand{\xxxSubParagraphNoStar}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+\makeatother
 
 
 \providecommand{\tightlist}{%
@@ -71,10 +92,37 @@
 \def\fps@figure{htbp}
 \makeatother
 
-\usepackage{todonotes}
-\usepackage[section]{placeins}
-\usepackage{orcidlink}
-\definecolor{mypink}{RGB}{219, 48, 122}
+\addtolength{\oddsidemargin}{-.5in}%
+\addtolength{\evensidemargin}{-1in}%
+\addtolength{\textwidth}{1in}%
+\addtolength{\textheight}{1.7in}%
+\addtolength{\topmargin}{-1in}%
+\usepackage{bm}
+\usepackage{mathptmx}
+\usepackage{amsmath} % Ensure amsmath is included for \eqref
+\usepackage[]{natbib}
+\usepackage[top=2cm, bottom=2cm, left=2.5cm, right=2.5cm]{geometry}
+\allowdisplaybreaks
+\sloppy
+\setlength{\parskip}{0pt}
+\setlength{\parindent}{15pt}
+\expandafter\def\expandafter\normalsize\expandafter{%
+  \normalsize  
+  \setlength\abovedisplayskip{1ex}
+  \setlength\belowdisplayskip{1ex}
+  \setlength\abovedisplayshortskip{1ex}
+  \setlength\belowdisplayshortskip{1ex}
+}
+\setlength{\bibsep}{0pt plus 0.3ex}
+\usepackage{microtype}
+\usepackage[onlyrefs]{mathtools}
+\setlength{\tabcolsep}{0.11cm}
+\usepackage{threeparttable}
+\makeatletter
+\g@addto@macro\TPT@defaults{\linespread{1}\selectfont}
+\def\fps@table{!tbh}
+\def\fps@figure{!tbh}
+\makeatother
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -129,8 +177,8 @@
 \ifLuaTeX
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
-\usepackage[style=authoryear-comp,]{biblatex}
-\addbibresource{references.bib}
+\usepackage[]{natbib}
+\bibliographystyle{agsm}
 \usepackage{bookmark}
 
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
@@ -148,223 +196,34 @@ quantile estimate},
   urlcolor={Blue},
   pdfcreator={LaTeX via pandoc}}
 
-\urlstyle{tt}
 
-%% CAPTIONS
-\usepackage{caption}
-\DeclareCaptionStyle{italic}[justification=centering]
- {labelfont={bf},textfont={it},labelsep=colon}
-\captionsetup[figure]{style=italic,format=hang,singlelinecheck=true}
-\captionsetup[table]{style=italic,format=hang,singlelinecheck=true}
 
-%% FONT
-\usepackage{bera}
-\usepackage[charter]{mathdesign}
-\usepackage[scale=0.9]{sourcecodepro}
-\usepackage[lf,t]{FiraSans}
-
-%% HEADERS AND FOOTERS
-\usepackage{fancyhdr}
-\pagestyle{fancy}
-\rfoot{\Large\sffamily\raisebox{-0.1cm}{\textbf{\thepage}}}
-\makeatletter
-\lhead{\textsf{\expandafter{\@title}}}
-\makeatother
-\rhead{}
-\cfoot{}
-\setlength{\headheight}{15pt}
-\renewcommand{\headrulewidth}{0.4pt}
-\renewcommand{\footrulewidth}{0.4pt}
-\fancypagestyle{plain}{%
-\fancyhf{} % clear all header and footer fields
-\fancyfoot[C]{\sffamily\thepage} % except the center
-\renewcommand{\headrulewidth}{0pt}
-\renewcommand{\footrulewidth}{0pt}}
-
-%% MATHS
-\usepackage{bm,amsmath}
-\allowdisplaybreaks
-
-%% GRAPHICS
-\makeatletter
-\def\fps@figure{htbp}
-\makeatother
-\setcounter{topnumber}{2}
-\setcounter{bottomnumber}{2}
-\setcounter{totalnumber}{4}
-\renewcommand{\topfraction}{0.85}
-\renewcommand{\bottomfraction}{0.85}
-\renewcommand{\textfraction}{0.15}
-\renewcommand{\floatpagefraction}{0.8}
-
-%% SECTION TITLES
-\usepackage[compact,sf,bf]{titlesec}
-\titleformat{\section}[block]
-  {\fontsize{15}{17}\bfseries\sffamily}
-  {\thesection}
-  {0.4em}{}
-\titleformat{\subsection}[block]
-  {\fontsize{12}{14}\bfseries\sffamily}
-  {\thesubsection}
-  {0.4em}{}
-\titlespacing{\section}{0pt}{*5}{*1}
-\titlespacing{\subsection}{0pt}{*2}{*0.2}
-
-%% BIBLIOGRAPHY
-\makeatletter
-\@ifpackageloaded{biblatex}{
-\ExecuteBibliographyOptions{bibencoding=utf8,minnames=1,maxnames=3, maxbibnames=99,dashed=false,terseinits=true,giveninits=true,uniquename=false,uniquelist=false,doi=false, isbn=false,url=true,sortcites=false}
-\DeclareFieldFormat{url}{\texttt{\url{#1}}}
-\DeclareFieldFormat[article]{pages}{#1}
-\DeclareFieldFormat[inproceedings]{pages}{\lowercase{pp.}#1}
-\DeclareFieldFormat[incollection]{pages}{\lowercase{pp.}#1}
-\DeclareFieldFormat[article]{volume}{\mkbibbold{#1}}
-\DeclareFieldFormat[article]{number}{\mkbibparens{#1}}
-\DeclareFieldFormat[article]{title}{\MakeCapital{#1}}
-\DeclareFieldFormat[article]{url}{}
-\DeclareFieldFormat[inproceedings]{title}{#1}
-\DeclareFieldFormat{shorthandwidth}{#1}
-\usepackage{xpatch}
-\xpatchbibmacro{volume+number+eid}{\setunit*{\adddot}}{}{}{}
-% Remove In: for an article.
-\renewbibmacro{in:}{%
-  \ifentrytype{article}{}{%
-  \printtext{\bibstring{in}\intitlepunct}}}
-\AtEveryBibitem{\clearfield{month}}
-\AtEveryCitekey{\clearfield{month}}
-\DeclareDelimFormat[cbx@textcite]{nameyeardelim}{\addspace}
-\renewcommand*{\finalnamedelim}{\addspace\&\space}
-}{}
-\makeatother
-
-%% PAGE BREAKING to avoid widows and orphans
-\clubpenalty = 2000
-\widowpenalty = 2000
-\usepackage{microtype}
-% Placement of logos
-
-\RequirePackage[absolute,overlay]{textpos}
-\setlength{\TPHorizModule}{1cm}
-\setlength{\TPVertModule}{1cm}
-\def\placefig#1#2#3#4{\begin{textblock}{.1}(#1,#2)\rlap{\includegraphics[#3]{#4}}\end{textblock}}
-
-% Title and date
-
-\title{Online conformal inference for multi-step time series
-forecasting}
-\date{14 October 2024}
-
-\def\Date{\number\day}
-\def\Month{\ifcase\month\or
- January\or February\or March\or April\or May\or June\or
- July\or August\or September\or October\or November\or December\fi}
-\def\Year{\number\year}
-
-% Working paper number and JEL codes
-
-\makeatletter
-\def\wp#1{\gdef\@wp{#1}}\def\@wp{??/??}
-\def\jel#1{\gdef\@jel{#1}}\def\@jel{??}
-\def\showjel{{\large\textsf{\textbf{JEL classification:}}~\@jel}}
-\def\nojel{\def\showjel{}}
-\makeatother
-
-\nojel
-
-% Title page
-
-\makeatletter
-\def\cover{{\sffamily\setcounter{page}{0}
-        \thispagestyle{empty}
-        \placefig{2}{1.5}{width=5cm}{monash2}
-        \placefig{16.9}{1.5}{width=2.1cm}{MBSportrait}
-        \begin{textblock}{4}(16.9,4)ISSN 1440-771X\end{textblock}
-        \begin{textblock}{7}(12.7,27.9)\hfill
-        \includegraphics[height=0.7cm]{AACSB}~~~
-        \includegraphics[height=0.7cm]{EQUIS}~~~
-        \includegraphics[height=0.7cm]{AMBA}
-        \end{textblock}
-        \vspace*{2.5cm}
-        \begin{center}\Large
-        Department of Econometrics and Business Statistics\\[.5cm]
-        \footnotesize http://monash.edu/business/ebs/research/publications
-        \end{center}\vspace{2cm}
-        \begin{center}
-        \fbox{\parbox{14cm}{\begin{onehalfspace}\centering\Huge\vspace*{0.3cm}
-                \textsf{\textbf{\expandafter{\@title}}}\vspace{1cm}\par
-                \LARGE
-                \expandafter{\@author}
-                \end{onehalfspace}
-        }}
-        \end{center}
-        \vfill
-                \begin{center}\Large
-                \Month~\Year\\[1cm]
-                Working Paper \@wp
-        \end{center}\vspace*{2cm}}}
-        \def\addresses#1{\gdef\@addresses{#1}}\def\@addresses{??}
-        \def\pageone{{\sffamily\setstretch{1}%
-        \thispagestyle{empty}%
-        \vbox to \textheight{%
-        \raggedright\baselineskip=1.2cm
-     {\fontsize{24.88}{30}\sffamily\textbf{\expandafter{\@title}}}
-        \vspace{2cm}\par
-        \hspace{1cm}\parbox{14cm}{\sffamily\large\@addresses}\vspace{1cm}\vfill
-        \hspace{1cm}{\large\Date~\Month~\Year}\\[1cm]
-        \hspace{1cm}\showjel\vss}}}
-\def\blindtitle{{\sffamily
-     \thispagestyle{plain}\raggedright\baselineskip=1.2cm
-     {\fontsize{24.88}{30}\sffamily\textbf{\expandafter{\@title}}}\vspace{1cm}\par
-        }}
-\def\titlepage{{\cover\newpage\pageone\newpage\blindtitle}}
-
-\def\blind{\def\titlepage{{\blindtitle}}\let\maketitle\blindtitle}
-\def\titlepageonly{\def\titlepage{{\pageone\end{document}}}}
-\def\nocover{\def\titlepage{{\pageone\newpage\blindtitle}}\let\maketitle\titlepage}
-\let\maketitle\titlepage
-\makeatother
-
-% Authors
-
-\nocover
-  \author{Xiaoqian Wang, Rob J Hyndman}
-  \addresses{%
-    %
-      \textbf{Xiaoqian Wang}\\%
-      %
-        Department of Econometrics \& Business Statistics\\%
-        Monash University\\%
-        Clayton VIC 3800\\%
-        Australia\\%
-      %
-      {Email: xiaoqian.wang@monash.edu}\\%
-      \textit{Corresponding author}\\[0.5cm]%
-   %
-      \textbf{Rob J Hyndman}\\%
-      %
-        Department of Econometrics \& Business Statistics\\%
-        Monash University\\%
-        Clayton VIC 3800\\%
-        Australia\\%
-      %
-      {Email: rob.hyndman@monash.edu}\\%
-      \\[0.5cm]%
-   %
-   }%
-   \lfoot{\sf Wang, Hyndman: 14 October 2024}
-
-% Keywords
-
-\newenvironment{keywords}{\par\vspace{0.5cm}\noindent{\sffamily\textbf{Keywords:}}}{\vspace{0.25cm}\par\hrule\vspace{0.5cm}\par}
-
-% Abstract
-
-\renewenvironment{abstract}{\begin{minipage}{\textwidth}\parskip=1.4ex\noindent
-\hrule\vspace{0.1cm}\par{\sffamily\textbf{\abstractname}}\newline\setstretch{1.667}}
-  {\end{minipage}}
 \begin{document}
+\def\spacingset#1{\renewcommand{\baselinestretch}%
+{#1}\small\normalsize} \spacingset{1}
+
+\renewcommand*{\arraystretch}{0.5} % Specify row height in a table globally
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{\bf Online conformal inference for multi-step time series
+forecasting}
+\author{
+Xiaoqian Wang\thanks{Corresponding author. Xiaoqian Wang, Department of
+Econometrics \& Business Statistics, Monash University, Clayton VIC,
+3800, Australia. E-mail address:
+\href{mailto:xiaoqian.wang@monash.edu}{xiaoqian.wang@monash.edu} (X.
+Wang).} \vspace{0.2em}\\
+Department of Econometrics \& Business Statistics, Monash
+University \vspace{0.2em}\\
+and \vspace{0.2em}\\Rob J Hyndman \vspace{0.2em}\\
+Department of Econometrics \& Business Statistics, Monash
+University \vspace{0.2em}\\
+}
 \maketitle
 
+\bigskip
+\bigskip
 \begin{abstract}
 We consider the problem of constructing distribution-free prediction
 intervals for multi-step time series forecasting, with a focus on the
@@ -388,13 +247,14 @@ providing adaptive prediction intervals that effectively respond to
 varying conditions.
 \end{abstract}
 
-\begin{keywords}
-  Conformal prediction; Coverage guarantee; Distribution-free
-inference; Exchangeability; 
-  Weighted quantile estimate.
-\end{keywords}
+\noindent%
+{\it Keywords:} Conformal prediction, Coverage
+guarantee, Distribution-free inference, Exchangeability, Weighted
+quantile estimate
+\vfill
 
-\renewcommand*{\bibfont}{\footnotesize}
+\newpage
+%\spacingset{1.8} % DON'T change the spacing!
 
 \setstretch{1.667}
 \renewcommand{\theproposition}{\arabic{proposition}} % numbering propositions sequentially and individually by type and not by section
@@ -402,7 +262,7 @@ inference; Exchangeability;
 
 \section{Introduction}\label{sec-intro}
 
-Conformal prediction \autocite{vovk2005} is a powerful and flexible tool
+Conformal prediction \citep{vovk2005} is a powerful and flexible tool
 for uncertainty quantification, distinguished by its simplicity,
 generality, and ease of implementation. It constructs valid prediction
 intervals that achieve nominal coverage without imposing stringent
@@ -410,93 +270,93 @@ assumptions on the data generating distribution, other than requiring
 the data to be i.i.d. or, more generally, exchangeable. Its credibility
 and potential make it widely applicable for quantifying the uncertainty
 of predictions produced by any black-box machine learning model
-\autocite{shafer2008,papadopoulos2008,barber2021} or non-parametric
-model \autocite{lei2014}.
+\citep{shafer2008, papadopoulos2008, barber2021} or non-parametric model
+\citep{lei2014}.
 
 Three key classes of conformal prediction methods are widely used for
 constructing distribution-free prediction intervals: split conformal
-prediction \autocite{vovk2005}, full conformal prediction
-\autocite{vovk2005}, and jackknife+ \autocite{barber2021}. The split
-conformal method, which relies on a holdout set, offers computational
-efficiency but sacrifices some statistical efficiency due to data
-splitting. In contrast, full conformal prediction avoids data splitting,
-providing higher accuracy at the cost of increased computational
-complexity. Jackknife+ strikes a balance between these methods, offering
-a compromise between statistical precision and computational demands.
-All three methods guarantee coverage at the target level under the
-assumption of data exchangeability.
+prediction \citep{vovk2005}, full conformal prediction \citep{vovk2005},
+and jackknife+ \citep{barber2021}. The split conformal method, which
+relies on a holdout set, offers computational efficiency but sacrifices
+some statistical efficiency due to data splitting. In contrast, full
+conformal prediction avoids data splitting, providing higher accuracy at
+the cost of increased computational complexity. Jackknife+ strikes a
+balance between these methods, offering a compromise between statistical
+precision and computational demands. All three methods guarantee
+coverage at the target level under the assumption of data
+exchangeability.
 
 Nevertheless, the data exchangeability assumption is often violated in
 many applied domains, where challenges such as non-stationarity,
 distributional drift, temporal and spatial dependencies are prevalent.
 In response, several extensions to conformal prediction have been
-proposed to accommodate non-exchangeable data. Notable examples include
+proposed to handle non-exchangeable data. Notable examples include
 methods for handling covariate shift
-\autocite{tibshirani2019,lei2021,yang2024}, online distribution shift
-\autocite{gibbs2021,zaffran2022,bastani2022}, label shift
-\autocite{podkopaev2021}, time series data
-\autocite{chernozhukov2018,gibbs2021,xu2021,xu2023,zaffran2022}, and
-spatial prediction \autocite{mao2024}, and methods based on certain
+\citep{tibshirani2019, lei2021, yang2024}, online distribution shift
+\citep{gibbs2021, zaffran2022, bastani2022}, label shift
+\citep{podkopaev2021}, time series data
+\citep{chernozhukov2018, gibbs2021, xu2021, xu2023, zaffran2022}, and
+spatial prediction \citep{mao2024}, and methods based on certain
 distributional assumptions of the data rather than exchangeability
-\autocite{oliveira2024,xu2021,xu2023}. Additionally, some methods
-propose weighting the nonconformity scores (for example, prediction
-errors) differently, either using non-data-dependent weights
-\autocite{barber2023} or weights based on observed feature values
-\autocite{tibshirani2019,guan2023,hore2023}.
+\citep{oliveira2024, xu2021, xu2023}. Additionally, some methods propose
+weighting nonconformity scores (e.g., prediction errors) differently,
+either using non-data-dependent weights \citep{barber2023} or weights
+based on observed feature values
+\citep{tibshirani2019, guan2023, hore2023}.
 
 Recently, several attempts have been made to enable conformal prediction
 on time series data, where exchangeability obviously fails due to
 inherent temporal dependencies. One line of research has focused on
 developing conformal-type methods that offer coverage guarantees under
 certain relaxations of exchangeability. For example, within the full
-conformal prediction framework, \textcite{chernozhukov2018} and
-\textcite{yu2022} construct prediction sets for time series by using a
+conformal prediction framework, \citet{chernozhukov2018} and
+\citet{yu2022} construct prediction sets for time series by using a
 group of permutations that are specifically designed to preserve the
 dependence structure in the data, ensuring validity under weak
 assumptions on the nonconformity score. In the split conformal
-prediction framework, \textcite{xu2021} and \textcite{xu2023} extend
-conformal prediction methods under classical nonparametric assumptions
-to achieve asymptotic valid conditional coverage for time series.
-\textcite{barber2023} use weighted residual distributions to provide
+prediction framework, \citet{xu2021} and \citet{xu2023} extend conformal
+prediction methods under classical nonparametric assumptions to achieve
+asymptotic valid conditional coverage for time series.
+\citet{barber2023} use weighted residual distributions to provide
 robustness against distribution drift. Additionally,
-\textcite{oliveira2024} introduce a general framework based on
+\citet{oliveira2024} introduce a general framework based on
 concentration inequalities and data decoupling properties of the data to
 retain asymptotic coverage guarantees across several dependent data
 settings.
 
-In a separate strand of research, \textcite{gibbs2021} develop adaptive
+In a separate strand of research, \citet{gibbs2021} develop adaptive
 conformal inference in an online manner to manage temporal distribution
 shifts and ensure long-run coverage guarantees. The basic idea is to
 adapt the miscoverage rate, \(\alpha\), based on historical miscoverage
 frequencies. Follow-up work has refined this idea by introducing
 time-dependent step sizes to respond to arbitrary distribution shifts,
-as seen in studies by \textcite{bastani2022}, \textcite{zaffran2022},
-and \textcite{gibbs2024}. However, these methods may produce prediction
+as seen in studies by \citet{bastani2022}, \citet{zaffran2022}, and
+\citet{gibbs2024}. However, these methods may produce prediction
 intervals that are either infinite or null. To address this issue,
 recent research has proposed a generalized updating process that tracks
 the quantile of the nonconformity score sequence, as discussed by
-\textcite{bhatnagar2023}, \textcite{angelopoulos2024}, and
-\textcite{angelopoulos2024online}.
+\citet{bhatnagar2023}, \citet{angelopoulos2024}, and
+\citet{angelopoulos2024online}.
 
 Existing conformal prediction methods for time series primarily focus on
 single-step forecasting. However, many applications require forecasts
 for multiple future time steps, not just one. Related research into
 multi-step time series forecasting is limited and does not account for
 the temporal dependencies inherent in multi-step forecasts. For example,
-\textcite{stankeviciute2021} integrate conformal prediction with
-recurrent neural networks for multi-step forecasting and then apply
-Bonferroni correction to achieve the desired coverage rate. This
-approach, however, assumes data independence, which is not often
-unrealistic for time series data. \textcite{yang2024ts} propose Bellman
-conformal inference, an extension of adaptive conformal prediction, to
-control multi-step miscoverage rates simultaneously at each time point
-\(t\) by minimizing a loss function that balances the average interval
-length across forecast horizons with miscoverage. While this method
-considers multi-step intervals, it does not account for their temporal
+\citet{stankeviciute2021} integrate conformal prediction with recurrent
+neural networks for multi-step forecasting and then apply Bonferroni
+correction to achieve the desired coverage rate. This approach, however,
+assumes data independence, which is not often unrealistic for time
+series data. \citet{yang2024ts} propose Bellman conformal inference, an
+extension of adaptive conformal prediction, to control multi-step
+miscoverage rates simultaneously at each time point \(t\) by minimizing
+a loss function that balances the average interval length across
+forecast horizons with miscoverage. While this method considers
+multi-step intervals, it does not account for their temporal
 dependencies and may be computationally intensive when solving the
 associated optimisation problems at each time step. Additionally,
 several extensions to multivariate targets have been explored, see,
-e.g., \textcite{schlembach2022} and \textcite{sun2022}.
+e.g., \citet{schlembach2022} and \citet{sun2022}.
 
 We employ a unified notation to formalize the mathematical
 representation of conformal prediction for time series data. We consider
@@ -590,9 +450,9 @@ and
 Here, ``proper'' means that the training set is used exclusively for
 fitting the model, with no overlap into the calibration set, which is
 essential for ensuring the validity of coverage in conformal prediction
-\autocite{papadopoulos2007}. With sequential splitting, multiple
-\(H\)-step forecasts and their respective nonconformity scores can be
-computed on the calibration set.
+\citep{papadopoulos2007}. With sequential splitting, multiple \(H\)-step
+forecasts and their respective nonconformity scores can be computed on
+the calibration set.
 
 \textbf{Online learning.} We will adapt the following generic online
 learning framework for all conformal prediction methods to be discussed
@@ -648,7 +508,7 @@ with sequential splits.}
 
 \end{figure}%
 
-\section{Extending conformal prediction methods to multi-step
+\section{Extending conformal prediction for multi-step
 forecasting}\label{sec-ext}
 
 In this section, we apply the online learning framework outlined in
@@ -661,18 +521,18 @@ expected squared deviation between the forecasts and actual values. One
 of the key properties of optimal forecast errors, which holds generally
 in linear models, is that the variance of the forecast error
 \(e_{t+h|t}\) is non-decreasing in \(h\)
-\autocite{tong1990,diebold1996,patton2007}. Therefore, we need to apply
-a separate conformal prediction procedure for each \(h \in [H]\).
+\citep{tong1990, diebold1996, patton2007}. Therefore, we need to apply a
+separate conformal prediction procedure for each \(h \in [H]\).
 
 \subsection{Online multi-step split conformal
 prediction}\label{online-multi-step-split-conformal-prediction}
 
-Split conformal prediction \autocites[SCP, also called inductive
-conformal prediction,][]{papadopoulos2002,vovk2005,lei2018}, is a
-holdout method for building prediction intervals using a pre-trained
-model in regression settings. A key advantage of SCP is its ability to
-guarantee coverage by assuming data exchangeability. Time series data
-are inherently nonexchangeable due to their temporal dependence and
+Split conformal prediction \citep[SCP, also called inductive conformal
+prediction,][]{papadopoulos2002, vovk2005, lei2018}, is a holdout method
+for building prediction intervals using a pre-trained model in
+regression settings. A key advantage of SCP is its ability to guarantee
+coverage by assuming data exchangeability. Time series data are
+inherently nonexchangeable due to their temporal dependence and
 autocorrelation. Therefore, directly applying SCP to time series data
 would violate the method's exchangeability assumption and compromise its
 coverage guarantee.
@@ -695,7 +555,7 @@ mass at \(a\).
 \subsection{Online multi-step weighted conformal
 prediction}\label{online-multi-step-weighted-conformal-prediction}
 
-\textcite{barber2023} propose a nonexchangeable conformal prediction
+\citet{barber2023} propose a nonexchangeable conformal prediction
 procedure (NexCP) that generalizes the SCP method to allow for some
 sources of nonexchangeability. The core idea is that a higher weight
 should be assigned to a data point that is believed to originate from
@@ -718,7 +578,7 @@ We choose fixed weights \(w_i = b^{t+1-i}\), \(b \in (0, 1)\) and
 calibration set. In this setting, weights decay exponentially as the
 nonconformity scores get older, akin to the rationale behind the simple
 exponential smoothing method in time series forecasting
-\autocite{hyndman2021}. Then for each \(h \in [H]\), MWCP updates the
+\citep{hyndman2021}. Then for each \(h \in [H]\), MWCP updates the
 \(h\)-step-ahead prediction interval: \[
 \hat{\mathcal{C}}_{t+h|t}^{\alpha} = \Bigg\{y\in\mathbb{R}: s_{t+h|t}^{y} \leq Q_{1-\alpha}\Bigg(\sum_{i=t-t_c+1}^{t}\tilde{w}_i\cdot\delta_{s_{i|i-h}}+\tilde{w}_{t+1}\cdot\delta_{+\infty}\Bigg)\Bigg\},
 \] where \(\tilde{w}_i\) and \(\tilde{w}_{t+1}\) are normalized weights
@@ -730,7 +590,7 @@ given by \[
 prediction}\label{multi-step-adaptive-conformal-prediction}
 
 Next we extend the adaptive conformal prediction (ACP) method proposed
-by \textcite{gibbs2021} to address multi-step time series forecasting,
+by \citet{gibbs2021} to address multi-step time series forecasting,
 introducing the \textbf{multi-step adaptive conformal prediction} (MACP)
 method. Assuming that
 \(\beta \mapsto \mathbb{P}(y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}^{\beta})\)
@@ -773,17 +633,17 @@ insufficient to estimate \(\alpha_{t+h|t}^{*}\) required for \(h\)-step
 forecasts.
 
 Selecting the parameter \(\gamma\) is pivotal yet challenging.
-\textcite{gibbs2021} suggest setting \(\gamma\) in proportion to the
-degree of variation of the unknown \(\alpha_{t}^{*}\) over time. Several
+\citet{gibbs2021} suggest setting \(\gamma\) in proportion to the degree
+of variation of the unknown \(\alpha_{t}^{*}\) over time. Several
 strategies have been proposed to avoid the necessity of selecting
-\(\gamma\). For example, \textcite{zaffran2022} use an adaptive
-aggregation of multiple ACPs with a set of candidate values for
-\(\gamma\) , determining weights based on their historical performance.
-\textcite{bastani2022} propose a multivalid prediction algorithm in
-which the prediction set is established by selecting a threshold from a
+\(\gamma\). For example, \citet{zaffran2022} use an adaptive aggregation
+of multiple ACPs with a set of candidate values for \(\gamma\) ,
+determining weights based on their historical performance.
+\citet{bastani2022} propose a multivalid prediction algorithm in which
+the prediction set is established by selecting a threshold from a
 sequence of candidate thresholds. However, both previous methods fail to
 promptly adapt to the local changes. To address this limitation,
-\textcite{gibbs2024} suggest adaptively tuning the step size parameter
+\citet{gibbs2024} suggest adaptively tuning the step size parameter
 \(\gamma\) in an online setting, choosing an ``optimal'' value for
 \(\gamma\) from a candidate set of values by assessing their historical
 performance.
@@ -799,11 +659,10 @@ adapt to the current miscoverage status.
 control}\label{multi-step-conformal-pid-control}
 
 We introduce \textbf{multi-step conformal PID control} method (hereafter
-MPID), which extends the PID method \autocite{angelopoulos2024},
-originally developed for one-step-ahead forecasting. For each individual
-forecast horizon \(h\in[H]\), the iteration of the \(h\)-step-ahead
-quantile estimate is given by
-\begin{equation}\phantomsection\label{eq-mpid}{
+MPID), which extends the PID method \citep{angelopoulos2024}, originally
+developed for one-step-ahead forecasting. For each individual forecast
+horizon \(h\in[H]\), the iteration of the \(h\)-step-ahead quantile
+estimate is given by \begin{equation}\phantomsection\label{eq-mpid}{
 q_{t+h|t}=\underbrace{q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)}_{\mathrm{P}}+\underbrace{r_t\Bigg(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\Bigg)}_{\mathrm{I}}+\underbrace{\hat{s}_{t+h|t}}_{\mathrm{D}},
 }\end{equation} where \(\eta > 0\) is a constant learning rate, and
 \(r_t\) is a saturation function that adheres to the following
@@ -845,7 +704,7 @@ coverage and prediction intervals.
 \section{Autocorrelated multi-step conformal
 prediction}\label{sec-acmcp}
 
-In the PID method proposed by \textcite{angelopoulos2024}, a notable
+In the PID method proposed by \citet{angelopoulos2024}, a notable
 feature is the inclusion of a scorecaster, a model trained on the score
 sequence to forecast the future score. The rationale behind it is to
 identify any leftover signal in the score distribution not captured by
@@ -918,8 +777,8 @@ unobserved model coefficients.
 It is well-established in the forecasting literature that, for a
 zero-mean covariance-stationary time series, the optimal linear
 least-squares forecasts have \(h\)-step-ahead errors that are at most
-MA\((h-1)\) process \autocite{harvey1997,diebold2024}, a property that
-can be derived using Wold's representation theorem. Here, we extend the
+MA\((h-1)\) process \citep{harvey1997, diebold2024}, a property that can
+be derived using Wold's representation theorem. Here, we extend the
 investigation to time series generated by a general non-stationary
 autoregressive process, and provide the corresponding proposition. The
 proof of this proposition is provided in Section~\ref{sec-proof_ma}.
@@ -1034,7 +893,7 @@ correct long-run coverage; i.e.,
 
 More importantly, Proposition~\ref{prp-cov_rt} is also adequate for
 establishing the coverage guarantee of the proposed AcMCP method given
-byEquation \eqref{eq-acmcp}. Following \textcite{angelopoulos2024}, we
+byEquation \eqref{eq-acmcp}. Following \citet{angelopoulos2024}, we
 first reformulate Equation \eqref{eq-acmcp} as
 \begin{equation}\phantomsection\label{eq-acmcp_1}{
 q_{t+h|t}=\hat{q}_{t+h|t}+r_t\left(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\right),
@@ -1074,9 +933,9 @@ following parameter settings:
 \item
   we focus on the target coverage level \(1-\alpha=0.9\);
 \item
-  for the MWCP method, we use \(b=0.99\) as per \textcite{barber2023};
+  for the MWCP method, we use \(b=0.99\) as per \citet{barber2023};
 \item
-  following \textcite{angelopoulos2024}, we use a step size parameter of
+  following \citet{angelopoulos2024}, we use a step size parameter of
   \(\gamma=0.005\) for the MACP method, a Theta model as the scorecaster
   in the MPID method, and a learning rate of \(\eta=0.01\hat{B}_t\) for
   quantile tracking in the MPID and AcMCP methods, where
@@ -1089,7 +948,7 @@ following parameter settings:
   where \(\tan (x)=\operatorname{sign}(x) \cdot \infty\) for
   \(x \notin[-\pi / 2, \pi / 2]\), and constants
   \(C_{\text {sat }}, K_{\mathrm{I}}>0\) are chosen heuristically, as
-  suggested by \textcite{angelopoulos2024};
+  suggested by \citet{angelopoulos2024};
 \item
   we consider a clipped version of MACP by imputing infinite intervals
   with the largest score seen so far.
@@ -1108,7 +967,7 @@ settings, we create training sets \(\mathcal{D}_{\text{tr}}\) and
 calibration sets \(\mathcal{D}_{\text{cal}}\), each with a length of
 \(500\). We use AR\((2)\) models to generate \(1\)- to \(3\)-step-ahead
 point forecasts (i.e.~\(H=3\)), using the \texttt{Arima()} function from
-the \texttt{forecast} R package \autocite{hyndman2024}. The goal is to
+the \texttt{forecast} R package \citep{hyndman2024}. The goal is to
 generate prediction intervals using various proposed conformal
 prediction methods and evaluate whether they can achieve the nominal
 long-run coverage for each separate forecast horizon.
@@ -1220,7 +1079,7 @@ nonlinear structure of the DGP, we use feed-forward neural networks with
 a single hidden layer and lagged inputs to generate \(1\)- to
 \(3\)-step-ahead point forecasts (i.e.~\(H=3\)), using the
 \texttt{nnetar()} function from the \texttt{forecast} R package
-\autocite{hyndman2024}. Note that it is not possible to derive analytic
+\citep{hyndman2024}. Note that it is not possible to derive analytic
 intervals for neural networks, thus we do not include neural network
 models when presenting the results.
 
@@ -1278,8 +1137,6 @@ width of the AcMCP method.}
 
 \end{figure}%
 
-\FloatBarrier
-
 \subsection{Electricity demand data}\label{electricity-demand-data}
 
 We apply the conformal prediction methods using data comprising daily
@@ -1311,7 +1168,7 @@ daily maximum temperatures in 2012--2014, Victoria, Australia.}
 Our response variable is \(\texttt{Demand}\), and we use two covariates:
 \(\texttt{Temperature}\), and \(\texttt{Workday}\) (an indicator
 variable for if the day was a working day or not). Following
-\textcite{hyndman2021}, we will fit a dynamic regression model with a
+\citet{hyndman2021}, we will fit a dynamic regression model with a
 piecewise linear function of temperature (containing a knot at \(18\)
 degrees) to generate \(1\)- to \(7\)-step-ahead point forecasts
 (i.e.~\(H=7\)). The error series in the regression is assumed to follow
@@ -1426,17 +1283,17 @@ December 2019.}
 \end{figure}%
 
 We consider three models: ARIMA with logarithmic transformation, ETS,
-and STL-ETS \autocite{hyndman2021}, and then output their simple average
-as final point forecasts. STL-ETS involves forecasting using the STL
+and STL-ETS \citep{hyndman2021}, and then output their simple average as
+final point forecasts. STL-ETS involves forecasting using the STL
 decomposition method, applying ETS to forecast the seasonally adjusted
 series. All three models can be automatically trained using the
-\texttt{forecast} R package \autocite{hyndman2024}. Our goal is to
-forecast \(12\) months ahead, i.e.~\(H=12\). We use \(20\) years of data
-for training the models and \(5\) years of data for calibration sets.
-The whole test set only has a length of \(152\) months. Therefore, we
-will not compute rolling coverage and interval width in this experiment,
-but rather compute the coverage and interval width averaged over the
-entire test set.
+\texttt{forecast} R package \citep{hyndman2024}. Our goal is to forecast
+\(12\) months ahead, i.e.~\(H=12\). We use \(20\) years of data for
+training the models and \(5\) years of data for calibration sets. The
+whole test set only has a length of \(152\) months. Therefore, we will
+not compute rolling coverage and interval width in this experiment, but
+rather compute the coverage and interval width averaged over the entire
+test set.
 
 We summarise the average coverage and interval width for each method and
 each forecast horizon in Figure~\ref{fig-cafe_cov}. The results first
@@ -1575,8 +1432,7 @@ Proposition~\ref{prp-ma}}{Proof of Proposition~}}\label{sec-proof_ma}
 
 \begin{proof}
 Here, we give the proof of Proposition~\ref{prp-ma} based on
-Proposition~\ref{prp-ar}; the idea is motivated by
-\textcite{sommer2023}.
+Proposition~\ref{prp-ar}; the idea is motivated by \citet{sommer2023}.
 
 Based on Proposition~\ref{prp-ar} and its proof, we have \begin{align*}
 e_{t+1|t} &= \omega_{t+1} \\
@@ -1702,7 +1558,8 @@ Funding information, including specific grant numbers.
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
 
-\printbibliography[heading=none]
+\renewcommand{\bibsection}{}
+\bibliography{references.bib}
 
 
 

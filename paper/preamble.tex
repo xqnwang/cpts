@@ -1,0 +1,26 @@
+\usepackage{bm}
+\usepackage{mathptmx}
+\usepackage{amsmath} % Ensure amsmath is included for \eqref
+\usepackage[]{natbib}
+\usepackage[top=2cm, bottom=2cm, left=2.5cm, right=2.5cm]{geometry}
+\allowdisplaybreaks
+\sloppy
+\setlength{\parskip}{0pt}
+\setlength{\parindent}{15pt}
+\expandafter\def\expandafter\normalsize\expandafter{%
+  \normalsize  
+  \setlength\abovedisplayskip{1ex}
+  \setlength\belowdisplayskip{1ex}
+  \setlength\abovedisplayshortskip{1ex}
+  \setlength\belowdisplayshortskip{1ex}
+}
+\setlength{\bibsep}{0pt plus 0.3ex}
+\usepackage{microtype}
+\usepackage[onlyrefs]{mathtools}
+\setlength{\tabcolsep}{0.11cm}
+\usepackage{threeparttable}
+\makeatletter
+\g@addto@macro\TPT@defaults{\linespread{1}\selectfont}
+\def\fps@table{!tbh}
+\def\fps@figure{!tbh}
+\makeatother
