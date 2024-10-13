@@ -22,12 +22,10 @@ abstract: |
   We consider the problem of constructing distribution-free prediction intervals for multi-step time series forecasting, with a focus on the temporal dependencies inherent in multi-step forecast errors. We establish that the optimal $h$-step-ahead forecast errors exhibit serial correlation up to lag $(h-1)$ under a general non-stationary autoregressive data generating process. To leverage these properties, we propose the Autocorrelated Multi-step Conformal Prediction (AcMCP) method, which effectively incorporates autocorrelations in multi-step forecast errors, resulting in more statistically efficient prediction intervals. This method ensures theoretical long-run coverage guarantees for multi-step prediction intervals, though we note that increased forecasting horizons may exacerbate deviations from the target coverage, particularly in the context of limited sample sizes. Additionally, we extend several easy-to-implement conformal prediction methods, originally designed for single-step forecasting, to accommodate multi-step scenarios. Through empirical evaluations, including simulations and applications to data, we demonstrate that AcMCP achieves coverage that closely aligns with the target within local windows, while providing adaptive prediction intervals that effectively respond to varying conditions.
 keywords: [Conformal prediction, Coverage guarantee, Distribution-free inference, Exchangeability, Weighted quantile estimate]
 bibliography: references.bib
-wpnumber: no/24
-jelcodes: C53,C22,C14
 blind: false
 cover: false
-linestretch: 1.1
-fontsize: 11pt
+linestretch: 1.667
+fontsize: 12pt
 include-in-header:
   - text: |
       \usepackage{todonotes}
@@ -36,6 +34,9 @@ format:
   wp-pdf:
     keep-tex: true
     number-depth: 3
+    geometry:
+      - left=2cm
+      - right=2cm
 execute:
   echo: false
   message: false
@@ -255,15 +256,13 @@ Let $\{\hat{q}_{t+h|t}\}_{t\in\mathbb{N}}$ be any sequence of numbers in $[-\fra
 
 # Experiments
 
-We examine the empirical performance of the proposed multi-step conformal prediction methods using two simulated data settings and two real data examples.
+We examine the empirical performance of the proposed multi-step conformal prediction methods using two simulated data settings and two real data examples. Throughout the experiments, we adhere to the following parameter settings:
 
-Throughout the experiments, we adhere to the following parameter settings:
-
-* we focus on the target coverage level $1-\alpha=0.9$;
-* for the MWCP method, we use $b=0.99$ as per @barber2023;
-* following @angelopoulos2024, we use a step size parameter of $\gamma=0.005$ for the MACP method, a Theta model as the scorecaster in the MPID method, and a learning rate of $\eta=0.01\hat{B}_t$ for quantile tracking in the MPID and AcMCP methods, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\dots,s_{t|t-h}\}$ is the highest score over a tailing window and the window length $\Delta$ is set to be same as the length of the calibration set;
-* we adopt a nonlinear saturation function defined as $r_t(x)=K_1 \tan \left(x \log (t) / (t C_{\text {sat }})\right)$, where $\tan (x)=\operatorname{sign}(x) \cdot \infty$ for $x \notin[-\pi / 2, \pi / 2]$, and constants $C_{\text {sat }}, K_{\mathrm{I}}>0$ are chosen heuristically, as suggested by @angelopoulos2024;
-* we consider a clipped version of MACP by imputing infinite intervals with the largest score seen so far.
+(a) we focus on the target coverage level $1-\alpha=0.9$;
+(b) for the MWCP method, we use $b=0.99$ as per @barber2023;
+(c) following @angelopoulos2024, we use a step size parameter of $\gamma=0.005$ for the MACP method, a Theta model as the scorecaster in the MPID method, and a learning rate of $\eta=0.01\hat{B}_t$ for quantile tracking in the MPID and AcMCP methods, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\dots,s_{t|t-h}\}$ is the highest score over a tailing window and the window length $\Delta$ is set to be same as the length of the calibration set;
+(d) we adopt a nonlinear saturation function defined as $r_t(x)=K_1 \tan \left(x \log (t) / (t C_{\text {sat }})\right)$, where $\tan (x)=\operatorname{sign}(x) \cdot \infty$ for $x \notin[-\pi / 2, \pi / 2]$, and constants $C_{\text {sat }}, K_{\mathrm{I}}>0$ are chosen heuristically, as suggested by @angelopoulos2024;
+(e) we consider a clipped version of MACP by imputing infinite intervals with the largest score seen so far.
 
 ## Simulated linear autoregressive process
 
@@ -384,7 +383,7 @@ P_NL_box
 
 ## Electricity demand data
 
-We apply the conformal prediction methods using data comprising daily electricity demand (GW), daily maximum temperature (degrees Celsius), and holiday information for the state of Victoria, Australia, spanning a three-year period from 2012 to 2014. Temperatures are taken from the Melbourne Regional Office weather station in the capital city of Victoria. The left panel of @fig-elec_data displays the daily electricity demand during 2012--2014, along with temperatures. The right panel shows a nonlinear relationship between electricity demand and temperature, with demand increasing for low temperatures (due to heating) and increasing for high temperatures (due to cooling). The two clouds of points in the right panel correspond to working days and non-working days.
+We apply the conformal prediction methods using data comprising daily electricity demand (GW), daily maximum temperature (degrees Celsius), and holiday information for Victoria, Australia, spanning a three-year period from 2012 to 2014. Temperatures are taken from the Melbourne Regional Office weather station in the capital city of Victoria. The left panel of @fig-elec_data displays the daily electricity demand during 2012--2014, along with temperatures. The right panel shows a nonlinear relationship between electricity demand and temperature, with demand increasing for low temperatures (due to heating) and increasing for high temperatures (due to cooling). The two clouds of points in the right panel correspond to working days and non-working days.
 
 ```{r}
 #| label: fig-elec_data
@@ -516,22 +515,17 @@ The methods discussed here are limited to ex-post forecasting, operating under t
 
 These considerations pave the way for numerous avenues for future research. Potential directions include the introduction of a time-dependent learning rate parameter to minimize interval width while maintaining the guaranteed coverage rate, as well as the development of refined methodologies that account for variability introduced by forecasting predictors in ex-ante scenarios.
 
-# References {.unnumbered}
-
-::: {#refs}
-:::
-
 ```{=tex}
-\newpage
+% \newpage
 \appendix
 % \pagenumbering{arabic}% resets `page` counter to 1
 \setcounter{section}{0}
 \renewcommand{\thesection}{Appendix \Alph{section}}
 \renewcommand{\thesubsection}{\Alph{section}.\arabic{subsection}}
-\renewcommand{\thefigure}{A\arabic{figure}}
-\renewcommand{\thetable}{A\arabic{table}}
-\setcounter{figure}{0}
-\setcounter{table}{0}
+% \renewcommand{\thefigure}{A\arabic{figure}}
+% \renewcommand{\thetable}{A\arabic{table}}
+% \setcounter{figure}{0}
+% \setcounter{table}{0}
 ```
 
 # Proofs {#sec-proof}
@@ -649,3 +643,13 @@ We set $q_{2h|h}=0$ without losing generality, the iteration $q_{t+h|t}=q_{t+h-1
 ::: proof
 Let $q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}$, then Equation \eqref{eq-acmcp_1} transforms into an update process $q_{t+h|t}^{*}=r_t\left(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\right)$, which is an update with respect to $q_{t+h|t}^{*}$. Under this new framework, the nonconformity score becomes $s_{t+h|t}^{*}=s_{t+h|t}-\hat{q}_{t+h|t}$, with values ranging in $[-b,b]$, given the assumption that both $s_{t+h|t}$ and $\hat{q}_{t+h|t}$ fall within $[-\frac{b}{2},\frac{b}{2}]$. Thus, @prp-cov_rt can be directly applied to establish the long-run coverage achieved by the AcMCP method.
 :::
+
+# Acknowledgments {.unnumbered}
+
+Funding information, including specific grant numbers.
+
+# References {.unnumbered}
+
+::: {#refs}
+:::
+

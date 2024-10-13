@@ -4,7 +4,7 @@
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
 %
 \documentclass[
-  11pt,
+  12pt,
   a4paper,
 ]{article}
 
@@ -41,7 +41,7 @@
   \KOMAoptions{parskip=half}}
 \makeatother
 \usepackage{xcolor}
-\usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm]{geometry}
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,left=2cm,right=2cm]{geometry}
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \setcounter{secnumdepth}{3}
 
@@ -210,8 +210,7 @@ quantile estimate},
 \titlespacing{\section}{0pt}{*5}{*1}
 \titlespacing{\subsection}{0pt}{*2}{*0.2}
 
-%% BIBLIOGRAPHY.
-
+%% BIBLIOGRAPHY
 \makeatletter
 \@ifpackageloaded{biblatex}{
 \ExecuteBibliographyOptions{bibencoding=utf8,minnames=1,maxnames=3, maxbibnames=99,dashed=false,terseinits=true,giveninits=true,uniquename=false,uniquelist=false,doi=false, isbn=false,url=true,sortcites=false}
@@ -270,8 +269,7 @@ forecasting}
 \def\nojel{\def\showjel{}}
 \makeatother
 
-\wp{no/24}
-\jel{C53,C22,C14}
+\nojel
 
 % Title page
 
@@ -360,8 +358,9 @@ forecasting}
 \newenvironment{keywords}{\par\vspace{0.5cm}\noindent{\sffamily\textbf{Keywords:}}}{\vspace{0.25cm}\par\hrule\vspace{0.5cm}\par}
 
 % Abstract
+
 \renewenvironment{abstract}{\begin{minipage}{\textwidth}\parskip=1.4ex\noindent
-\hrule\vspace{0.1cm}\par{\sffamily\textbf{\abstractname}}\newline\setstretch{1.1}}
+\hrule\vspace{0.1cm}\par{\sffamily\textbf{\abstractname}}\newline\setstretch{1.667}}
   {\end{minipage}}
 \begin{document}
 \maketitle
@@ -395,8 +394,9 @@ inference; Exchangeability;
   Weighted quantile estimate.
 \end{keywords}
 
+\renewcommand*{\bibfont}{\footnotesize}
 
-\setstretch{1.1}
+\setstretch{1.667}
 \renewcommand{\theproposition}{\arabic{proposition}} % numbering propositions sequentially and individually by type and not by section
 \setcounter{proposition}{0}
 
@@ -1065,12 +1065,11 @@ prediction intervals obtained by the AcMCP iteration given by Equation
 
 We examine the empirical performance of the proposed multi-step
 conformal prediction methods using two simulated data settings and two
-real data examples.
+real data examples. Throughout the experiments, we adhere to the
+following parameter settings:
 
-Throughout the experiments, we adhere to the following parameter
-settings:
-
-\begin{itemize}
+\begin{enumerate}
+\def\labelenumi{(\alph{enumi})}
 \tightlist
 \item
   we focus on the target coverage level \(1-\alpha=0.9\);
@@ -1094,7 +1093,7 @@ settings:
 \item
   we consider a clipped version of MACP by imputing infinite intervals
   with the largest score seen so far.
-\end{itemize}
+\end{enumerate}
 
 \subsection{Simulated linear autoregressive
 process}\label{simulated-linear-autoregressive-process}
@@ -1285,16 +1284,16 @@ width of the AcMCP method.}
 
 We apply the conformal prediction methods using data comprising daily
 electricity demand (GW), daily maximum temperature (degrees Celsius),
-and holiday information for the state of Victoria, Australia, spanning a
-three-year period from 2012 to 2014. Temperatures are taken from the
-Melbourne Regional Office weather station in the capital city of
-Victoria. The left panel of Figure~\ref{fig-elec_data} displays the
-daily electricity demand during 2012--2014, along with temperatures. The
-right panel shows a nonlinear relationship between electricity demand
-and temperature, with demand increasing for low temperatures (due to
-heating) and increasing for high temperatures (due to cooling). The two
-clouds of points in the right panel correspond to working days and
-non-working days.
+and holiday information for Victoria, Australia, spanning a three-year
+period from 2012 to 2014. Temperatures are taken from the Melbourne
+Regional Office weather station in the capital city of Victoria. The
+left panel of Figure~\ref{fig-elec_data} displays the daily electricity
+demand during 2012--2014, along with temperatures. The right panel shows
+a nonlinear relationship between electricity demand and temperature,
+with demand increasing for low temperatures (due to heating) and
+increasing for high temperatures (due to cooling). The two clouds of
+points in the right panel correspond to working days and non-working
+days.
 
 \begin{figure}[!b]
 
@@ -1505,21 +1504,16 @@ maintaining the guaranteed coverage rate, as well as the development of
 refined methodologies that account for variability introduced by
 forecasting predictors in ex-ante scenarios.
 
-\section*{References}\label{references}
-\addcontentsline{toc}{section}{References}
-
-\printbibliography[heading=none]
-
-\newpage
+% \newpage
 \appendix
 % \pagenumbering{arabic}% resets `page` counter to 1
 \setcounter{section}{0}
 \renewcommand{\thesection}{Appendix \Alph{section}}
 \renewcommand{\thesubsection}{\Alph{section}.\arabic{subsection}}
-\renewcommand{\thefigure}{A\arabic{figure}}
-\renewcommand{\thetable}{A\arabic{table}}
-\setcounter{figure}{0}
-\setcounter{table}{0}
+% \renewcommand{\thefigure}{A\arabic{figure}}
+% \renewcommand{\thetable}{A\arabic{table}}
+% \setcounter{figure}{0}
+% \setcounter{table}{0}
 
 \section{Proofs}\label{sec-proof}
 
@@ -1699,6 +1693,16 @@ framework, the nonconformity score becomes
 Proposition~\ref{prp-cov_rt} can be directly applied to establish the
 long-run coverage achieved by the AcMCP method.
 \end{proof}
+
+\section*{Acknowledgments}\label{acknowledgments}
+\addcontentsline{toc}{section}{Acknowledgments}
+
+Funding information, including specific grant numbers.
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
+\printbibliography[heading=none]
 
 
 
