@@ -370,23 +370,23 @@ forecasting}
 We consider the problem of constructing distribution-free prediction
 intervals for multi-step time series forecasting, with a focus on the
 temporal dependencies inherent in multi-step forecast errors. We
-establish that the forecast errors of optimal multi-step forecasts can
-be approximated by an autoregressive process under a general
-non-stationary autoregressive data generating process. To leverage these
-properties, we propose the Autocorrelated Multi-step Conformal
-Prediction (AcMCP) method, which effectively incorporates
-autocorrelations in multi-step forecast errors, resulting in more
-statistically efficient prediction intervals. This method ensures
-theoretical long-run coverage guarantees for multi-step forecasts,
-although we note that increased forecasting horizons may exacerbate
-deviations from the target coverage, particularly in the context of
-limited sample sizes. Additionally, we extend several easy-to-implement
-conformal prediction methods originally designed for single-step
-forecasting to accommodate multi-step scenarios. Through empirical
-evaluations, including simulations and applications to data, we
-demonstrate that AcMCP achieves coverage which closely aligns with the
-target within local windows, while providing adaptive prediction
-intervals that adjust effectively to varying conditions.
+establish that the optimal \(h\)-step-ahead forecast errors exhibit
+serial correlation up to lag \((h-1)\) under a general non-stationary
+autoregressive data generating process. To leverage these properties, we
+propose the Autocorrelated Multi-step Conformal Prediction (AcMCP)
+method, which effectively incorporates autocorrelations in multi-step
+forecast errors, resulting in more statistically efficient prediction
+intervals. This method ensures theoretical long-run coverage guarantees
+for multi-step prediction intervals, though we note that increased
+forecasting horizons may exacerbate deviations from the target coverage,
+particularly in the context of limited sample sizes. Additionally, we
+extend several easy-to-implement conformal prediction methods,
+originally designed for single-step forecasting, to accommodate
+multi-step scenarios. Through empirical evaluations, including
+simulations and applications to data, we demonstrate that AcMCP achieves
+coverage that closely aligns with the target within local windows, while
+providing adaptive prediction intervals that effectively respond to
+varying conditions.
 \end{abstract}
 
 \begin{keywords}
@@ -436,8 +436,8 @@ methods for handling covariate shift
 spatial prediction \autocite{mao2024}, and methods based on certain
 distributional assumptions of the data rather than exchangeability
 \autocite{oliveira2024,xu2021,xu2023}. Additionally, some methods
-propose weighting the nonconformity scores (i.e., prediction errors)
-differently, either using non-data-dependent weights
+propose weighting the nonconformity scores (for example, prediction
+errors) differently, either using non-data-dependent weights
 \autocite{barber2023} or weights based on observed feature values
 \autocite{tibshirani2019,guan2023,hore2023}.
 
@@ -491,9 +491,9 @@ control multi-step miscoverage rates simultaneously at each time point
 length across forecast horizons with miscoverage. While this method
 considers multi-step intervals, it does not account for their temporal
 dependencies and may be computationally intensive when solving the
-associated optimization problems. Additionally, several extensions to
-multivariate targets have been explored, see, e.g.,
-\textcite{schlembach2022} and \textcite{sun2022}.
+associated optimization problems at each time step. Additionally,
+several extensions to multivariate targets have been explored, see,
+e.g., \textcite{schlembach2022} and \textcite{sun2022}.
 
 We employ a unified notation to formalize the mathematical
 representation of conformal prediction for time series data. We consider
@@ -529,18 +529,18 @@ extend several widely used conformal prediction methods that are
 originally designed for single-step forecasting to accommodate
 multi-step forecasting scenarios. Second, we provide theoretical proofs
 demonstrating that the forecast errors of optimal \(h\)-step-ahead
-forecasts approximate an AR process when we assume a general
-non-stationary autoregressive data generating process. Third, we
-introduce the autocorrelated multi-step conformal prediction method,
-which accounts for the autocorrelations of multi-step forecast errors.
-Our method is proven to achieve long-run coverage guarantees without
-making any assumptions on data distribution shifts. We also highlight
-that for \(t \ll \infty\), increasing the forecast horizon \(h\)
-generally leads to greater deviations from the target coverage, which
-aligns with our expectations. Finally, we illustrate the practical
-utility of these proposed methods through two simulations and two
-applications to electricity demand and eating-out expenditure
-forecasting.
+forecasts approximate a linear combination of at most its lag \((h-1)\)
+with respect to forecast horizon when we assume a general non-stationary
+autoregressive data generating process. Third, we introduce the
+autocorrelated multi-step conformal prediction method, which accounts
+for the autocorrelations of multi-step forecast errors. Our method is
+proven to achieve long-run coverage guarantees without making any
+assumptions on data distribution shifts. We also highlight that for
+\(t \ll \infty\), increasing the forecast horizon \(h\) generally leads
+to greater deviations from the target coverage, which aligns with our
+expectations. Finally, we illustrate the practical utility of these
+proposed methods through two simulations and two applications to
+electricity demand and eating-out expenditure forecasting.
 
 We developed the \texttt{conformalForecast} package for R, available at
 \url{https://github.com/xqnwang/conformalForecast}, to implement the
@@ -593,12 +593,12 @@ computed on the calibration set.
 
 \textbf{Online learning.} We will adapt the following generic online
 learning framework for all conformal prediction methods to be discussed
-in later sections. The entire procedure for the framework is also
-illustrated in Figure~\ref{fig-flowchart}. This framework updates
-prediction intervals as new data points arrive, allowing us to assess
-their long-run coverage behavior. It adopts a standard rolling window
-evaluation strategy, although expanding windows could easily be used
-instead.
+in later sections. The entire procedure for the online learning
+framework with sequential splits is also illustrated in
+Figure~\ref{fig-flowchart}. This framework updates prediction intervals
+as new data points arrive, allowing us to assess their long-run coverage
+behavior. It adopts a standard rolling window evaluation strategy,
+although expanding windows could easily be used instead.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -962,12 +962,11 @@ for steps \(t+1,\ldots,t+H\) based on available information up to time
 Additionally, in AcMCP, \(\tilde{e}_{t+h|t}\) is a forecast combination
 of two simple models: one being an MA\((h-1)\) model trained on the
 \(h\)-step-ahead forecast errors available up to and including time
-\(t\) (i.e.~\(e_{1+h|1}, \ldots, e_{t|t-h}\)), and the other an
-AR\((h-1)\) model (with respect to \(h\) rather than \(t\)) trained by
-regressing \(e_{t+h|t}\) on forecast errors from past steps
-(i.e.~\(e_{t+h-1|t}, \ldots, e_{t+1|t}\)). Thus, we perform multi-step
-conformal prediction recursively, contrasting with the independent
-approach employed in MPID. Moreover, the inclusion of
+\(t\) (i.e.~\(e_{1+h|1}, \ldots, e_{t|t-h}\)), and the other a linear
+regression model trained by regressing \(e_{t+h|t}\) on forecast errors
+from past steps (i.e.~\(e_{t+h-1|t}, \ldots, e_{t+1|t}\)). Thus, we
+perform multi-step conformal prediction recursively, contrasting with
+the independent approach employed in MPID. Moreover, the inclusion of
 \(\tilde{e}_{t+h|t}\) is not intended to forecast the nonconformity
 scores (i.e., forecast errors), but rather to incorporate
 autocorrelations present in multi-step forecast errors within the
@@ -1467,21 +1466,22 @@ no difference from the \(90\%\) target level.}
 
 We have introduced a unified notation to formalize the mathematical
 representation of conformal prediction within the context of time series
-data. We focus on conformal inference for multi-step time series
-forecasting in a generic online learning framework.
+data, with a particular focus on multi-step time series forecasting in a
+generic online learning framework.
 
 Several accessible conformal prediction methods have been extended to
 address the challenges of multi-step forecasting scenarios.
 
-We have shown that the optimal multi-step-ahead forecast errors can be
-approximated by an AR process under the assumption of a general
+We have shown that the optimal \(h\)-step-ahead forecast errors can be
+approximated by a linear combination of at most its lag \((h-1)\) with
+respect to forecast horizon, under the assumption of a general
 non-stationary autoregressive DGP. Building on this foundation, we
 introduce a novel method, AcMCP, which accounts for the autocorrelations
 inherent in multi-step forecast errors. Our method achieves long-run
 coverage guarantees without imposing assumptions regarding data
 distribution shifts. In both simulations and applications to data, our
 proposed method achieves coverage closer to the target within local
-windows while offering adaptive prediction intervals that respond
+windows while offering adaptive prediction intervals that adjust
 effectively to varying conditions.
 
 The methods discussed here are limited to ex-post forecasting, operating
