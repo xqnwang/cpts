@@ -43,6 +43,11 @@ execute:
   cache: true
 ---
 
+```{=tex}
+\renewcommand{\theproposition}{\arabic{proposition}} % numbering propositions sequentially and individually by type and not by section
+\setcounter{proposition}{0}
+```
+
 ```{r}
 #| label: packages
 #| include: false
