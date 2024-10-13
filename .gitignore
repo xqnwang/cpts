@@ -16,6 +16,12 @@ refs/*
 .RData
 .Ruserdata
 
+# Initial files
+R/
+code/CP_AR2.R
+data/
+docs/
+
 # Core latex/pdflatex auxiliary files
 *.xdv
 *.aux
