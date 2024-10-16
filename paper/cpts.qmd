@@ -142,7 +142,7 @@ tikzAnnotate("\\draw[decorate] (Chat) -- node {\\small \\textcolor{blue}{$\\{\\h
 tikzCoord(T * 1.15, tr - 1.3 * tc, "Chat2")
 tikzAnnotate("\\draw[decorate] (Chat2) -- node {\\small \\textcolor{blue}{$\\{\\hat{\\cal{C}}^{\\alpha}_{T-H+h|T-H}\\}_{1 \\le h \\le H}$}} (Chat2);")
 tikzCoord(0.9 * T, tr + tc + 1, "topbrace")
-tikzCoord(0.9 * T, tr + 1, "bottombrace")
+tikzCoord(0.9 * T, tr + 1.5, "bottombrace")
 tikzAnnotate(c(
   "\\draw[very thick,decorate,decoration={brace,amplitude=5pt},transform canvas={xshift=1em}] (topbrace) --",
   "node[left=4pt,align=center] {} (bottombrace);"
