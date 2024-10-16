@@ -206,63 +206,63 @@ AR2_info <- do.call(bind_rows, info) |>
 
 #--------------------------
 # Plots: Coverage and width
-cov_plot <- cov |>
-  filter(index >= fit_window + cal_window + calc_window) |>
-  filter(method != "MPI") |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = coverage, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.8) +
-  scale_colour_manual(values = cols) +
-  geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "black") +
-  # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
-  facet_grid(cols = vars(horizon)) +
-  labs(
-    x = "Time",
-    y = "",
-    title = "Local coverage level"
-  ) +
-  theme_bw() +
-  theme(legend.position="none")
-
-wid_me_plot <- wid_me |>
-  filter(index >= fit_window + cal_window + calc_window) |>
-  filter(method != "MPI") |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = width, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.8) +
-  scale_colour_manual(values = cols) +
-  facet_grid(cols = vars(horizon)) +
-  labs(
-    x = "Time",
-    y = "",
-    title = "Mean interval width"
-  ) +
-  theme_bw() +
-  theme(legend.position="none")
-
-wid_md_plot <- wid_md |>
-  filter(index >= fit_window + cal_window + calc_window) |>
-  filter(method != "MPI") |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = width, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.8) +
-  scale_colour_manual(values = cols) +
-  facet_grid(cols = vars(horizon)) +
-  labs(
-    x = "Time",
-    y = "",
-    title = "Median interval width",
-    colour = "Methods"
-  ) +
-  theme_bw() +
-  theme(legend.position = "bottom") +
-  guides(colour = guide_legend(nrow = 1))
-
-P_AR2_cov <- cov_plot / wid_me_plot / wid_md_plot
-saveRDS(P_AR2_cov, file = "result/P_AR2_cov.rds")
+# cov_plot <- cov |>
+#   filter(index >= fit_window + cal_window + calc_window) |>
+#   filter(method != "MPI") |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = coverage, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.8) +
+#   scale_colour_manual(values = cols) +
+#   geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "black") +
+#   # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
+#   facet_grid(cols = vars(horizon)) +
+#   labs(
+#     x = "Time",
+#     y = "",
+#     title = "Local coverage level"
+#   ) +
+#   theme_bw() +
+#   theme(legend.position="none")
+# 
+# wid_me_plot <- wid_me |>
+#   filter(index >= fit_window + cal_window + calc_window) |>
+#   filter(method != "MPI") |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = width, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.8) +
+#   scale_colour_manual(values = cols) +
+#   facet_grid(cols = vars(horizon)) +
+#   labs(
+#     x = "Time",
+#     y = "",
+#     title = "Mean interval width"
+#   ) +
+#   theme_bw() +
+#   theme(legend.position="none")
+# 
+# wid_md_plot <- wid_md |>
+#   filter(index >= fit_window + cal_window + calc_window) |>
+#   filter(method != "MPI") |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = width, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.8) +
+#   scale_colour_manual(values = cols) +
+#   facet_grid(cols = vars(horizon)) +
+#   labs(
+#     x = "Time",
+#     y = "",
+#     title = "Median interval width",
+#     colour = "Methods"
+#   ) +
+#   theme_bw() +
+#   theme(legend.position = "bottom") +
+#   guides(colour = guide_legend(nrow = 1))
+# 
+# P_AR2_cov <- cov_plot / wid_me_plot / wid_md_plot
+# saveRDS(P_AR2_cov, file = "result/P_AR2_cov.rds")
 
 #--------------------------
 # Plots: Coverage and width as panels

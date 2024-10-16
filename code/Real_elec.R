@@ -253,62 +253,62 @@ saveRDS(P_elec_winkler, file = "result/P_elec_winkler.rds")
 
 #--------------------------
 # Plots: Coverage and width
-cov_plot <- cov |>
-  filter(index >= ymd("2014-07-19")) |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = coverage, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.9) +
-  scale_colour_manual(values = cols) +
-  geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "black") +
-  # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
-  facet_grid(cols = vars(horizon)) +
-  labs(
-    x = "Time (Year 2014)",
-    y = "",
-    title = "Local coverage level"
-  ) +
-  theme_bw() +
-  theme(legend.position="none")
-
-wid_me_plot <- wid_me |>
-  filter(index >= ymd("2014-07-19")) |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = width, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.9) +
-  scale_colour_manual(values = cols) +
-  # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
-  facet_grid(cols = vars(horizon)) +
-  labs(
-    x = "Time (Year 2014)",
-    y = "",
-    title = "Mean interval width"
-  ) +
-  theme_bw() +
-  theme(legend.position="none")
-
-wid_md_plot <- wid_md |>
-  filter(index >= ymd("2014-07-19")) |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = width, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.9) +
-  scale_colour_manual(values = cols) +
-  # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
-  facet_grid(cols = vars(horizon)) +
-  labs(
-    x = "Time (Year 2014)",
-    y = "",
-    title = "Median interval width",
-    colour = "Methods"
-  ) +
-  theme_bw() +
-  theme(legend.position = "bottom") +
-  guides(colour = guide_legend(nrow = 1))
-
-P_elec_cov <- cov_plot / wid_me_plot / wid_md_plot
-saveRDS(P_elec_cov, file = "result/P_elec_cov.rds")
+# cov_plot <- cov |>
+#   filter(index >= ymd("2014-07-19")) |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = coverage, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.9) +
+#   scale_colour_manual(values = cols) +
+#   geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "black") +
+#   # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
+#   facet_grid(cols = vars(horizon)) +
+#   labs(
+#     x = "Time (Year 2014)",
+#     y = "",
+#     title = "Local coverage level"
+#   ) +
+#   theme_bw() +
+#   theme(legend.position="none")
+# 
+# wid_me_plot <- wid_me |>
+#   filter(index >= ymd("2014-07-19")) |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = width, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.9) +
+#   scale_colour_manual(values = cols) +
+#   # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
+#   facet_grid(cols = vars(horizon)) +
+#   labs(
+#     x = "Time (Year 2014)",
+#     y = "",
+#     title = "Mean interval width"
+#   ) +
+#   theme_bw() +
+#   theme(legend.position="none")
+# 
+# wid_md_plot <- wid_md |>
+#   filter(index >= ymd("2014-07-19")) |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = width, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.9) +
+#   scale_colour_manual(values = cols) +
+#   # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
+#   facet_grid(cols = vars(horizon)) +
+#   labs(
+#     x = "Time (Year 2014)",
+#     y = "",
+#     title = "Median interval width",
+#     colour = "Methods"
+#   ) +
+#   theme_bw() +
+#   theme(legend.position = "bottom") +
+#   guides(colour = guide_legend(nrow = 1))
+# 
+# P_elec_cov <- cov_plot / wid_me_plot / wid_md_plot
+# saveRDS(P_elec_cov, file = "result/P_elec_cov.rds")
 
 #--------------------------
 # Plots: Coverage and width as panels

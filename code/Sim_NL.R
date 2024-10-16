@@ -178,119 +178,119 @@ for (i in 1:length(candidates)) {
 wid_md <- bind_rows(mget(paste0(methods, "_wid_md")))
 
 ## Overall measurements
-complete.obs <- function(x) {
-  x[complete.cases(x),]
-}
-increase.cols <- function(x) {
-  ifinc <- matrix(nrow = nrow(x), ncol = ncol(x)-1)
-  for (i in 2:ncol(x)) {
-    ifinc[,i-1] <- x[,i] >= x[,i-1]
-  }
-  sum(apply(ifinc, 1, all))/nrow(ifinc)
-}
-info <- lapply(1:length(candidates), function(i) {
-  out_cov <- cov_list[[i]]
-  out_wid <- wid_list[[i]]
-  out_score <- score_list[[i]]
-  out_mean <- data.frame(
-    method = methods[i],
-    covmean = as.vector(out_cov$mean),
-    covmin = apply(out_cov$rollmean, 2, min, na.rm = TRUE),
-    covmax = apply(out_cov$rollmean, 2, max, na.rm = TRUE),
-    widmean = as.vector(out_wid$mean),
-    widmedian = as.vector(out_wid$median),
-    fanout = increase.cols(complete.obs(out_wid$width)),
-    winkler = as.vector(out_score[, paste0("Winkler_", level)]),
-    msis = as.vector(out_score[, paste0("MSIS_", level)])
-  ) |>
-    as_tibble() |>
-    rownames_to_column("horizon") |>
-    mutate(horizon = paste0("h=", horizon))
-  out_mean
-})
-NL_info <- do.call(bind_rows, info) |>
-  mutate(
-    method = factor(method, levels = methods),
-    covmean = round(covmean, 3)
-  ) |>
-  mutate(
-    covmean = covmean - 0.01*level,
-    covmin = covmin - 0.01*level,
-    covmax = covmax - 0.01*level
-  ) |>
-  arrange(horizon, method)
-NL_table <- NL_info |>
-  filter(method %in% c("MPI", "MPID", "AcMCP")) |>
-  select(horizon, covmean, widmean, winkler) |>
-  mutate(across(2:4, \(x) round(x, 3)))
-NL_table <- bind_cols(
-  filter(NL_table, horizon == "h=1"),
-  filter(NL_table, horizon == "h=2"),
-  filter(NL_table, horizon == "h=3")) |>
-  select(!starts_with("horizon")) |>
-  as.data.frame()
-NL_table <- data.frame(Methods = c("MPI", "MPID", "AcMCP"), NL_table)
-colnames(NL_table) <- c("Methods", rep(c("Coverage gap", "Mean width", "Winkler score"), 3))
-saveRDS(NL_table, file = "result/T_NL_winkler.rds")
+# complete.obs <- function(x) {
+#   x[complete.cases(x),]
+# }
+# increase.cols <- function(x) {
+#   ifinc <- matrix(nrow = nrow(x), ncol = ncol(x)-1)
+#   for (i in 2:ncol(x)) {
+#     ifinc[,i-1] <- x[,i] >= x[,i-1]
+#   }
+#   sum(apply(ifinc, 1, all))/nrow(ifinc)
+# }
+# info <- lapply(1:length(candidates), function(i) {
+#   out_cov <- cov_list[[i]]
+#   out_wid <- wid_list[[i]]
+#   out_score <- score_list[[i]]
+#   out_mean <- data.frame(
+#     method = methods[i],
+#     covmean = as.vector(out_cov$mean),
+#     covmin = apply(out_cov$rollmean, 2, min, na.rm = TRUE),
+#     covmax = apply(out_cov$rollmean, 2, max, na.rm = TRUE),
+#     widmean = as.vector(out_wid$mean),
+#     widmedian = as.vector(out_wid$median),
+#     fanout = increase.cols(complete.obs(out_wid$width)),
+#     winkler = as.vector(out_score[, paste0("Winkler_", level)]),
+#     msis = as.vector(out_score[, paste0("MSIS_", level)])
+#   ) |>
+#     as_tibble() |>
+#     rownames_to_column("horizon") |>
+#     mutate(horizon = paste0("h=", horizon))
+#   out_mean
+# })
+# NL_info <- do.call(bind_rows, info) |>
+#   mutate(
+#     method = factor(method, levels = methods),
+#     covmean = round(covmean, 3)
+#   ) |>
+#   mutate(
+#     covmean = covmean - 0.01*level,
+#     covmin = covmin - 0.01*level,
+#     covmax = covmax - 0.01*level
+#   ) |>
+#   arrange(horizon, method)
+# NL_table <- NL_info |>
+#   filter(method %in% c("MPI", "MPID", "AcMCP")) |>
+#   select(horizon, covmean, widmean, winkler) |>
+#   mutate(across(2:4, \(x) round(x, 3)))
+# NL_table <- bind_cols(
+#   filter(NL_table, horizon == "h=1"),
+#   filter(NL_table, horizon == "h=2"),
+#   filter(NL_table, horizon == "h=3")) |>
+#   select(!starts_with("horizon")) |>
+#   as.data.frame()
+# NL_table <- data.frame(Methods = c("MPI", "MPID", "AcMCP"), NL_table)
+# colnames(NL_table) <- c("Methods", rep(c("Coverage gap", "Mean width", "Winkler score"), 3))
+# saveRDS(NL_table, file = "result/T_NL_winkler.rds")
 
 #--------------------------
 # Plots: Coverage and width
-cov_plot <- cov |>
-  filter(index >= fit_window + cal_window + calc_window) |>
-  filter(method != "MPI") |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = coverage, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.9) +
-  scale_colour_manual(values = cols) +
-  geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "black") +
-  facet_grid(cols = vars(horizon)) +
-  labs(
-    x = "Time",
-    y = "",
-    title = "Local coverage level",
-    colour = "Methods"
-  ) +
-  guides(colour = guide_legend(nrow = 1)) +
-  theme_bw()
-
-wid_me_plot <- wid_me |>
-  filter(index >= fit_window + cal_window + calc_window) |>
-  filter(method != "MPI") |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = width, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.9) +
-  scale_colour_manual(values = cols) +
-  facet_grid(cols = vars(horizon)) +
-  labs(
-    x = "Time",
-    y = "",
-    title = "Mean interval width"
-  ) +
-  theme_bw()
-
-wid_md_plot <- wid_md |>
-  filter(index >= fit_window + cal_window + calc_window) |>
-  filter(method != "MPI") |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = width, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.9) +
-  scale_colour_manual(values = cols) +
-  # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
-  facet_grid(cols = vars(horizon)) +
-  labs(
-    x = "Time",
-    y = "",
-    title = "Median interval width"
-  ) +
-  theme_bw()
-
-P_NL_cov <- ggpubr::ggarrange(cov_plot, wid_me_plot, wid_md_plot,
-                              ncol = 1, nrow = 3,
-                              common.legend = TRUE, legend = "bottom")
-saveRDS(P_NL_cov, file = "result/P_NL_cov.rds")
+# cov_plot <- cov |>
+#   filter(index >= fit_window + cal_window + calc_window) |>
+#   filter(method != "MPI") |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = coverage, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.9) +
+#   scale_colour_manual(values = cols) +
+#   geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "black") +
+#   facet_grid(cols = vars(horizon)) +
+#   labs(
+#     x = "Time",
+#     y = "",
+#     title = "Local coverage level",
+#     colour = "Methods"
+#   ) +
+#   guides(colour = guide_legend(nrow = 1)) +
+#   theme_bw()
+# 
+# wid_me_plot <- wid_me |>
+#   filter(index >= fit_window + cal_window + calc_window) |>
+#   filter(method != "MPI") |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = width, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.9) +
+#   scale_colour_manual(values = cols) +
+#   facet_grid(cols = vars(horizon)) +
+#   labs(
+#     x = "Time",
+#     y = "",
+#     title = "Mean interval width"
+#   ) +
+#   theme_bw()
+# 
+# wid_md_plot <- wid_md |>
+#   filter(index >= fit_window + cal_window + calc_window) |>
+#   filter(method != "MPI") |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = width, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.9) +
+#   scale_colour_manual(values = cols) +
+#   # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
+#   facet_grid(cols = vars(horizon)) +
+#   labs(
+#     x = "Time",
+#     y = "",
+#     title = "Median interval width"
+#   ) +
+#   theme_bw()
+# 
+# P_NL_cov <- ggpubr::ggarrange(cov_plot, wid_me_plot, wid_md_plot,
+#                               ncol = 1, nrow = 3,
+#                               common.legend = TRUE, legend = "bottom")
+# saveRDS(P_NL_cov, file = "result/P_NL_cov.rds")
 
 #--------------------------
 # Plots: Coverage and width as facets
