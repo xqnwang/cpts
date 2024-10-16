@@ -84,7 +84,7 @@ The task is to employ conformal inference to build $H$-step prediction intervals
 **Sequential split.** In a time series context, it is inappropriate to perform *random splitting*, a standard strategy in much of the conformal prediction literature, due to the temporal dependency present in the data. Instead, throughout the conformal prediction methods proposed in this paper, we use a *sequential split* to preserve the temporal structure. For example, the $t$ available data points, $z_{1:t}$, are sequentially split into two consecutive sets, a *proper training set* $\mathcal{D}_{\text{tr}} \subset \{1,\ldots,t_r\}$ and a *calibration set* $\mathcal{D}_{\text{cal}} \subset \{t_r+1,\ldots,t\}$, where $t_c=t-t_r \gg H$, $\mathcal{D}_{\text{tr}} \cup \mathcal{D}_{\text{cal}} = \{1, \ldots, t\}$, and $\mathcal{D}_{\text{tr}} \cap \mathcal{D}_{\text{cal}} = \varnothing$. Here, "proper" means that the training set is used exclusively for fitting the model, with no overlap into the calibration set, which is essential for ensuring the validity of coverage in conformal prediction [@papadopoulos2007]. With sequential splitting, multiple $H$-step forecasts and their respective nonconformity scores can be computed on the calibration set.
 
 **Online learning.** We will adapt the following generic online learning framework for all conformal prediction methods to be discussed in later sections. The entire procedure for
-the online learning framework with sequential splits is also illustrated in @fig-flowchart. This framework updates prediction intervals as new data points arrive, allowing us to assess their long-run coverage behaviour. It adopts a standard rolling window evaluation strategy, although expanding windows could easily be used instead.
+the online learning framework with sequential splits is also illustrated in \autoref{fig-flowchart}. This framework updates prediction intervals as new data points arrive, allowing us to assess their long-run coverage behaviour. It adopts a standard rolling window evaluation strategy, although expanding windows could easily be used instead.
 
 1. *Initialization*. Train a forecasting model on the initial proper training set $z_{(1+t-t_r):t}$, setting $t=t_r$. Then generate $H$-step-ahead point forecasts $\{\hat{y}_{t+h|t}\}_{h\in[H]}$ and compute the corresponding nonconformity scores $\{s_{t+h|t}=\mathcal{S}(z_{(1+t-t_r):t}, y_{t+h})\}_{h\in[H]}$ based on the true values $H$ steps ahead, i.e. $\{y_{t+h}\}_{h\in[H]}$.
 
@@ -94,7 +94,75 @@ the online learning framework with sequential splits is also illustrated in @fig
 
 4. *Online updating*. Continuously roll the training set and calibration set forward, one data point at a time, to update the nonconformity scores for calibration, and then repeat step 3 until prediction intervals for the entire test set are obtained. That is, $\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}\}_{t_r+t_c \leq t \leq T-h}$ for $h \in [H]$, where $T-t_r-t_c$ is the length of the test set used for testing coverage. Our goal is to achieve long-run coverage in time.
 
-![Diagram of the online learning framework with sequential splits.](flowchart.pdf){#fig-flowchart}
+<!-- ![Diagram of the online learning framework with sequential splits.](flowchart.pdf){#fig-flowchart} -->
+
+```{r}
+#| label: flowchart
+#| echo: false
+#| include: false
+library(tikzDevice)
+library(shape)
+# Load some additional TikZ libraries
+tikz(here::here("paper/figs/annotation.tex"),
+  width = 8, height = 4,
+  packages = c(
+    getOption("tikzLatexPackages"),
+    "\\usetikzlibrary{decorations.pathreplacing}",
+    "\\usetikzlibrary{positioning}",
+    "\\usetikzlibrary{shapes.arrows,shapes.symbols}"
+  )
+)
+tr <- 20
+tc <- 15
+T <- 60
+h <- 5
+plot(c(0, T + h + 10), c(0, tr + tc + 4), type = "n", xlab = "$t$", ylab = "", yaxt = "n", xaxt = "n", bty = "n")
+axis(1, at = c(1, tr, tr + tc, T), labels = c("1", "$t_r$", "$t_r+t_c$", "$T$"))
+for (i in seq(tc)) {
+  polygon(c(1, 1, i, i, 1), 1 - i + tr + tc + c(0, 1, 1, 0, 0), col = "white")
+  polygon(i + c(0, 0, tr - 1, tr - 1, 0), 1 - i + tr + tc + c(0, 1, 1, 0, 0), col = "grey")
+  polygon(pmin(tr + tc, i + tr - 1 + c(0, 0, h - 1, h - 1, 0)), 1 - i + tr + tc + c(0, 1, 1, 0, 0), col = "black")
+}
+for (i in (tr - h):(tr + tc + 1)) {
+  polygon(c(1, 1, i, i, 1), 1 - i + tr + tc + c(0, 1, 1, 0, 0), col = "white")
+  polygon(i + c(0, 0, tr - 1, tr - 1, 0), 1 - i + tr + tc + c(0, 1, 1, 0, 0), col = "grey")
+  polygon(i + tr - 1 + c(0, 0, h - 1, h - 1, 0), 1 - i + tr + tc + c(0, 1, 1, 0, 0), col = "blue")
+}
+lines(c(1, 1), c(1, T - 10), lty = 2)
+lines(c(tr, tr), c(1, T - 10), lty = 2)
+lines(c(tr + tc, tr + tc), c(1, T - 10), lty = 2)
+# Annotations
+tikzCoord(tr + h * 0.4, tr + tc + 3, "H")
+tikzAnnotate("\\draw[decorate] (H) -- node {\\small $\\overbrace{~~~}^{H}$} (H);")
+tikzCoord(T * 1.1, tr + 0.85 * tc, "yhat")
+tikzAnnotate("\\draw[decorate] (yhat) -- node {\\small $\\{\\hat{y}_{t+h|t}\\}_{t_r \\le t \\le t_r+t_c-h}$} (yhat);")
+tikzCoord(T * 1.1, tr + 0.35 * tc, "shat")
+tikzAnnotate("\\draw[decorate] (shat) -- node {\\small $\\{\\hat{s}_{t+h|t}\\}_{t_r \\le t \\le t_r+t_c-h}$} (shat);")
+tikzCoord(T * 1.15, tr - 0.5 * tc, "Chat")
+tikzAnnotate("\\draw[decorate] (Chat) -- node {\\small \\textcolor{blue}{$\\{\\hat{\\cal{C}}^{\\alpha}_{t_r+t_c+h|t_r+t_c}\\}_{1 \\le h \\le H}$}} (Chat);")
+tikzCoord(0.9 * T, tr + tc + 1, "topbrace")
+tikzCoord(0.9 * T, tr + 2, "bottombrace")
+tikzAnnotate(c(
+  "\\draw[very thick,decorate,decoration={brace,amplitude=5pt},transform canvas={xshift=1em}] (topbrace) --",
+  "node[left=4pt,align=center] {} (bottombrace);"
+))
+Arrows(T * 1.05, tr + 0.75 * tc, T * 1.05, tr + 0.55 * tc,
+  lwd = 3, arr.lwd = 3, arr.length = 0.2, arr.width = 0.1)
+Arrows(T * 1.05, tr + 0.2 * tc, T * 1.05, tr - 0.15 * tc,
+  lwd = 3, arr.lwd = 3, arr.length = 0.2, arr.width = 0.1)
+tikzCoord(tr+tc+3*h, tr, "yhat2")
+tikzAnnotate("\\draw[decorate] (yhat2) -- node {\\small\\textcolor{blue}{$\\{\\hat{y}_{t_r+t_c+h|t_r+t_c}\\}_{1 \\le h \\le H}$}} (yhat2);")
+Arrows(tr+tc+3*h, tr-3,  T, tr - 0.45 * tc,
+  lwd = 3, arr.lwd = 3, arr.length = 0.2, arr.width = 0.1, col="blue")
+dev.off()
+```
+
+\begin{figure}[!hbtp]
+\vspace*{-1.5cm}
+\hspace*{-2.5cm}
+\input figs/annotation.tex
+\caption{Diagram of the online learning framework with sequential splits. White: unused data; Gray: training data; Black: Forecasts in calibration set; Blue: Forecasts in test set.}\label{fig-flowchart}
+\end{figure}
 
 ## Extending conformal prediction for multi-step forecasting {#sec-ext}
 
