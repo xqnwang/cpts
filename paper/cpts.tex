@@ -138,20 +138,6 @@
 \widowpenalty=10000
 \clubpenalty=10000
 \brokenpenalty=10000
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{multirow}
-\usepackage{wrapfig}
-\usepackage{float}
-\usepackage{colortbl}
-\usepackage{pdflscape}
-\usepackage{tabu}
-\usepackage{threeparttable}
-\usepackage{threeparttablex}
-\usepackage[normalem]{ulem}
-\usepackage{makecell}
-\usepackage{xcolor}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -424,15 +410,20 @@ demonstrating that the forecast errors of optimal \(h\)-step-ahead
 forecasts approximate a linear combination of at most its lag \((h-1)\)
 with respect to forecast horizon when we assume a general non-stationary
 autoregressive data generating process. Third, we introduce the
-autocorrelated multi-step conformal prediction method, which accounts
-for the autocorrelations of multi-step forecast errors. Our method is
-proven to achieve long-run coverage guarantees without making any
-assumptions on data distribution shifts. We also highlight that for
-\(t \ll \infty\), increasing the forecast horizon \(h\) generally leads
-to greater deviations from the target coverage, which aligns with our
-expectations. Finally, we illustrate the practical utility of these
-proposed methods through two simulations and two applications to
-electricity demand and eating-out expenditure forecasting.
+autocorrelated multi-step conformal prediction (AcMCP) method, which
+accounts for the autocorrelations of multi-step forecast errors. Our
+method is proven to achieve long-run coverage guarantees without making
+any assumptions on data distribution shifts. \citet{lopes2024} introduce
+ConForME, a method that focuses on generating uniform prediction
+intervals across the entire forecast horizon, aiming to ensure the
+overall validity of these intervals. In contrast, our method targets
+pointwise prediction intervals for each specific forecast horizon,
+\(h\in[H]\). We also highlight that for \(t \ll \infty\), increasing the
+forecast horizon \(h\) generally leads to greater deviations from the
+target coverage, which aligns with our expectations. Finally, we
+illustrate the practical utility of these proposed methods through two
+simulations and two applications to electricity demand and eating-out
+expenditure forecasting.
 
 We developed the \texttt{conformalForecast} package for R, available at
 \url{https://github.com/xqnwang/conformalForecast}, to implement the

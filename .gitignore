@@ -1,10 +1,7 @@
 # Data
 *.rda
-*.rds
 *.csv
 refs/*
-!result/P*
-!result/T*
 *_files/
 
 # History files
@@ -18,7 +15,6 @@ refs/*
 
 # Initial files
 R/
-code/CP_AR2.R
 data/
 docs/
 
