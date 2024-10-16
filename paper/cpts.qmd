@@ -337,8 +337,6 @@ y_t = 0.8y_{t-1} - 0.5y_{t-2} + \varepsilon_t,
 $$
 where $\varepsilon_t$ is white noise with error variance $\sigma^2 = 1$. After an appropriate burn-in period, we generate $N=5000$ data points. Under the sequential split and online learning settings, we create training sets $\mathcal{D}_{\text{tr}}$ and calibration sets $\mathcal{D}_{\text{cal}}$, each with a length of $500$. We use AR$(2)$ models to generate $1$- to $3$-step-ahead point forecasts (i.e. $H=3$), using the `Arima()` function from the `forecast` R package [@hyndman2024]. The goal is to generate prediction intervals using various proposed conformal prediction methods and evaluate whether they can achieve the nominal long-run coverage for each separate forecast horizon.
 
-@fig-AR2_cov presents the rolling coverage and interval width of each method for each forecast horizon, with metrics computed over a rolling window of size $500$. The analytic (and optimal) intervals obtained from the AR model are also shown. We observe that MPID and AcMCP achieve approximately the desired $90\%$ coverage level over the rolling windows, while other methods, including the AR model, undergo much wider swings away from the desired level, showing high coverage volatility over time. The trajectories of the rolling mean and median of the interval widths for each method are largely consistent. AcMCP constructs narrower prediction intervals than MPID, despite both methods achieving similar coverage. Moreover, we see that AcMCP tends to offer adaptive prediction intervals, and results in wider intervals especially when competing methods undercover, which is to be expected. In short, AcMCP intervals offer greater adaptivity and more precise coverage compared to AR, MSCP, MWCP and MACP. However, MPID achieves tight coverage but at the cost of constructing wider prediction intervals. This is due to the inclusion of a second model (scorecaster) which introduces additional variance into the generated prediction intervals. The results can be further elucidated with @fig-AR2_box, which presents boxplots of rolling coverage and interval width for each method and each forecast horizon.
-
 ```{r}
 #| label: fig-AR2_cov
 #| results: hide
@@ -348,7 +346,7 @@ where $\varepsilon_t$ is white noise with error variance $\sigma^2 = 1$. After a
 
 P_AR2_cov <- readRDS(here::here("result/P_AR2_cov.rds"))
 P_AR2_cov +
-  theme(legend.box.margin=margin(-13,-10,-10,-10))
+  theme(legend.box.margin = margin(-13, -10, -10, -10))
 ```
 
 ```{r}
@@ -362,8 +360,6 @@ P_AR2_box <- readRDS(here::here("result/P_AR2_box.rds"))
 P_AR2_box
 ```
 
-The inclusion of the last term $\tilde{e}_{t+h|t}$ in AcMCP should only result in a slight difference compared to the version without this term, which we henceforth refer to as MPI. This is because, the inclusion of $\tilde{e}_{t+h|t}$ aims to capture autocorrelations inherent in multi-step forecast errors and focuses on the mean of forecast errors, whereas the whole update of AcMCP operates on quantiles of scores. To illustrate the subtle difference in their results and explore their origins, we visualize their prediction intervals over a truncated period of length $500$, as shown in @fig-AR2_timeplot. We observe that AcMCP and MPI indeed construct similar prediction intervals so their lower and upper bounds mostly overlap with each other. The main differences occur around the time 1320 and during the period 1470-1500, where AcMCP tends to have a fanning-out effect, increasing the interval width as the forecast horizon increases, compared to MPI. @fig-AR2_timeplot also presents the prediction interval bounds given by MACP. The prediction intervals of both AcMCP and MACP can capture certain patterns in the actual observations, and there is no consistent pattern indicating dominance of one method over the other in terms of interval width.
-
 ```{r}
 #| label: fig-AR2_timeplot
 #| results: hide
@@ -373,8 +369,13 @@ The inclusion of the last term $\tilde{e}_{t+h|t}$ in AcMCP should only result i
 
 P_AR2_timeplot <- readRDS(here::here("result/P_AR2_timeplot.rds"))
 P_AR2_timeplot +
-  theme(legend.box.margin=margin(-13,-10,-10,-10))
+  theme(legend.box.margin = margin(-13, -10, -10, -10))
 ```
+
+@fig-AR2_cov presents the rolling coverage and interval width of each method for each forecast horizon, with metrics computed over a rolling window of size $500$. The analytic (and optimal) intervals obtained from the AR model are also shown. We observe that MPID and AcMCP achieve approximately the desired $90\%$ coverage level over the rolling windows, while other methods, including the AR model, undergo much wider swings away from the desired level, showing high coverage volatility over time. The trajectories of the rolling mean and median of the interval widths for each method are largely consistent. AcMCP constructs narrower prediction intervals than MPID, despite both methods achieving similar coverage. Moreover, we see that AcMCP tends to offer adaptive prediction intervals, and results in wider intervals especially when competing methods undercover, which is to be expected. In short, AcMCP intervals offer greater adaptivity and more precise coverage compared to AR, MSCP, MWCP and MACP. However, MPID achieves tight coverage but at the cost of constructing wider prediction intervals. This is due to the inclusion of a second model (scorecaster) which introduces additional variance into the generated prediction intervals. The results can be further elucidated with @fig-AR2_box, which presents boxplots of rolling coverage and interval width for each method and each forecast horizon.
+
+The inclusion of the last term $\tilde{e}_{t+h|t}$ in AcMCP should only result in a slight difference compared to the version without this term, which we henceforth refer to as MPI. This is because, the inclusion of $\tilde{e}_{t+h|t}$ aims to capture autocorrelations inherent in multi-step forecast errors and focuses on the mean of forecast errors, whereas the whole update of AcMCP operates on quantiles of scores. To illustrate the subtle difference in their results and explore their origins, we visualize their prediction intervals over a truncated period of length $500$, as shown in @fig-AR2_timeplot. We observe that AcMCP and MPI indeed construct similar prediction intervals so their lower and upper bounds mostly overlap with each other. The main differences occur around the time 1320 and during the period 1470-1500, where AcMCP tends to have a fanning-out effect, increasing the interval width as the forecast horizon increases, compared to MPI. @fig-AR2_timeplot also presents the prediction interval bounds given by MACP. The prediction intervals of both AcMCP and MACP can capture certain patterns in the actual observations, and there is no consistent pattern indicating dominance of one method over the other in terms of interval width.
+
 
 ### Simulated nonlinear autoregressive process
 
@@ -384,12 +385,10 @@ y_t = \sin(y_{t-1}) + 0.5\log(y_{t-2} + 1) + 0.1y_{t-1}x_{1,t} + 0.3x_{2,t} + \v
 $$
 where $x_{1,t}$ and $x_{2,t}$ are uniformly distributed on $[0,1]$, and $\varepsilon_{t}$ is white noise with error variance $\sigma^2 = 0.1$. Thus, the time series $y_t$ nonlinearly depends on its lagged values $y_{t-1}$ and $y_{t-2}$, as well as exogenous variables $x_{1,t}$ and $x_{2,t}$.
 
-After an appropriate burn-in period, we generate $N=2000$ data points. Under the sequential split and online learning settings, we create training sets $\mathcal{D}_{\text{tr}}$ and calibration sets $\mathcal{D}_{\text{cal}}$, each with a length of $500$. Given the nonlinear structure of the DGP, we use feed-forward neural networks with a single hidden layer and lagged inputs to generate $1$- to $3$-step-ahead point forecasts (i.e. $H=3$), using the `nnetar()` function from the `forecast` R package [@hyndman2024]. Note that it is not possible to derive analytic intervals for neural networks, thus we do not include neural network models when presenting the results.
-
-@fig-NL_cov illustrates the rolling coverage and interval width of each method, with calculations based on a rolling window of size $100$. We see that MPID and AcMCP are able to maintain minor fluctuations around the target coverage of $90\%$ across all time indices, contrasting with MSCP, MWCP, and MACP, which struggle to sustain the target coverage and display pronounced fluctuations over time. Moreover, all conformal prediction methods, except for MSCP, construct adaptive prediction intervals. They widen intervals in response to undercoverage and narrow them when overcoverage occurs. Notably, MPID and AcMCP demonstrate greater adaptability, displaying higher variability in interval widths compared to competing methods in order to uphold the desired coverage. AcMCP intervals are evidently narrower than MPID intervals for $2$-step-ahead forecasting but wider for $3$-step-ahead forecasting. AcMCP intervals appear to be more reasonable, as they tend to widen with increasing forecast horizons.
 
 ```{r}
 #| label: fig-NL_cov
+#| fig-pos: "!b"
 #| results: hide
 #| fig-width: 9
 #| fig-height: 7
@@ -397,7 +396,7 @@ After an appropriate burn-in period, we generate $N=2000$ data points. Under the
 
 P_NL_cov <- readRDS(here::here("result/P_NL_cov.rds"))
 P_NL_cov +
-  theme(legend.box.margin=margin(-13,-10,-10,-10))
+  theme(legend.box.margin = margin(-13, -10, -10, -10))
 ```
 
 ````{=html}
@@ -431,11 +430,10 @@ T_NL_winkler |>
 -->
 ````
 
-We provide further insights into the performance of these conformal prediction methods by presenting boxplots of the rolling coverage and interval width for each method, as depicted in @fig-NL_box. We observe that coverage variability is higher for MSCP, MWCP and MACP than for MPID and AcMCP, while MPID and AcMCP lead to a lower effective interval size.
-
 ```{r}
 #| label: fig-NL_box
 #| results: hide
+#| fig-pos: "!b"
 #| fig-width: 8
 #| fig-height: 3
 #| fig-cap: Nonlinear simulation results showing boxplots of the rolling coverage and interval width for each method across different forecast horizons. The red dashed lines show the target coverage level, while the blue dashed lines indicate the median interval width of the AcMCP method.
@@ -443,6 +441,12 @@ We provide further insights into the performance of these conformal prediction m
 P_NL_box <- readRDS(here::here("result/P_NL_box.rds"))
 P_NL_box
 ```
+
+After an appropriate burn-in period, we generate $N=2000$ data points. Under the sequential split and online learning settings, we create training sets $\mathcal{D}_{\text{tr}}$ and calibration sets $\mathcal{D}_{\text{cal}}$, each with a length of $500$. Given the nonlinear structure of the DGP, we use feed-forward neural networks with a single hidden layer and lagged inputs to generate $1$- to $3$-step-ahead point forecasts (i.e. $H=3$), using the `nnetar()` function from the `forecast` R package [@hyndman2024]. Note that it is not possible to derive analytic intervals for neural networks, thus we do not include neural network models when presenting the results.
+
+@fig-NL_cov illustrates the rolling coverage and interval width of each method, with calculations based on a rolling window of size $100$. We see that MPID and AcMCP are able to maintain minor fluctuations around the target coverage of $90\%$ across all time indices, contrasting with MSCP, MWCP, and MACP, which struggle to sustain the target coverage and display pronounced fluctuations over time. Moreover, all conformal prediction methods, except for MSCP, construct adaptive prediction intervals. They widen intervals in response to undercoverage and narrow them when overcoverage occurs. Notably, MPID and AcMCP demonstrate greater adaptability, displaying higher variability in interval widths compared to competing methods in order to uphold the desired coverage. AcMCP intervals are evidently narrower than MPID intervals for $2$-step-ahead forecasting but wider for $3$-step-ahead forecasting. AcMCP intervals appear to be more reasonable, as they tend to widen with increasing forecast horizons.
+
+We provide further insights into the performance of these conformal prediction methods by presenting boxplots of the rolling coverage and interval width for each method, as depicted in @fig-NL_box. We observe that coverage variability is higher for MSCP, MWCP and MACP than for MPID and AcMCP, while MPID and AcMCP lead to a lower effective interval size.
 
 ### Electricity demand data
 
@@ -471,7 +475,7 @@ Our response variable is $\texttt{Demand}$, and we use two covariates: $\texttt{
 
 P_elec_cov <- readRDS(here::here("result/P_elec_cov.rds"))
 P_elec_cov +
-  theme(legend.box.margin=margin(-13,-10,-10,-10))
+  theme(legend.box.margin = margin(-13, -10, -10, -10))
 ```
 
 ```{r}
@@ -495,7 +499,7 @@ P_elec_box
 
 P_elec_timeplot <- readRDS(here::here("result/P_elec_timeplot.rds"))
 P_elec_timeplot +
-  theme(legend.box.margin=margin(-13,-10,-10,-10))
+  theme(legend.box.margin = margin(-13, -10, -10, -10))
 ```
 
 ````{=html}
@@ -526,6 +530,7 @@ In our final example, we apply the conformal prediction methods to forecast the 
 ```{r}
 #| label: fig-cafe_data
 #| results: hide
+#| fig-pos: "!tb"
 #| fig-width: 8
 #| fig-height: 3
 #| fig-cap: Monthly expenditure on cafes, restaurants and takeaway food services in Victoria, Australia, from April 1982 to December 2019.
@@ -647,7 +652,7 @@ e_{t+3|t} &= \omega_{t+3} + \phi_{1}^{(3)}e_{t+2|t} + \phi_{2}^{(3)}e_{t+1|t} \\
 e_{t+h|t} & = \omega_{t+h} + \phi_{1}^{(h)}e_{t+h-1|t} + \cdots + \phi_{p}^{(h)}e_{t+h-p|t}, \text{ with } p = \min\{d, h-1\},
 \end{align*}
 where $\omega_t$ is a white noise series, $\phi_i^{(j)}$ denotes the coefficient for the lag $i$ term in the AR model of order $\min\{d, j-1\}$ for the forecast error $e_{t+j|t}$ and here the AR model is applied at the forecast horizon $j$, rather than at the time index $t$.
- 
+
 Substituting all equations above into the following equation, we can obtain
 $$
 e_{t+h|t} = \omega_{t+h} + \sum_{i=1}^{h-1}\theta_{i}\omega_{t+h-i}, \text{ for each } h\in[H],
