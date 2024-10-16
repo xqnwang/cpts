@@ -44,7 +44,8 @@ saveRDS(P_elec_data, file = "result/P_elec_data.rds")
 #------------------------------------
 # General setup
 ## base forecasting
-horizon <- 7; level <- 90
+horizon <- 7
+level <- 90
 forward <- TRUE
 fit_window <- vic_elec_daily |> filter(year(Date) < 2014) |> nrow()
 ## data
@@ -53,7 +54,8 @@ y <- elec[,1] |> head(-horizon)
 exog_data <- elec[,-1]
 ## conformal prediction
 symmetric <- FALSE
-cal_window <- 100; rolling <- TRUE
+cal_window <- 100
+rolling <- TRUE
 type <- 8
 ## analysis
 calc_window <- 100
@@ -83,7 +85,8 @@ macp <- acp(fc, symmetric = symmetric, gamma = gamma,
             ncal = cal_window, rolling = rolling)
 
 # MPID
-Tg <- 1000; delta <- 0.01
+Tg <- 1000
+delta <- 0.01
 Csat <- 2 / pi * (ceiling(log(Tg) * delta) - 1 / log(Tg))
 KI <- 30
 lr <- 0.1
@@ -306,6 +309,47 @@ wid_md_plot <- wid_md |>
 
 P_elec_cov <- cov_plot / wid_me_plot / wid_md_plot
 saveRDS(P_elec_cov, file = "result/P_elec_cov.rds")
+
+#--------------------------
+# Plots: Coverage and width as panels
+df <- bind_rows(
+  cov |>
+    filter(index >= ymd("2014-07-19")) |>
+    mutate(
+      method = factor(method, levels = methods),
+      yvar = coverage,
+      panel = "Local coverage level"
+    ),
+  wid_me |>
+    filter(index >= ymd("2014-07-19")) |>
+    mutate(
+      method = factor(method, levels = methods),
+      yvar = width,
+      panel = "Mean interval width"
+    ),
+  wid_md |>
+    filter(index >= ymd("2014-07-19")) |>
+    mutate(
+      method = factor(method, levels = methods),
+      yvar = width,
+      panel = "Median interval width"
+    )
+) |>
+  as_tsibble(index = index, key = c(horizon, method, panel))
+
+P_elec_cov2 <- df |>
+  ggplot(aes(x = index, y = yvar, group = method, colour = method)) +
+  geom_line(size = 0.6, alpha = 0.9) +
+  scale_colour_manual(values = cols) +
+  facet_grid(rows = vars(panel),cols = vars(horizon), scales = "free_y") +
+  labs(
+    x = "Time (Year 2014)",
+    y = "",
+  ) +
+  theme_bw() +
+  theme(legend.position="bottom")
+
+saveRDS(P_elec_cov2, file = "result/P_elec_cov2.rds")
 
 #--------------------------
 # Boxplots: rolling coverage and width
