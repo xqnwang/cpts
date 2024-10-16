@@ -509,7 +509,7 @@ although expanding windows could easily be used instead.
   calibration set forward, one data point at a time, to update the
   nonconformity scores for calibration, and then repeat step 3 until
   prediction intervals for the entire test set are obtained. That is,
-  \(\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}\}_{t_r+t_c \leq t \leq T-h}\)
+  \(\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}\}_{t_r+t_c \leq t \leq T-H}\)
   for \(h \in [H]\), where \(T-t_r-t_c\) is the length of the test set
   used for testing coverage. Our goal is to achieve long-run coverage in
   time.
@@ -521,7 +521,7 @@ although expanding windows could easily be used instead.
 \input figs/annotation.tex
 \vspace*{-1.0cm}
 
-\caption{Diagram of the online learning framework with sequential splits. White: unused data; Gray: training data; Black: Forecasts in calibration set; Blue: Forecasts in test set.}\label{fig-flowchart}
+\caption{Diagram of the online learning framework with sequential splits. White: unused data; Gray: training data; Black: forecasts in calibration set; Blue: forecasts in test set.}\label{fig-flowchart}
 \end{figure}
 
 \section{Extending conformal prediction for multi-step
