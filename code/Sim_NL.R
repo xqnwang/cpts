@@ -7,12 +7,14 @@ library(conformalForecast)
 ## data simulation
 nobs <- 2000
 ## base forecasting
-horizon <- 3; level <- 90
+horizon <- 3
+level <- 90
 forward <- TRUE
 fit_window <- 500
 ## conformal prediction
 symmetric <- FALSE
-cal_window <- 500; rolling <- TRUE
+cal_window <- 500
+rolling <- TRUE
 type <- 8
 ## analysis
 calc_window <- 100
@@ -27,7 +29,7 @@ x2 <- runif(n, 0, 1)
 e <- rnorm(n, 0, 0.1)
 y <- numeric(n)
 for (t in 3:n) {
-  y[t] <- sin(y[t-1]) + 0.5 * log(y[t-2] + 1) + 0.3 * x2[t] + 
+  y[t] <- sin(y[t-1]) + 0.5 * log(y[t-2] + 1) + 0.3 * x2[t] +
     0.1 * y[t-1] * x1[t]+ e[t]
 }
 y <- ts(y[(nburnin+1):(nburnin+nobs)], start = 1, frequency = 1)
@@ -68,7 +70,8 @@ macp <- acp(fc, alpha = 1 - 0.01 * level,
             ncal = cal_window, rolling = rolling)
 
 # MPID
-Tg <- 1000; delta <- 0.01
+Tg <- 1000
+delta <- 0.01
 Csat <- 2 / pi * (ceiling(log(Tg) * delta) - 1 / log(Tg))
 KI <- 0.5
 lr <- 0.1
@@ -223,7 +226,7 @@ NL_table <- NL_info |>
 NL_table <- bind_cols(
   filter(NL_table, horizon == "h=1"),
   filter(NL_table, horizon == "h=2"),
-  filter(NL_table, horizon == "h=3")) |> 
+  filter(NL_table, horizon == "h=3")) |>
   select(!starts_with("horizon")) |>
   as.data.frame()
 NL_table <- data.frame(Methods = c("MPI", "MPID", "AcMCP"), NL_table)
@@ -288,6 +291,52 @@ P_NL_cov <- ggpubr::ggarrange(cov_plot, wid_me_plot, wid_md_plot,
                               ncol = 1, nrow = 3,
                               common.legend = TRUE, legend = "bottom")
 saveRDS(P_NL_cov, file = "result/P_NL_cov.rds")
+
+#--------------------------
+# Plots: Coverage and width as facets
+df <- bind_rows(
+  cov |>
+    filter(index >= fit_window + cal_window + calc_window) |>
+    filter(method != "MPI") |>
+    mutate(
+      method = factor(method, levels = methods),
+      yvar = coverage,
+      panel = "Local coverage level"
+    ),
+  wid_me |>
+    filter(index >= fit_window + cal_window + calc_window) |>
+    filter(method != "MPI") |>
+    mutate(
+      method = factor(method, levels = methods),
+      yvar = width,
+      panel = "Mean interval width"
+    ),
+  wid_md |>
+    filter(index >= fit_window + cal_window + calc_window) |>
+    filter(method != "MPI") |>
+    mutate(
+      method = factor(method, levels = methods),
+      yvar = width,
+      panel = "Median interval width"
+    )
+) |>
+  as_tsibble(index = index, key = c(horizon, method, panel))
+
+P_NL_cov2 <- df |>
+  ggplot(aes(x = index, y = yvar, group = method, colour = method)) +
+  geom_line(size = 0.6, alpha = 0.9) +
+  scale_colour_manual(values = cols) +
+  facet_grid(rows = vars(panel), cols = vars(horizon), scales = "free_y") +
+  labs(
+    x = "Time",
+    y = "",
+    colour = "Methods"
+  ) +
+  guides(colour = guide_legend(nrow = 1)) +
+  theme_bw() +
+  theme(legend.position="bottom")
+
+saveRDS(P_NL_cov2, file = "result/P_NL_cov2.rds")
 
 #--------------------------
 # Boxplots: rolling coverage and width
@@ -379,5 +428,3 @@ P_NL_timeplot <- tp_data |>
   theme_bw() +
   theme(legend.position = "bottom")
 # saveRDS(P_NL_timeplot, file = "result/P_NL_timeplot.rds")
-
-

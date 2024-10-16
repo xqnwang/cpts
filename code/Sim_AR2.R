@@ -6,15 +6,19 @@ library(conformalForecast)
 #------------------------------------
 # General setup
 ## data simulation
-nobs <- 5000; ar_coef <- c(0.8, -0.5); sigma <- 1
+nobs <- 5000
+ar_coef <- c(0.8, -0.5)
+sigma <- 1
 !any(abs(polyroot(c(1, -ar_coef))) <= 1) # The model will be stationary if TRUE
 ## base forecasting
-horizon <- 3; level <- 90
+horizon <- 3
+level <- 90
 forward <- TRUE
 fit_window <- 500
 ## conformal prediction
 symmetric <- FALSE
-cal_window <- 500; rolling <- TRUE
+cal_window <- 500
+rolling <- TRUE
 type <- 8
 ## analysis
 calc_window <- 500
@@ -53,7 +57,8 @@ macp <- acp(fc, symmetric = symmetric, gamma = gamma,
             ncal = cal_window, rolling = rolling)
 
 # MPID
-Tg <- 5000; delta <- 0.01
+Tg <- 5000
+delta <- 0.01
 Csat <- 2 / pi * (ceiling(log(Tg) * delta) - 1 / log(Tg))
 KI <- 2
 lr <- 0.1
@@ -258,6 +263,52 @@ wid_md_plot <- wid_md |>
 
 P_AR2_cov <- cov_plot / wid_me_plot / wid_md_plot
 saveRDS(P_AR2_cov, file = "result/P_AR2_cov.rds")
+
+#--------------------------
+# Plots: Coverage and width as panels
+df <- bind_rows(
+  cov |>
+    filter(index >= fit_window + cal_window + calc_window) |>
+    filter(method != "MPI") |>
+    mutate(
+      method = factor(method, levels = methods),
+      yvar = coverage,
+      panel = "Local coverage level"
+    ),
+  wid_me |>
+    filter(index >= fit_window + cal_window + calc_window) |>
+    filter(method != "MPI") |>
+    mutate(
+      method = factor(method, levels = methods),
+      yvar = width,
+      panel = "Mean interval width"
+    ),
+  wid_md |>
+    filter(index >= fit_window + cal_window + calc_window) |>
+    filter(method != "MPI") |>
+    mutate(
+      method = factor(method, levels = methods),
+      yvar = width,
+      panel = "Median interval width"
+    )
+) |>
+  as_tsibble(index = index, key = c(horizon, method, panel))
+
+P_AR2_cov2 <- df |>
+  ggplot(aes(x = index, y = yvar, group = method, colour = method)) +
+  geom_line(size = 0.6, alpha = 0.8) +
+  scale_colour_manual(values = cols) +
+  facet_grid(rows = vars(panel), cols = vars(horizon), scales = "free_y") +
+  labs(
+    x = "Time",
+    y = "",
+    colour = "Methods"
+  ) +
+  guides(colour = guide_legend(nrow = 1)) +
+  theme_bw() +
+  theme(legend.position="bottom")
+
+saveRDS(P_AR2_cov2, file = "result/P_AR2_cov2.rds")
 
 #--------------------------
 # Boxplots: rolling coverage and width
