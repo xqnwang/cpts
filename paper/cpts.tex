@@ -97,6 +97,11 @@
 \addtolength{\textwidth}{1in}%
 \addtolength{\textheight}{1.7in}%
 \addtolength{\topmargin}{-1in}%
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{positioning}
+\usetikzlibrary{shapes.arrows,shapes.symbols,arrows.meta}
+\usepackage[no-weekday]{eukdate}
 \usepackage{bm}
 \usepackage{mathptmx}
 \usepackage{amsmath} % Ensure amsmath is included for \eqref
@@ -107,7 +112,7 @@
 \setlength{\parskip}{0pt}
 \setlength{\parindent}{15pt}
 \expandafter\def\expandafter\normalsize\expandafter{%
-  \normalsize  
+  \normalsize
   \setlength\abovedisplayskip{1ex}
   \setlength\belowdisplayskip{1ex}
   \setlength\abovedisplayshortskip{1ex}
@@ -123,6 +128,30 @@
 \def\fps@table{!tbh}
 \def\fps@figure{!tbh}
 \makeatother
+
+\usepackage{caption}
+\DeclareCaptionStyle{italic}[justification=centering]
+ {labelfont={bf},textfont={it},labelsep=colon}
+\captionsetup[figure]{style=italic,format=hang,singlelinecheck=true}
+\captionsetup[table]{style=italic,format=hang,singlelinecheck=true}
+
+\widowpenalty=10000
+\clubpenalty=10000
+\brokenpenalty=10000
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -458,8 +487,8 @@ the calibration set.
 learning framework for all conformal prediction methods to be discussed
 in later sections. The entire procedure for the online learning
 framework with sequential splits is also illustrated in
-Figure~\ref{fig-flowchart}. This framework updates prediction intervals
-as new data points arrive, allowing us to assess their long-run coverage
+\autoref{fig-flowchart}. This framework updates prediction intervals as
+new data points arrive, allowing us to assess their long-run coverage
 behaviour. It adopts a standard rolling window evaluation strategy,
 although expanding windows could easily be used instead.
 
@@ -495,18 +524,14 @@ although expanding windows could easily be used instead.
   time.
 \end{enumerate}
 
-\begin{figure}
+\begin{figure}[!hbtp]
+\vspace*{-1.5cm}
+\hspace*{-2.5cm}
+\input figs/annotation.tex
+\vspace*{-1.0cm}
 
-\centering{
-
-\includegraphics{flowchart.pdf}
-
-}
-
-\caption{\label{fig-flowchart}Diagram of the online learning framework
-with sequential splits.}
-
-\end{figure}%
+\caption{Diagram of the online learning framework with sequential splits. White: unused data; Gray: training data; Black: Forecasts in calibration set; Blue: Forecasts in test set.}\label{fig-flowchart}
+\end{figure}
 
 \section{Extending conformal prediction for multi-step
 forecasting}\label{sec-ext}
@@ -972,6 +997,21 @@ generate prediction intervals using various proposed conformal
 prediction methods and evaluate whether they can achieve the nominal
 long-run coverage for each separate forecast horizon.
 
+\begin{figure}
+
+\centering{
+
+\includegraphics{cpts_files/figure-pdf/fig-AR2_cov-1.pdf}
+
+}
+
+\caption{\label{fig-AR2_cov}AR(2) simulation results showing rolling
+coverage, mean and median interval width for each forecast horizon. The
+displayed curves are smoothed over a rolling window of size \(500\). The
+black dashed line indicates the target level of \(1-\alpha=0.9\).}
+
+\end{figure}%
+
 Figure~\ref{fig-AR2_cov} presents the rolling coverage and interval
 width of each method for each forecast horizon, with metrics computed
 over a rolling window of size \(500\). The analytic (and optimal)
@@ -998,21 +1038,6 @@ and interval width for each method and each forecast horizon.
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-AR2_cov-1.pdf}
-
-}
-
-\caption{\label{fig-AR2_cov}AR(2) simulation results showing rolling
-coverage, mean and median interval width for each forecast horizon. The
-displayed curves are smoothed over a rolling window of size \(500\). The
-black dashed line indicates the target level of \(1-\alpha=0.9\).}
-
-\end{figure}%
-
-\begin{figure}
-
-\centering{
-
 \includegraphics{cpts_files/figure-pdf/fig-AR2_box-1.pdf}
 
 }
@@ -1022,6 +1047,20 @@ the rolling coverage and interval width for each method across different
 forecast horizons. The red dashed lines show the target coverage level,
 while the blue dashed lines indicate the median interval width of the
 AcMCP method.}
+
+\end{figure}%
+
+\begin{figure}[!b]
+
+\centering{
+
+\includegraphics{cpts_files/figure-pdf/fig-AR2_timeplot-1.pdf}
+
+}
+
+\caption{\label{fig-AR2_timeplot}AR(2) simulation results showing the
+prediction interval bounds for the MACP, MPI, and AcMCP methods over a
+truncated period of length 500.}
 
 \end{figure}%
 
@@ -1045,20 +1084,6 @@ intervals of both AcMCP and MACP can capture certain patterns in the
 actual observations, and there is no consistent pattern indicating
 dominance of one method over the other in terms of interval width.
 
-\begin{figure}
-
-\centering{
-
-\includegraphics{cpts_files/figure-pdf/fig-AR2_timeplot-1.pdf}
-
-}
-
-\caption{\label{fig-AR2_timeplot}AR(2) simulation results showing the
-prediction interval bounds for the MACP, MPI, and AcMCP methods over a
-truncated period of length 500.}
-
-\end{figure}%
-
 \subsection{Simulated nonlinear autoregressive
 process}\label{simulated-nonlinear-autoregressive-process}
 
@@ -1070,6 +1095,37 @@ y_t = \sin(y_{t-1}) + 0.5\log(y_{t-2} + 1) + 0.1y_{t-1}x_{1,t} + 0.3x_{2,t} + \v
 \(\sigma^2 = 0.1\). Thus, the time series \(y_t\) nonlinearly depends on
 its lagged values \(y_{t-1}\) and \(y_{t-2}\), as well as exogenous
 variables \(x_{1,t}\) and \(x_{2,t}\).
+
+\begin{figure}[!b]
+
+\centering{
+
+\includegraphics{cpts_files/figure-pdf/fig-NL_cov-1.pdf}
+
+}
+
+\caption{\label{fig-NL_cov}Nonlinear simulation results showing rolling
+coverage, mean and median interval width for each forecast horizon. The
+displayed curves are smoothed over a rolling window of size \(100\). The
+black dashed line indicates the target level of \(1-\alpha=0.9\).}
+
+\end{figure}%
+
+\begin{figure}[!b]
+
+\centering{
+
+\includegraphics{cpts_files/figure-pdf/fig-NL_box-1.pdf}
+
+}
+
+\caption{\label{fig-NL_box}Nonlinear simulation results showing boxplots
+of the rolling coverage and interval width for each method across
+different forecast horizons. The red dashed lines show the target
+coverage level, while the blue dashed lines indicate the median interval
+width of the AcMCP method.}
+
+\end{figure}%
 
 After an appropriate burn-in period, we generate \(N=2000\) data points.
 Under the sequential split and online learning settings, we create
@@ -1099,43 +1155,12 @@ narrower than MPID intervals for \(2\)-step-ahead forecasting but wider
 for \(3\)-step-ahead forecasting. AcMCP intervals appear to be more
 reasonable, as they tend to widen with increasing forecast horizons.
 
-\begin{figure}
-
-\centering{
-
-\includegraphics{cpts_files/figure-pdf/fig-NL_cov-1.pdf}
-
-}
-
-\caption{\label{fig-NL_cov}Nonlinear simulation results showing rolling
-coverage, mean and median interval width for each forecast horizon. The
-displayed curves are smoothed over a rolling window of size \(100\). The
-black dashed line indicates the target level of \(1-\alpha=0.9\).}
-
-\end{figure}%
-
 We provide further insights into the performance of these conformal
 prediction methods by presenting boxplots of the rolling coverage and
 interval width for each method, as depicted in Figure~\ref{fig-NL_box}.
 We observe that coverage variability is higher for MSCP, MWCP and MACP
 than for MPID and AcMCP, while MPID and AcMCP lead to a lower effective
 interval size.
-
-\begin{figure}
-
-\centering{
-
-\includegraphics{cpts_files/figure-pdf/fig-NL_box-1.pdf}
-
-}
-
-\caption{\label{fig-NL_box}Nonlinear simulation results showing boxplots
-of the rolling coverage and interval width for each method across
-different forecast horizons. The red dashed lines show the target
-coverage level, while the blue dashed lines indicate the median interval
-width of the AcMCP method.}
-
-\end{figure}%
 
 \subsection{Electricity demand data}\label{electricity-demand-data}
 
@@ -1152,7 +1177,7 @@ increasing for high temperatures (due to cooling). The two clouds of
 points in the right panel correspond to working days and non-working
 days.
 
-\begin{figure}[!b]
+\begin{figure}[!hb]
 
 \centering{
 
@@ -1176,7 +1201,7 @@ an ARIMA model to contain autocorrelation. We use two years of data as
 training sets to fit dynamic regression models, and use \(100\) data
 points for calibration sets.
 
-\begin{figure}
+\begin{figure}[!hbtp]
 
 \centering{
 
@@ -1192,7 +1217,7 @@ horizon. The displayed curves are smoothed over a rolling window of size
 
 \end{figure}%
 
-\begin{figure}
+\begin{figure}[!hbtp]
 
 \centering{
 
@@ -1268,7 +1293,7 @@ as shown in Figure~\ref{fig-cafe_data}. The data shows an overall upward
 trend, obvious annual seasonal patterns, and variability proportional to
 the data level.
 
-\begin{figure}
+\begin{figure}[!tb]
 
 \centering{
 

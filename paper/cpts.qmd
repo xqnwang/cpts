@@ -342,8 +342,8 @@ where $\varepsilon_t$ is white noise with error variance $\sigma^2 = 1$. After a
 ```{r}
 #| label: fig-AR2_cov
 #| results: hide
-#| fig-width: 9
-#| fig-height: 6
+#| fig-width: 8
+#| fig-height: 5.3
 #| fig-cap: AR(2) simulation results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $500$. The black dashed line indicates the target level of $1-\alpha=0.9$.
 
 P_AR2_cov <- readRDS(here::here("result/P_AR2_cov2.rds"))
@@ -356,8 +356,8 @@ P_AR2_cov +
 ```{r}
 #| label: fig-AR2_box
 #| results: hide
-#| fig-width: 9
-#| fig-height: 3.5
+#| fig-width: 8
+#| fig-height: 3
 #| fig-cap: AR(2) simulation results showing boxplots of the rolling coverage and interval width for each method across different forecast horizons. The red dashed lines show the target coverage level, while the blue dashed lines indicate the median interval width of the AcMCP method.
 
 P_AR2_box <- readRDS(here::here("result/P_AR2_box.rds"))
@@ -393,8 +393,8 @@ where $x_{1,t}$ and $x_{2,t}$ are uniformly distributed on $[0,1]$, and $\vareps
 #| label: fig-NL_cov
 #| fig-pos: "!b"
 #| results: hide
-#| fig-width: 9
-#| fig-height: 6
+#| fig-width: 8
+#| fig-height: 5.3
 #| fig-cap: Nonlinear simulation results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $100$. The black dashed line indicates the target level of $1-\alpha=0.9$.
 
 P_NL_cov <- readRDS(here::here("result/P_NL_cov2.rds"))
@@ -471,13 +471,13 @@ Our response variable is $\texttt{Demand}$, and we use two covariates: $\texttt{
 
 ```{r}
 #| label: fig-elec_cov
-#| fig-pos: "!hbt"
+#| fig-pos: "!hbtp"
 #| results: hide
-#| fig-width: 12
-#| fig-height: 6
+#| fig-width: 11
+#| fig-height: 5.1
 #| fig-cap: Electricity demand data results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $100$. The black dashed line indicates the target level of $1-\alpha=0.9$.
 
-P_elec_cov <- readRDS(here::here("result/P_elec_cov.rds"))
+P_elec_cov <- readRDS(here::here("result/P_elec_cov2.rds"))
 P_elec_cov +
   theme(legend.box.margin = margin(-13, -10, -10, -10))
 ```
@@ -485,6 +485,7 @@ P_elec_cov +
 ```{r}
 #| label: fig-elec_box
 #| results: hide
+#| fig-pos: "!hbtp"
 #| fig-width: 10
 #| fig-height: 6.5
 #| fig-cap: Electricity demand data results showing boxplots of the rolling coverage and interval width for each method across different forecast horizons. The red dashed lines show the target coverage level, while the blue dashed lines indicate the median interval width of the AcMCP method.
@@ -493,12 +494,11 @@ P_elec_box <- readRDS(here::here("result/P_elec_box.rds"))
 P_elec_box
 ```
 
-
 ```{r}
 #| label: fig-elec_timeplot
 #| results: hide
-#| fig-width: 6
-#| fig-height: 7
+#| fig-width: 8
+#| fig-height: 8
 #| fig-cap: Electricity demand data results showing the forecast interval bounds for MACP, MPI, and AcMCP over the whole test set.
 
 P_elec_timeplot <- readRDS(here::here("result/P_elec_timeplot.rds"))
@@ -550,8 +550,8 @@ We summarise the average coverage and interval width for each method and each fo
 ```{r}
 #| label: fig-cafe_cov
 #| results: hide
-#| fig-width: 10
-#| fig-height: 3
+#| fig-width: 8
+#| fig-height: 2.5
 #| fig-cap: Eating out expenditure data results showing coverage gap and interval width averaged over the entire test set for each forecast horizon. The black dashed line in the top panel indicates no difference from the $90\%$ target level.
 
 P_cafe_cov <- readRDS(here::here("result/P_cafe_cov.rds"))
