@@ -641,10 +641,9 @@ Let $q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}$, then Equation \eqref{eq-acmcp_1} 
 
 ## Acknowledgments {.unnumbered}
 
-Funding information, including specific grant numbers.
+Rob Hyndman and Xiaoqian Wang are members of the Australian Research Council Industrial Transformation Training Centre in Optimisation Technologies, Integrated Methodologies, and Applications (OPTIMA), Project ID IC200100009. 
 
 ## References {.unnumbered}
 
 ::: {#refs}
 :::
-
