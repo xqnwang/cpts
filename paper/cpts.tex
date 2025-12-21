@@ -1,4 +1,5 @@
 % Options for packages loaded elsewhere
+% Options for packages loaded elsewhere
 \PassOptionsToPackage{unicode}{hyperref}
 \PassOptionsToPackage{hyphens}{url}
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
@@ -6,22 +7,22 @@
 \documentclass[
   11pt,
   12pt]{article}
-
+\usepackage{xcolor}
 \usepackage{amsmath,amssymb}
-\usepackage{setspace}
+\setcounter{secnumdepth}{5}
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
   \usepackage{textcomp} % provide euro and other symbols
 \else % if luatex or xetex
-  \usepackage{unicode-math}
+  \usepackage{unicode-math} % this also loads fontspec
   \defaultfontfeatures{Scale=MatchLowercase}
   \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
 \fi
 \usepackage{lmodern}
-\ifPDFTeX\else  
-    % xetex/luatex font selection
+\ifPDFTeX\else
+  % xetex/luatex font selection
 \fi
 % Use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
@@ -29,6 +30,7 @@
   \usepackage[]{microtype}
   \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
 }{}
+\usepackage{setspace}
 \makeatletter
 \@ifundefined{KOMAClassName}{% if non-KOMA class
   \IfFileExists{parskip.sty}{%
@@ -39,9 +41,6 @@
 }{% if KOMA class
   \KOMAoptions{parskip=half}}
 \makeatother
-\usepackage{xcolor}
-\setlength{\emergencystretch}{3em} % prevent overfull lines
-\setcounter{secnumdepth}{5}
 % Make \paragraph and \subparagraph free-standing
 \makeatletter
 \ifx\paragraph\undefined\else
@@ -67,8 +66,7 @@
 \makeatother
 
 
-\providecommand{\tightlist}{%
-  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}\usepackage{longtable,booktabs,array}
+\usepackage{longtable,booktabs,array}
 \usepackage{calc} % for calculating minipage widths
 % Correct order of tables after \paragraph or \subparagraph
 \usepackage{etoolbox}
@@ -80,17 +78,35 @@
 \makesavenoteenv{longtable}
 \usepackage{graphicx}
 \makeatletter
-\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
-\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
-\makeatother
-% Scale images if necessary, so that they will not overflow the page
-% margins by default, and it is still possible to overwrite the defaults
-% using explicit options in \includegraphics[width, height, ...]{}
-\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
 % Set default figure placement to htbp
-\makeatletter
 \def\fps@figure{htbp}
 \makeatother
+
+
+
+
+
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+
+ 
+\usepackage[]{natbib}
+\bibliographystyle{agsm}
+
 
 \addtolength{\oddsidemargin}{-.5in}%
 \addtolength{\evensidemargin}{-1in}%
@@ -138,6 +154,20 @@
 \widowpenalty=10000
 \clubpenalty=10000
 \brokenpenalty=10000
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -188,16 +218,9 @@
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
 \makeatother
-
-\ifLuaTeX
-  \usepackage{selnolig}  % disable illegal ligatures
-\fi
-\usepackage[]{natbib}
-\bibliographystyle{agsm}
 \usepackage{bookmark}
-
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
-\urlstyle{same} % disable monospaced font for URLs
+\urlstyle{same}
 \hypersetup{
   pdftitle={Online conformal inference for multi-step time series forecasting},
   pdfauthor={Xiaoqian Wang; Rob J Hyndman},
@@ -992,7 +1015,7 @@ long-run coverage for each separate forecast horizon.
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-AR2_cov-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-AR2_cov-1.pdf}}
 
 }
 
@@ -1029,7 +1052,7 @@ and interval width for each method and each forecast horizon.
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-AR2_box-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-AR2_box-1.pdf}}
 
 }
 
@@ -1045,7 +1068,7 @@ AcMCP method.}
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-AR2_timeplot-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-AR2_timeplot-1.pdf}}
 
 }
 
@@ -1091,7 +1114,7 @@ variables \(x_{1,t}\) and \(x_{2,t}\).
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-NL_cov-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-NL_cov-1.pdf}}
 
 }
 
@@ -1106,7 +1129,7 @@ black dashed line indicates the target level of \(1-\alpha=0.9\).}
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-NL_box-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-NL_box-1.pdf}}
 
 }
 
@@ -1172,7 +1195,7 @@ days.
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-elec_data-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-elec_data-1.pdf}}
 
 }
 
@@ -1196,7 +1219,7 @@ points for calibration sets.
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-elec_cov-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-elec_cov-1.pdf}}
 
 }
 
@@ -1212,7 +1235,7 @@ horizon. The displayed curves are smoothed over a rolling window of size
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-elec_box-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-elec_box-1.pdf}}
 
 }
 
@@ -1228,7 +1251,7 @@ width of the AcMCP method.}
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-elec_timeplot-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-elec_timeplot-1.pdf}}
 
 }
 
@@ -1288,7 +1311,7 @@ the data level.
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-cafe_data-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-cafe_data-1.pdf}}
 
 }
 
@@ -1328,7 +1351,7 @@ coverage across most forecast horizons.
 
 \centering{
 
-\includegraphics{cpts_files/figure-pdf/fig-cafe_cov-1.pdf}
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-cafe_cov-1.pdf}}
 
 }
 
