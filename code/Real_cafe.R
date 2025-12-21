@@ -95,10 +95,10 @@ mpid <- pid(fc, alpha = 1 - 0.01 * level,
             lr = lr, KI = KI, Csat = Csat)
 
 # AcMCP
-acmcp <- mcp(fc, alpha = 1 - 0.01 * level,
-             ncal = cal_window, rolling = rolling,
-             integrate = TRUE, scorecast = TRUE,
-             lr = lr, KI = KI, Csat = Csat)
+acmcp <- acmcp(fc, alpha = 1 - 0.01 * level,
+               ncal = cal_window, rolling = rolling,
+               integrate = TRUE, scorecast = TRUE,
+               lr = lr, KI = KI, Csat = Csat)
 
 #------------------------------------
 # Result analysis

@@ -77,9 +77,9 @@ mpid <- pid(fc, symmetric = symmetric, ncal = cal_window, rolling = rolling,
             lr = lr, KI = KI, Csat = Csat)
 
 # AcMCP
-acmcp <- mcp(fc, ncal = cal_window, rolling = rolling,
-             integrate = TRUE, scorecast = TRUE,
-             lr = lr, KI = KI, Csat = Csat)
+acmcp <- acmcp(fc, ncal = cal_window, rolling = rolling,
+               integrate = TRUE, scorecast = TRUE,
+               lr = lr, KI = KI, Csat = Csat)
 
 #------------------------------------
 # Result analysis
