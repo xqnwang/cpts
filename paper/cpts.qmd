@@ -405,12 +405,12 @@ P_NL_cov +
   theme(legend.box.margin = margin(-13, -10, -10, -10))
 ```
 
-````{=html}
 <!--#
 The most basic requirement for a prediction interval is to cover the actual value with the desired probability. Evaluating the efficiency of forecast intervals is relevant only when they demonstrate valid coverage. As discussed, MSCP, MWCP and MACP have coverage that deviate a bit far from the desired coverage, thus we now focus our comparison on MPID and AcMCP, the two methods that offer more accurate coverage. @tbl-NL_winkler shows the resulting coverage gap (the difference between actual and nominal coverage), forecast interval width, and Winkler score [@winkler1972], averaged over all test sets, for the MPI, MPID, and AcMCP methods. The Winkler score is proposed by @winkler1972 to evaluate a prediction interval, and is defined as the length of the interval plus a penalty if the observation is outside the interval. A smaller Winkler score indicates better performance. The results indicate that, in this nonlinear DGP setting, there is essentially no difference among these three methods in terms of overall coverage gap, average interval width, and Winkler score.
 
 ```{r}
 #| label: tbl-NL_winkler
+#| eval: false
 #| tbl-cap: Nonlinear simulation results showing coverage gap, interval width, and Winkler score, averaged over all test sets.
 
 T_NL_winkler <- readRDS(here::here("result/T_NL_winkler.rds"))
@@ -434,7 +434,6 @@ T_NL_winkler |>
   )
 ```
 -->
-````
 
 ```{r}
 #| label: fig-NL_box
