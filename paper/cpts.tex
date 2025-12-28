@@ -858,13 +858,14 @@ of two simple models: one being an MA\((h-1)\) model trained on the
 \(h\)-step-ahead forecast errors available up to and including time
 \(t\) (i.e.~\(e_{1+h|1}, \ldots, e_{t|t-h}\)), and the other a linear
 regression model trained by regressing \(e_{t+h|t}\) on forecast errors
-from past steps (i.e.~\(e_{t+h-1|t}, \ldots, e_{t+1|t}\)). Thus, we
-perform multi-step conformal prediction recursively, contrasting with
-the independent approach employed in MPID. Moreover, the inclusion of
-\(\tilde{e}_{t+h|t}\) is not intended to forecast the nonconformity
-scores (i.e., forecast errors), but rather to incorporate
-autocorrelations present in multi-step forecast errors within the
-resulting multi-step prediction intervals.
+from past steps (i.e.~\(e_{t+h-1|t}, \ldots, e_{t+1|t}\)). Unlike MPID,
+which treats multi-step prediction problems independently across
+horizons, AcMCP performs multi-step conformal prediction recursively,
+explicitly accounting for the serial dependence among multi-step
+forecast errors. Importantly, the role of \(\tilde{e}_{t+h|t}\) is not
+to forecast the nonconformity scores themselves, but to incorporate the
+autocorrelation structure of multi-step forecast errors into the
+construction of the resulting prediction intervals.
 
 \subsection{Coverage guarantees}\label{coverage-guarantees}
 
@@ -1024,20 +1025,22 @@ intervals obtained from the AR model are also shown. We observe that
 MPID and AcMCP achieve approximately the desired \(90\%\) coverage level
 over the rolling windows, while other methods, including the AR model,
 undergo much wider swings away from the desired level, showing high
-coverage volatility over time. The trajectories of the rolling mean and
-median of the interval widths for each method are largely consistent.
-AcMCP constructs narrower prediction intervals than MPID, despite both
-methods achieving similar coverage. Moreover, we see that AcMCP tends to
-offer adaptive prediction intervals, and results in wider intervals
-especially when competing methods undercover, which is to be expected.
-In short, AcMCP intervals offer greater adaptivity and more precise
-coverage compared to AR, MSCP, MWCP and MACP. However, MPID achieves
-tight coverage but at the cost of constructing wider prediction
-intervals. This is due to the inclusion of a second model (scorecaster)
-which introduces additional variance into the generated prediction
-intervals. The results can be further elucidated with
-Figure~\ref{fig-AR2_box}, which presents boxplots of rolling coverage
-and interval width for each method and each forecast horizon.
+coverage volatility over time. For each forecast horizon and method, the
+rolling mean and median interval widths follow very similar trajectories
+across rolling windows. AcMCP constructs narrower prediction intervals
+than MPID, despite both methods achieving similar coverage. Moreover, we
+see that AcMCP tends to offer coverage-adaptive prediction intervals,
+automatically adjusting their width based on past coverage performance,
+and results in wider intervals especially when competing methods
+undercover, which is to be expected. In short, AcMCP intervals offer
+greater adaptivity and more precise coverage compared to AR, MSCP, MWCP
+and MACP. Both MPID and AcMCP achieve tight coverage, but AcMCP outputs
+more informative and smaller intervals. This is due to the inclusion of
+a second model (scorecaster) which introduces additional variance into
+the generated prediction intervals. The results can be further
+elucidated with Figure~\ref{fig-AR2_box}, which presents boxplots of
+rolling coverage and interval width for each method and each forecast
+horizon.
 
 \begin{figure}
 
@@ -1151,13 +1154,14 @@ fluctuations around the target coverage of \(90\%\) across all time
 indices, contrasting with MSCP, MWCP, and MACP, which struggle to
 sustain the target coverage and display pronounced fluctuations over
 time. Moreover, all conformal prediction methods, except for MSCP,
-construct adaptive prediction intervals. They widen intervals in
-response to undercoverage and narrow them when overcoverage occurs.
-Notably, MPID and AcMCP demonstrate greater adaptability, displaying
-higher variability in interval widths compared to competing methods in
-order to uphold the desired coverage. AcMCP intervals are evidently
-narrower than MPID intervals for \(2\)-step-ahead forecasting but wider
-for \(3\)-step-ahead forecasting. AcMCP intervals appear to be more
+construct prediction intervals that are adaptive to observed changes in
+the data distribution. They widen intervals in response to undercoverage
+and narrow them when overcoverage occurs. Notably, MPID and AcMCP
+demonstrate greater adaptability, displaying higher variability in
+interval widths compared to competing methods in order to uphold the
+desired coverage. AcMCP intervals are evidently narrower than MPID
+intervals for \(2\)-step-ahead forecasting but wider for
+\(3\)-step-ahead forecasting. AcMCP intervals appear to be more
 reasonable, as they tend to widen with increasing forecast horizons.
 
 We provide further insights into the performance of these conformal
