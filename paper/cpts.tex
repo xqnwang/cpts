@@ -469,11 +469,12 @@ at the target coverage level \(1-\alpha\). For brevity, we will use
 \textbf{Sequential split.} In a time series context, it is inappropriate
 to perform \emph{random splitting}, a standard strategy in much of the
 conformal prediction literature, due to the temporal dependency present
-in the data. Instead, throughout the conformal prediction methods
-proposed in this paper, we use a \emph{sequential split} to preserve the
-temporal structure. For example, the \(t\) available data points,
-\(z_{1:t}\), are sequentially split into two consecutive sets, a
-\emph{proper training set}
+in the data \citep{zaffran2022}. Following related work such as
+\citet{wisniewski2020} and \citet{zaffran2022}, throughout the conformal
+prediction methods proposed in this paper, we use a \emph{sequential
+split} to preserve the temporal structure. For example, the \(t\)
+available data points, \(z_{1:t}\), are sequentially split into two
+consecutive sets, a \emph{proper training set}
 \(\mathcal{D}_{\text{tr}} \subset \{1,\ldots,t_r\}\) and a
 \emph{calibration set}
 \(\mathcal{D}_{\text{cal}} \subset \{t_r+1,\ldots,t\}\), where
@@ -489,13 +490,14 @@ essential for ensuring the validity of coverage in conformal prediction
 computed on the calibration set.
 
 \textbf{Online learning.} We will adapt the following generic online
-learning framework for all conformal prediction methods to be discussed
-in later sections. The entire procedure for the online learning
-framework with sequential splits is also illustrated in
-\autoref{fig-flowchart}. This framework updates prediction intervals as
-new data points arrive, allowing us to assess their long-run coverage
-behaviour. It adopts a standard rolling window evaluation strategy,
-although expanding windows could easily be used instead.
+learning framework, which is closely related to \citet{zaffran2022}, for
+all conformal prediction methods to be discussed in later sections. The
+entire procedure for the online learning framework with sequential
+splits is also illustrated in \autoref{fig-flowchart}. This framework
+updates prediction intervals as new data points arrive, allowing us to
+assess their long-run coverage behaviour. It adopts a standard rolling
+window evaluation strategy, although expanding windows could easily be
+used instead.
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -671,12 +673,13 @@ of multiple ACPs with a set of candidate values for \(\gamma\) ,
 determining weights based on their historical performance.
 \citet{bastani2022} propose a multivalid prediction algorithm in which
 the prediction set is established by selecting a threshold from a
-sequence of candidate thresholds. However, both previous methods fail to
-promptly adapt to the local changes. To address this limitation,
-\citet{gibbs2024} suggest adaptively tuning the step size parameter
-\(\gamma\) in an online setting, choosing an ``optimal'' value for
-\(\gamma\) from a candidate set of values by assessing their historical
-performance.
+sequence of candidate thresholds. Both methods rely on update schemes
+that place substantial weight on older historical data, which may impede
+rapid adaptation to abrupt changes \citep{gibbs2024}. Therefore,
+\citet{gibbs2024} propose an alternative expert selection scheme that
+adaptively tunes the step-size parameter over time and places greater
+emphasis on more recent observations by construction, enabling faster
+responses to sudden environmental shifts.
 
 The theoretical coverage properties of ACP suggest that a larger value
 for \(\gamma\) generally results in less deviation from the target
