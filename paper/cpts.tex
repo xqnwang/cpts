@@ -323,15 +323,15 @@ In response, several extensions to conformal prediction have been
 proposed to handle non-exchangeable data. Notable examples include
 methods for handling covariate shift
 \citep{tibshirani2019, lei2021, yang2024}, online distribution shift
-\citep{gibbs2021, zaffran2022, bastani2022}, label shift
+\citep{gibbs2021, gibbs2024, zaffran2022, bastani2022}, label shift
 \citep{podkopaev2021}, time series data
 \citep{chernozhukov2018, gibbs2021, xu2021, xu2023, zaffran2022}, and
 spatial prediction \citep{mao2024}, and methods based on certain
 distributional assumptions of the data rather than exchangeability
-\citep{oliveira2024, xu2021, xu2023}. Additionally, some methods propose
-weighting nonconformity scores (e.g., prediction errors) differently,
-either using non-data-dependent weights \citep{barber2023} or weights
-based on observed feature values
+\citep{chernozhukov2018, oliveira2024, xu2021, xu2023}. Additionally,
+some methods propose weighting nonconformity scores (e.g., prediction
+errors) differently, either using non-data-dependent weights
+\citep{barber2023} or weights based on observed feature values
 \citep{tibshirani2019, guan2023, hore2023}.
 
 Recently, several attempts have been made to enable conformal prediction
@@ -345,27 +345,28 @@ group of permutations that are specifically designed to preserve the
 dependence structure in the data, ensuring validity under weak
 assumptions on the nonconformity score. In the split conformal
 prediction framework, \citet{xu2021} and \citet{xu2023} extend conformal
-prediction methods under classical nonparametric assumptions to achieve
-asymptotic valid conditional coverage for time series.
-\citet{barber2023} use weighted residual distributions to provide
-robustness against distribution drift. Additionally,
-\citet{oliveira2024} introduce a general framework based on
-concentration inequalities and data decoupling properties of the data to
-retain asymptotic coverage guarantees across several dependent data
+prediction methods to time series settings and establish asymptotically
+valid conditional coverage under the assumption that model errors are
+stationary and strongly mixing. \citet{barber2023} use weighted residual
+distributions to provide robustness against distribution drift.
+Additionally, \citet{oliveira2024} introduce a general framework based
+on concentration inequalities and data decoupling properties of the data
+to retain asymptotic coverage guarantees across several dependent data
 settings.
 
 In a separate strand of research, \citet{gibbs2021} develop adaptive
-conformal inference in an online manner to manage temporal distribution
-shifts and ensure long-run coverage guarantees. The basic idea is to
-adapt the miscoverage rate, \(\alpha\), based on historical miscoverage
-frequencies. Follow-up work has refined this idea by introducing
-time-dependent step sizes to respond to arbitrary distribution shifts,
-as seen in studies by \citet{bastani2022}, \citet{zaffran2022}, and
-\citet{gibbs2024}. However, these methods may produce prediction
-intervals that are either infinite or null. To address this issue,
-recent research has proposed a generalized updating process that tracks
-the quantile of the nonconformity score sequence, as discussed by
-\citet{bhatnagar2023}, \citet{angelopoulos2024}, and
+conformal inference (ACI, denoted as ACP hereafter) in an online manner
+to manage temporal distribution shifts and ensure long-run coverage
+guarantees. The basic idea is to adapt the miscoverage rate, \(\alpha\),
+based on historical miscoverage frequencies. However, ACP may yield
+infinite or empty prediction intervals when the \(\alpha\) drifts below
+\(0\) or exceeds \(1\), respectively. Follow-up work has refined this
+idea by introducing time-dependent step sizes to respond to arbitrary
+distribution shifts, as seen in studies by \citet{bastani2022},
+\citet{zaffran2022}, and \citet{gibbs2024}. Recent research has proposed
+a generalized updating process that tracks the quantile of the
+nonconformity score sequence, rather than the miscoverage rate, as
+discussed by \citet{bhatnagar2023}, \citet{angelopoulos2024}, and
 \citet{angelopoulos2024online}.
 
 Existing conformal prediction methods for time series primarily focus on
@@ -618,10 +619,10 @@ given by \[
 \subsection{Multi-step adaptive conformal
 prediction}\label{multi-step-adaptive-conformal-prediction}
 
-Next we extend the adaptive conformal prediction (ACP) method proposed
-by \citet{gibbs2021} to address multi-step time series forecasting,
-introducing the \textbf{multi-step adaptive conformal prediction} (MACP)
-method. Assuming that
+Next we extend the adaptive conformal inference (ACI, denoted as ACP
+hereafter) method proposed by \citet{gibbs2021} to address multi-step
+time series forecasting, introducing the \textbf{multi-step adaptive
+conformal prediction} (MACP) method. Assuming that
 \(\beta \mapsto \mathbb{P}(y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}^{\beta})\)
 is continuous and non-increasing, with
 \(\mathbb{P}(y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}^{0}) = 1\) and
