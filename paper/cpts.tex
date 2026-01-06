@@ -1389,14 +1389,24 @@ proposed method achieves coverage closer to the target within local
 windows while offering adaptive prediction intervals that adjust
 effectively to varying conditions.
 
-The methods discussed here are limited to ex-post forecasting, operating
-under the assumption that actual values of the exogenous predictors
-during the forecast period are available. In many applications, this may
-not be true and the methods will need to be adapted to allow forecasts
-of the predictors to be used, and the resulting uncertainty to be
-included in the conformal inference. Additionally, our methodology does
-not incorporate an algorithmic approach to tuning the learning rate
-parameter.
+The methods discussed here are restricted to an ex-post forecasting
+setting, where the values of exogenous predictors over the forecast
+horizon are assumed to be observed. In this setting, the width of the
+conformal prediction intervals reflects the combined influence of
+\emph{aleatoric uncertainty}, arising from the inherent andomness in the
+DGP, and \emph{epistemic uncertainty}, stemming from a lack of knowledge
+about the underlying DGP \citep{sale2025}. In many practical forecasting
+scenarios, however, this assumption is violated, as the exogenous
+predictors are themselves subject to forecasting. In such settings, both
+types of uncertainty are amplified and interdependent: aleatoric
+uncertainty expands to include the variability induced by stochastic
+predictor forecasts, while epistemic uncertainty compounds through the
+propagation of uncertainty from the predictor models to the primary
+predictive model. Consequently, conformal inference procedures require
+adaptation to explicitly incorporate and propagate this joint
+uncertainty in order to preserve valid coverage and statistical
+efficiency. Additionally, our methodology does not incorporate an
+algorithmic approach to tuning the learning rate parameter.
 
 These considerations pave the way for numerous avenues for future
 research. Potential directions include the introduction of a
