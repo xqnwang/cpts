@@ -154,6 +154,20 @@
 \widowpenalty=10000
 \clubpenalty=10000
 \brokenpenalty=10000
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -1024,7 +1038,7 @@ long-run coverage for each separate forecast horizon.
 \caption{\label{fig-AR2_cov}AR(2) simulation results showing rolling
 coverage, mean and median interval width for each forecast horizon. The
 displayed curves are smoothed over a rolling window of size \(500\). The
-black dashed line indicates the target level of \(1-\alpha=0.9\).}
+target coverage level is \(1-\alpha=0.9\).}
 
 \end{figure}%
 
@@ -1125,7 +1139,7 @@ variables \(x_{1,t}\) and \(x_{2,t}\).
 \caption{\label{fig-NL_cov}Nonlinear simulation results showing rolling
 coverage, mean and median interval width for each forecast horizon. The
 displayed curves are smoothed over a rolling window of size \(100\). The
-black dashed line indicates the target level of \(1-\alpha=0.9\).}
+target coverage level is \(1-\alpha=0.9\).}
 
 \end{figure}%
 
@@ -1231,8 +1245,7 @@ points for calibration sets.
 \caption{\label{fig-elec_cov}Electricity demand data results showing
 rolling coverage, mean and median interval width for each forecast
 horizon. The displayed curves are smoothed over a rolling window of size
-\(100\). The black dashed line indicates the target level of
-\(1-\alpha=0.9\).}
+\(100\). The target coverage level is \(1-\alpha=0.9\).}
 
 \end{figure}%
 

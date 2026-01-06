@@ -347,7 +347,7 @@ where $\varepsilon_t$ is white noise with error variance $\sigma^2 = 1$. After a
 #| results: hide
 #| fig-width: 8
 #| fig-height: 5.3
-#| fig-cap: AR(2) simulation results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $500$. The black dashed line indicates the target level of $1-\alpha=0.9$.
+#| fig-cap: AR(2) simulation results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $500$. The target coverage level is $1-\alpha=0.9$.
 
 P_AR2_cov <- readRDS(here::here("result/P_AR2_cov2.rds"))
 P_AR2_cov +
@@ -398,7 +398,7 @@ where $x_{1,t}$ and $x_{2,t}$ are uniformly distributed on $[0,1]$, and $\vareps
 #| results: hide
 #| fig-width: 8
 #| fig-height: 5.3
-#| fig-cap: Nonlinear simulation results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $100$. The black dashed line indicates the target level of $1-\alpha=0.9$.
+#| fig-cap: Nonlinear simulation results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $100$. The target coverage level is $1-\alpha=0.9$.
 
 P_NL_cov <- readRDS(here::here("result/P_NL_cov2.rds"))
 P_NL_cov +
@@ -477,7 +477,7 @@ Our response variable is $\texttt{Demand}$, and we use two covariates: $\texttt{
 #| results: hide
 #| fig-width: 11
 #| fig-height: 5.1
-#| fig-cap: Electricity demand data results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $100$. The black dashed line indicates the target level of $1-\alpha=0.9$.
+#| fig-cap: Electricity demand data results showing rolling coverage, mean and median interval width for each forecast horizon. The displayed curves are smoothed over a rolling window of size $100$. The target coverage level is $1-\alpha=0.9$.
 
 P_elec_cov <- readRDS(here::here("result/P_elec_cov2.rds"))
 P_elec_cov +
