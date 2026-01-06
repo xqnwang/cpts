@@ -154,20 +154,6 @@
 \widowpenalty=10000
 \clubpenalty=10000
 \brokenpenalty=10000
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{multirow}
-\usepackage{wrapfig}
-\usepackage{float}
-\usepackage{colortbl}
-\usepackage{pdflscape}
-\usepackage{tabu}
-\usepackage{threeparttable}
-\usepackage{threeparttablex}
-\usepackage[normalem]{ulem}
-\usepackage{makecell}
-\usepackage{xcolor}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -1111,10 +1097,14 @@ mostly overlap with each other. The main differences occur around the
 time 1320 and during the period 1470-1500, where AcMCP tends to have a
 fanning-out effect, increasing the interval width as the forecast
 horizon increases, compared to MPI. Figure~\ref{fig-AR2_timeplot} also
-presents the prediction interval bounds given by MACP. The prediction
-intervals of both AcMCP and MACP can capture certain patterns in the
-actual observations, and there is no consistent pattern indicating
-dominance of one method over the other in terms of interval width.
+presents the prediction interval bounds given by MACP. Since both MACP
+and AcMCP rely on past miscoverage information to update prediction
+intervals, we include MACP to support a direct comparison of their
+resulting prediction intervals while preserving a clear and concise
+presentation. The prediction intervals of both AcMCP and MACP can
+capture certain patterns in the actual observations, and there is no
+consistent pattern indicating dominance of one method over the other in
+terms of interval width.
 
 \subsection{Simulated nonlinear autoregressive
 process}\label{simulated-nonlinear-autoregressive-process}
@@ -1183,10 +1173,16 @@ the data distribution. They widen intervals in response to undercoverage
 and narrow them when overcoverage occurs. Notably, MPID and AcMCP
 demonstrate greater adaptability, displaying higher variability in
 interval widths compared to competing methods in order to uphold the
-desired coverage. AcMCP intervals are evidently narrower than MPID
-intervals for \(2\)-step-ahead forecasting but wider for
-\(3\)-step-ahead forecasting. AcMCP intervals appear to be more
-reasonable, as they tend to widen with increasing forecast horizons.
+desired coverage. The outcome of the rolling mean and median interval
+widths indicates that AcMCP produces generally narrower prediction
+intervals than MPID for \(2\)-step-ahead forecasts, while producing
+wider intervals for \(3\)-step-ahead forecasts. Furthermore, under
+AcMCP, the prediction interval width at horizon \(h=3\) exceeds that at
+\(h=2\) in \(53.41\%\) of the test cases, compared with only \(38.08\%\)
+under MPID. This pattern suggests that AcMCP may have more plausible
+interval behavior, as forecast uncertainty typically increases with the
+forecast horizon, leading to a greater tendency for wider prediction
+intervals.
 
 We provide further insights into the performance of these conformal
 prediction methods by presenting boxplots of the rolling coverage and
@@ -1293,7 +1289,7 @@ Third, MPI, MPID, and AcMCP offer prediction intervals that are wider
 than those of other conformal prediction methods, effectively mitigating
 or avoiding the undercoverage issue observed after September 2014.
 Additionally, we notice that MPID performs slightly worse than MPI and
-AcMCP in terms of coverage for \(h=3,4,7\), despite leading to wider
+AcMCP in terms of coverage for \(h=3\), despite leading to wider
 intervals. Finally, MPI and AcMCP coverage display similar pattern, but
 AcMCP is capable of constructing narrower intervals than MPI.
 
@@ -1352,18 +1348,20 @@ not compute rolling coverage and interval width in this experiment, but
 rather compute the coverage and interval width averaged over the entire
 test set.
 
-We summarise the average coverage and interval width for each method and
-each forecast horizon in Figure~\ref{fig-cafe_cov}. The results first
-show that MSCP, MWCP and MACP provide valid prediction intervals for
-smaller forecast horizon but fail to achieve the desired coverage for
-larger forecast horizons (\(h>5\)). Second, for \(h \leq 5\), MPI and
-AcMCP can approximately achieve the desired coverage and provide
-comparable mean interval widths with other methods, except for MPID.
-Third, the coverage of MSCP, MWCP and MACP declines gradually as the
-forecast horizon increases, while MPI and AcMCP maintain coverage within
-a tighter range, albeit at the cost of interval efficiency. Lastly,
-compared to MPI, AcMCP exhibits slightly less deviation from the desired
-coverage across most forecast horizons.
+As the forecast horizons considered in this application are relatively
+long, we summarize performance in Figure~\ref{fig-cafe_cov} by reporting
+the average coverage and average interval width across the whole test
+set for each method and each forecast horizon. The results first show
+that MSCP, MWCP and MACP provide valid prediction intervals for smaller
+forecast horizon but fail to achieve the desired coverage for larger
+forecast horizons (\(h>5\)). Second, for \(h \leq 5\), MPI and AcMCP can
+approximately achieve the desired coverage and provide comparable mean
+interval widths with other methods, except for MPID. Third, the coverage
+of MSCP, MWCP and MACP declines gradually as the forecast horizon
+increases, while MPI and AcMCP maintain coverage within a tighter range,
+albeit at the cost of interval efficiency. Lastly, compared to MPI,
+AcMCP exhibits slightly less deviation from the desired coverage across
+most forecast horizons.
 
 \begin{figure}
 
