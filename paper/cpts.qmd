@@ -175,13 +175,17 @@ In this section, we apply the online learning framework outlined in @sec-setup t
 
 ### Online multi-step split conformal prediction
 
-Split conformal prediction [SCP, also called inductive conformal prediction, @papadopoulos2002; @vovk2005; @lei2018], is a holdout method for building prediction intervals using a pre-trained model on a training set. A key advantage of SCP is its ability to guarantee coverage by assuming data exchangeability. Time series data are inherently nonexchangeable due to their temporal dependence and autocorrelation. Therefore, directly applying SCP to time series data would violate the method's exchangeability assumption and compromise its coverage guarantee.
+Split conformal prediction [SCP, also called inductive conformal prediction, @papadopoulos2002; @vovk2005; @lei2018], is a holdout method for building prediction intervals using a pre-trained model on a training set. A key advantage of SCP is its ability to guarantee coverage by assuming data exchangeability. In regression setting, SCP randomly separates the available $n$ data points, $Z_i = (X_i, Y_i) \in \mathbb{R}^d \times \mathbb{R}$, $i=1,\ldots,n$, into a proper training set of size $n_t$ and a calibration set of size $n_c$. Given a regression model $\hat{\mu}: \mathbb{R}^d \rightarrow \mathbb{R}$ that is fitted on the training set and a score function $\mathcal{S}$, a nonconformity score $s_i = \mathcal{S}\left(X_i, Y_i\right)$ is computed on every data point $i$ in the calibration set to measure the nonconformity between the calibration's response values and the predicted values obtained from the fitted model $\hat{\mu}$. Then SCP computes the prediction interval for the test data $Y_{n+1}$ using
+$$
+\hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right) = \left\{y\in\mathbb{R}: \mathcal{S}\left(X_{n+1}, y\right) \leq Q_{1-\alpha}\left(\sum_{i \in \mathcal{D}_{\text{cal}}}\frac{1}{n_c+1}\cdot\delta_{s_{i}}+\frac{1}{n_c+1}\cdot\delta_{+\infty}\right)\right\},
+$$
+where $\mathrm{Q}_\tau(\cdot)$ denotes the $\tau$-quantile of its argument, and $\delta_a$ denotes the point mass at $a$. Time series data are inherently nonexchangeable due to their temporal dependence and autocorrelation. Therefore, directly applying SCP to time series data would violate the method's exchangeability assumption and compromise its coverage guarantee.
 
 Here we introduce online **multi-step split conformal prediction** (MSCP) as a generalization of SCP to recursively update all $h$-step-ahead prediction intervals over time. MSCP applies conformal inference in an online fashion, updating prediction intervals as new data points are received. Specifically, for each $h \in [H]$, we consider the following simple online update to construct prediction intervals on the test set:
 $$
 \hat{\mathcal{C}}_{t+h|t}^{\alpha} = \Bigg\{y\in\mathbb{R}: s_{t+h|t}^{y} \leq Q_{1-\alpha}\Bigg(\sum_{i=t-t_c+1}^{t}\frac{1}{t_c+1}\cdot\delta_{s_{i|i-h}}+\frac{1}{t_c+1}\cdot\delta_{+\infty}\Bigg)\Bigg\},
 $$ {#eq-mscp}
-where $s_{t+h|t}^{y}:=\mathcal{S}(z_{1:t}, y)$ denotes the $h$-step-ahead nonconformity score calculated at time $t$ using a hypothesized test observation $y$, $Q_\tau(\cdot)$ denotes the $\tau$-quantile of its argument, and $\delta_a$ denotes the point mass at $a$.
+where $s_{t+h|t}^{y}:=\mathcal{S}(z_{1:t}, y)$ denotes the $h$-step-ahead nonconformity score calculated at time $t$ using a hypothesized test observation $y$.
 
 ### Online multi-step weighted conformal prediction
 
