@@ -1282,16 +1282,24 @@ of size \(100\). The DR method corresponds to the analytic intervals
 obtained from the dynamic regression model. First, we observe that DR
 consistently achieves a significantly higher coverage than the \(90\%\)
 target coverage, resulting in much wider intervals than other methods
-for \(h=1,2,3,4\). Second, MSCP, MWCP, and MACP fail to sustain the
-target coverage and noticeably undercover after September 2014 for all
-forecast horizons, thus leading to narrower intervals than others.
-Third, MPI, MPID, and AcMCP offer prediction intervals that are wider
-than those of other conformal prediction methods, effectively mitigating
-or avoiding the undercoverage issue observed after September 2014.
-Additionally, we notice that MPID performs slightly worse than MPI and
-AcMCP in terms of coverage for \(h=3\), despite leading to wider
-intervals. Finally, MPI and AcMCP coverage display similar pattern, but
-AcMCP is capable of constructing narrower intervals than MPI.
+for \(h=1,2,3,4\). While such overcoverage may enhance reliability,
+excessively wide prediction intervals reduce forecast sharpness and can
+lead to overly conservative operational decisions in electricity
+markets, such as inflated reserve procurement and inefficient generation
+scheduling. Second, MSCP, MWCP, and MACP fail to sustain the target
+coverage and noticeably undercover after September 2014 for all forecast
+horizons, thus leading to narrower intervals than others. In electricity
+market applications, such undercoverage implies an underestimation of
+demand uncertainty, increasing the risk of demand exceeding the
+predicted upper bounds and potentially leading to insufficient reserve
+allocation and reliability concerns. Third, MPI, MPID, and AcMCP offer
+prediction intervals that are wider than those of other conformal
+prediction methods, effectively mitigating or avoiding the undercoverage
+issue observed after September 2014. Additionally, we notice that MPID
+performs slightly worse than MPI and AcMCP in terms of coverage for
+\(h=3\), despite leading to wider intervals. Finally, MPI and AcMCP
+coverage display similar pattern, but AcMCP is capable of constructing
+narrower intervals than MPI.
 
 We present the forecast interval bounds for MACP, MPI, and AcMCP in
 Figure~\ref{fig-elec_timeplot}. The plot shows that MACP intervals are
