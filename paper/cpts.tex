@@ -190,9 +190,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{corollary}{Corollary}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -446,7 +446,12 @@ increasing the forecast horizon \(h\) generally leads to greater
 deviations from the target coverage, which aligns with our expectations.
 Finally, we illustrate the practical utility of these proposed methods
 through two simulations and two applications to electricity demand and
-eating-out expenditure forecasting.
+eating-out expenditure forecasting. The results show that the proposed
+AcMCP method adapts effectively to changes in the observed data
+distribution and, among the proposed extensions that achieve coverage
+close to the target level, generally yields more informative and
+narrower prediction intervals, particularly for larger forecast
+horizons.
 
 We developed the \texttt{conformalForecast} package for R to implement
 the proposed multi-step conformal prediction methods, the package is
@@ -1108,12 +1113,13 @@ and results in wider intervals especially when competing methods
 undercover, which is to be expected. In short, AcMCP intervals offer
 greater adaptivity and more precise coverage compared to AR, MSCP, MWCP
 and MACP. Both MPID and AcMCP achieve tight coverage, but AcMCP outputs
-more informative and smaller intervals. This is due to the inclusion of
-a second model (scorecaster) which introduces additional variance into
-the generated prediction intervals. The results can be further
-elucidated with Figure~\ref{fig-AR2_box}, which presents boxplots of
-rolling coverage and interval width for each method and each forecast
-horizon.
+more informative and smaller intervals. The benefits of AcMCP are more
+noticeable when \(h\) grows, and it does not deteriorate for smaller
+\(h\). This improvement can be attributed to the inclusion of a second
+model (scorecaster) which introduces additional variance into the
+generated prediction intervals. The results can be further elucidated
+with Figure~\ref{fig-AR2_box}, which presents boxplots of rolling
+coverage and interval width for each method and each forecast horizon.
 
 \begin{figure}
 
@@ -1362,7 +1368,11 @@ issue observed after September 2014. Additionally, we notice that MPID
 performs slightly worse than MPI and AcMCP in terms of coverage for
 \(h=3\), despite leading to wider intervals. Finally, MPI and AcMCP
 coverage display similar pattern, but AcMCP is capable of constructing
-narrower intervals than MPI.
+narrower intervals than MPI, particularly for larger forecast horizons
+\(h\). Compared with MPID, the advantage of AcMCP is also reflected in
+reduced interval width: its gains become increasingly pronounced as
+\(h\) grows, while its performance does not deteriorate for smaller
+values of \(h\).
 
 We present the forecast interval bounds for MACP, MPI, and AcMCP in
 Figure~\ref{fig-elec_timeplot}. The plot shows that MACP intervals are
