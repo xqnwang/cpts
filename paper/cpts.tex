@@ -191,6 +191,8 @@
 \usepackage{amsthm}
 \theoremstyle{plain}
 \newtheorem{proposition}{Proposition}[section]
+\theoremstyle{plain}
+\newtheorem{corollary}{Corollary}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -283,6 +285,9 @@ quantile estimate
 \setstretch{1.667}
 \renewcommand{\theproposition}{\arabic{proposition}} % numbering propositions sequentially and individually by type and not by section
 \setcounter{proposition}{0}
+
+\renewcommand{\thecorollary}{\arabic{corollary}} % numbering corollaries sequentially and individually
+\setcounter{corollary}{0}
 
 \section{Introduction}\label{sec-intro}
 
@@ -423,22 +428,25 @@ conformal prediction framework and an online learning scheme, which are
 well-suited to the sequential nature of time series data. First, we
 extend several widely used conformal prediction methods that are
 originally designed for single-step forecasting to accommodate
-multi-step forecasting scenarios. Second, we provide theoretical proofs
-demonstrating that the forecast errors of optimal \(h\)-step-ahead
-forecasts approximate a linear combination of at most its lag \((h-1)\)
-with respect to forecast horizon when we assume a general non-stationary
-autoregressive data generating process. Third, we introduce the
-autocorrelated multi-step conformal prediction (AcMCP) method, which
-accounts for the autocorrelations of multi-step forecast errors. Our
-method is proven to achieve long-run coverage guarantees without making
-any assumptions on data distribution shifts. In contrast to
-\citet{lopes2024}, our method targets pointwise prediction intervals for
-each specific forecast horizon, \(h\in[H]\). We also highlight that for
-\(t \ll \infty\), increasing the forecast horizon \(h\) generally leads
-to greater deviations from the target coverage, which aligns with our
-expectations. Finally, we illustrate the practical utility of these
-proposed methods through two simulations and two applications to
-electricity demand and eating-out expenditure forecasting.
+multi-step forecasting scenarios. These extensions do not generally
+provide theoretical long-run coverage guarantees, with the exception of
+the multi-step conformal PID control (MPID) method, which admits such a
+guarantee. Second, we provide theoretical proofs demonstrating that the
+forecast errors of optimal \(h\)-step-ahead forecasts approximate a
+linear combination of at most its lag \((h-1)\) with respect to forecast
+horizon when we assume a general non-stationary autoregressive data
+generating process. Third, we introduce the autocorrelated multi-step
+conformal prediction (AcMCP) method, which accounts for the
+autocorrelations of multi-step forecast errors. Our method is proven to
+achieve long-run coverage guarantees without making any assumptions on
+data distribution shifts. In contrast to \citet{lopes2024}, our method
+targets pointwise prediction intervals for each specific forecast
+horizon, \(h\in[H]\). We also highlight that for \(t \ll \infty\),
+increasing the forecast horizon \(h\) generally leads to greater
+deviations from the target coverage, which aligns with our expectations.
+Finally, we illustrate the practical utility of these proposed methods
+through two simulations and two applications to electricity demand and
+eating-out expenditure forecasting.
 
 We developed the \texttt{conformalForecast} package for R to implement
 the proposed multi-step conformal prediction methods, the package is
@@ -554,7 +562,11 @@ of the key properties of optimal forecast errors, which holds generally
 in linear models, is that the variance of the forecast error
 \(e_{t+h|t}\) is non-decreasing in \(h\)
 \citep{tong1990, diebold1996, patton2007}. Therefore, we need to apply a
-separate conformal prediction procedure for each \(h \in [H]\).
+separate conformal prediction procedure for each \(h \in [H]\). We note
+that the extensions of existing approaches introduced in this section do
+not provide theoretical long-run coverage guarantees, with the exception
+of the multi-step conformal PID control (MPID) method, which admits such
+a guarantee.
 
 \subsection{Online multi-step split conformal
 prediction}\label{online-multi-step-split-conformal-prediction}
@@ -722,7 +734,7 @@ guarantees long-run coverage. More importantly, Equation \eqref{eq-mpid}
 represents a specific instance of Equation \eqref{eq-acmcp_1} that we
 will introduce later, thereby ensuring long-run coverage for each
 individual forecast horizon \(h\) according to
-Proposition~\ref{prp-cov_acmcp}.
+Corollary~\ref{cor-cov_acmcp}.
 
 The P control in MPID shows a delayed correction of the quantile
 estimate for a length of \(h\) periods. The underlying intuition is
@@ -746,6 +758,13 @@ Section~\ref{sec-acmcp} for a detailed discussion) trained using the
 scorecaster is well-designed and there are predictable patterns in the
 nonconformity scores; otherwise, it may increase variability in the
 coverage and prediction intervals.
+
+The MPID method will be improved in Section~\ref{sec-acmcp} by proposing
+the AcMCP method, in which the D control component of MPID is replaced
+by a specific and structured approach to explicitly capture the
+autocorrelations of multi-step forecast errors. As a consequence, the
+long-run coverage guarantees established for AcMCP in
+Section~\ref{sec-cov} also apply to the MPID method.
 
 \section{Autocorrelated multi-step conformal
 prediction}\label{sec-acmcp}
@@ -772,7 +791,8 @@ their methodological construction.
 
 In this section, we will explore the properties of multi-step forecast
 errors and propose a novel conformal prediction method that accounts for
-their autocorrelations.
+their autocorrelations while providing theoretical long-run coverage
+guarantees.
 
 \subsection{Properties of multi-step forecast errors}\label{sec-ppt}
 
@@ -806,6 +826,10 @@ forecast errors are at most serially correlated to lag \((h-1)\).
 
 \end{proposition}
 
+\begin{proof}
+See Section~\ref{sec-proof_ar}.
+\end{proof}
+
 Proposition~\ref{prp-ar} suggests that the optimal \(h\)-step ahead
 forecast error, \(e_{t+h|t}\), is serially correlated with the forecast
 errors from at most the past \(h-1\) steps, i.e.,
@@ -828,10 +852,11 @@ It is well-established in the forecasting literature that, for a
 zero-mean covariance-stationary time series, the optimal linear
 least-squares forecasts have \(h\)-step-ahead errors that are at most
 MA\((h-1)\) process \citep{harvey1997, diebold2024}, a property that can
-be derived using Wold's representation theorem. Here, we extend the
-investigation to time series generated by a general non-stationary
-autoregressive process, and provide the corresponding proposition. The
-proof of this proposition is provided in Section~\ref{sec-proof_ma}.
+be derived using Wold's representation theorem. The statement can be
+extended to time series generated by a general non-stationary
+autoregressive process \citep{sommer2023}, as described in
+Proposition~\ref{prp-ma}. We provide the proof of this proposition in
+Section~\ref{sec-proof_ma} based on Proposition~\ref{prp-ar}.
 
 \begin{proposition}[MA\((h-1)\) process for \(h\)-step-ahead optimal
 forecast errors]\protect\hypertarget{prp-ma}{}\label{prp-ma}
@@ -847,6 +872,10 @@ e_{t+h|t} = \omega_{t+h} + \theta_1\omega_{t+h-1} + \cdots + \theta_{h-1}\omega_
 }\end{equation} where \(\omega_{t}\) is white noise.
 
 \end{proposition}
+
+\begin{proof}
+See Section~\ref{sec-proof_ma}.
+\end{proof}
 
 \subsection{The AcMCP method}\label{sec-novel}
 
@@ -889,7 +918,7 @@ to forecast the nonconformity scores themselves, but to incorporate the
 autocorrelation structure of multi-step forecast errors into the
 construction of the resulting prediction intervals.
 
-\subsection{Coverage guarantees}\label{coverage-guarantees}
+\subsection{Coverage guarantees}\label{sec-cov}
 
 \begin{proposition}[]\protect\hypertarget{prp-cov_rt}{}\label{prp-cov_rt}
 
@@ -910,16 +939,25 @@ correct long-run coverage; i.e.,
 
 \end{proposition}
 
-Proposition~\ref{prp-cov_rt} indicates that, for \(T \ll \infty\),
-increasing the forecast horizon \(h\) tends to amplify deviations from
-the target coverage because \(g(T-h)/(T-h)\) is non-increasing, given
-that the admissible function \(g\) is sublinear, nonnegative, and
-nondecreasing. This is consistent with expectations, as extending the
-forecast horizon generally increases forecast uncertainty. As
-predictions extend further into the future, more factors contribute to
-variability and uncertainty. In this case, conformal prediction
-intervals may not scale perfectly with the increasing uncertainty,
-leading to a larger discrepancy between the desired and actual coverage.
+\begin{proof}
+See Section~\ref{sec-proof_cov_rt}.
+\end{proof}
+
+When \(h=1\), Proposition~\ref{prp-cov_rt} reduces to Proposition 2 of
+\citet{angelopoulos2024}. While \citet{angelopoulos2024} only consider
+one-step-ahead forecasting, Proposition~\ref{prp-cov_rt} in this paper
+is more general and establishes an explicit upper bound on the coverage
+gap for multi-step forecasting. Proposition~\ref{prp-cov_rt} indicates
+that, for \(T \ll \infty\), increasing the forecast horizon \(h\) tends
+to amplify deviations from the target coverage because \(g(T-h)/(T-h)\)
+is non-increasing, given that the admissible function \(g\) is
+sublinear, nonnegative, and nondecreasing. This is consistent with
+expectations, as extending the forecast horizon generally increases
+forecast uncertainty. As predictions extend further into the future,
+more factors contribute to variability and uncertainty. In this case,
+conformal prediction intervals may not scale perfectly with the
+increasing uncertainty, leading to a larger discrepancy between the
+desired and actual coverage.
 
 The quantile iteration
 \(q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)\) can be
@@ -928,7 +966,7 @@ Proposition~\ref{prp-cov_rt} if we set \(q_{2h|h}=0\) without losing
 generality. Thus, its coverage bounds can be easily derived as a result
 of Proposition~\ref{prp-cov_rt}.
 
-\begin{proposition}[]\protect\hypertarget{prp-cov_qt}{}\label{prp-cov_qt}
+\begin{corollary}[]\protect\hypertarget{cor-cov_qt}{}\label{cor-cov_qt}
 
 Let \(\{s_{t+h|t}\}_{t\in\mathbb{N}}\) be any sequence of numbers in
 \([-b, b]\) for any \(h\in[H]\), where \(b>0\), and may be infinite.
@@ -942,7 +980,16 @@ Therefore the prediction intervals obtained by the iteration yield the
 correct long-run coverage; i.e.,
 \(\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha\).
 
-\end{proposition}
+\end{corollary}
+
+\begin{proof}
+See Section~\ref{sec-proof_cov_qt}.
+\end{proof}
+
+When \(h=1\), Corollary~\ref{cor-cov_qt} reduces to Proposition 1 of
+\citet{angelopoulos2024}, while Corollary~\ref{cor-cov_qt} extends this
+result to a more general multi-step setting and establishes an explicit
+upper bound on the coverage gap for multi-step forecasting.
 
 More importantly, Proposition~\ref{prp-cov_rt} is also adequate for
 establishing the coverage guarantee of the proposed AcMCP method given
@@ -959,7 +1006,7 @@ will recover Equation \eqref{eq-acmcp}. We can consider
 on available historical data. We then present the coverage guarantee for
 AcMCP given by Equation \eqref{eq-acmcp_1}.
 
-\begin{proposition}[]\protect\hypertarget{prp-cov_acmcp}{}\label{prp-cov_acmcp}
+\begin{corollary}[]\protect\hypertarget{cor-cov_acmcp}{}\label{cor-cov_acmcp}
 
 Let \(\{\hat{q}_{t+h|t}\}_{t\in\mathbb{N}}\) be any sequence of numbers
 in \([-\frac{b}{2}, \frac{b}{2}]\), and
@@ -971,7 +1018,11 @@ prediction intervals obtained by the AcMCP iteration given by Equation
 \eqref{eq-acmcp_1} yield the correct long-run coverage; i.e.,
 \(\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha\).
 
-\end{proposition}
+\end{corollary}
+
+\begin{proof}
+See Section~\ref{sec-proof_cov_acmcp}.
+\end{proof}
 
 \section{Experiments}\label{experiments}
 
@@ -1520,7 +1571,7 @@ Proposition~\ref{prp-ma}}{Proof of Proposition~}}\label{sec-proof_ma}
 
 \begin{proof}
 Here, we give the proof of Proposition~\ref{prp-ma} based on
-Proposition~\ref{prp-ar}; the idea is motivated by \citet{sommer2023}.
+Proposition~\ref{prp-ar}.
 
 Based on Proposition~\ref{prp-ar} and its proof, we have \begin{align*}
 e_{t+1|t} &= \omega_{t+1} \\
@@ -1609,7 +1660,7 @@ function \(g\). Hence the second part holds trivially.
 \end{proof}
 
 \subsection{\texorpdfstring{Proof of
-Proposition~\ref{prp-cov_qt}}{Proof of Proposition~}}\label{sec-proof_cov_qt}
+Corollary~\ref{cor-cov_qt}}{Proof of Corollary~}}\label{sec-proof_cov_qt}
 
 \begin{proof}
 We set \(q_{2h|h}=0\) without losing generality, the iteration
@@ -1623,7 +1674,7 @@ desired result.
 \end{proof}
 
 \subsection{\texorpdfstring{Proof of
-Proposition~\ref{prp-cov_acmcp}}{Proof of Proposition~}}\label{sec-proof_cov_acmcp}
+Corollary~\ref{cor-cov_acmcp}}{Proof of Corollary~}}\label{sec-proof_cov_acmcp}
 
 \begin{proof}
 Let \(q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}\), then Equation
