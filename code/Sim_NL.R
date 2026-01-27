@@ -51,6 +51,7 @@ nnar_model <- function(x, h, level, xreg, newxreg) {
 fc <- cvforecast(y, forecastfun = nnar_model, h = horizon, level = NULL,
                  forward = forward, xreg = exog_data, window = fit_window)
 # saveRDS(fc, file = "result/NL_fc.rds")
+# fc <- readRDS("result/NL_fc.rds")
 
 # MSCP
 mscp <- scp(fc, alpha = 1 - 0.01 * level,
@@ -68,6 +69,21 @@ gamma <- 0.005
 macp <- acp(fc, alpha = 1 - 0.01 * level,
             symmetric = symmetric, gamma = gamma,
             ncal = cal_window, rolling = rolling)
+## imputing infinite intervals with the largest score seen so far
+if (any(is.infinite(macp$UPPER[[paste0(level, "%")]]))) {
+  upper_target <- macp$UPPER[[paste0(level, "%")]]
+  for (j in 1:horizon) {
+    prev_max <- NA_real_
+    for (i in 1:NROW(upper_target)) {
+      if (is.finite(upper_target[i,j])) {
+        prev_max <- max(prev_max, upper_target[i, j], na.rm = TRUE)
+      } else if (is.infinite(upper_target[i,j])) {
+        upper_target[i,j] <- prev_max
+      }
+    }
+  }
+  macp$UPPER[[paste0(level, "%")]] <- upper_target
+}
 
 # MPID
 Tg <- 1000

@@ -55,6 +55,7 @@ comb_model <- function(x, h, level) {
 fc <- cvforecast(cafe, forecastfun = comb_model, h = horizon, level = NULL,
                  forward = forward, window = fit_window)
 # saveRDS(fc, file = "result/cafe_fc.rds")
+# fc <- readRDS("result/cafe_fc.rds")
 
 # MSCP
 mscp <- scp(fc, alpha = 1 - 0.01 * level,
