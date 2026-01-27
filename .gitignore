@@ -4,6 +4,7 @@
 refs/*
 *_files/
 *_fc.rds
+*_workspace.RData
 
 # History files
 .Rhistory
