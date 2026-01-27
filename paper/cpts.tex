@@ -190,9 +190,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{corollary}{Corollary}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -1571,11 +1571,20 @@ These considerations pave the way for numerous avenues for future
 research. A natural extension of the proposed method is to further
 improve the efficiency of the resulting prediction intervals while
 preserving their coverage guarantees, with the goal of producing
-intervals that are as narrow as possible. Another important direction
-concerns the development of refined methodologies for ex-ante
-forecasting settings, where uncertainty arising from forecasting the
-predictors themselves should be incorporated into the conformal
-inference framework.
+intervals that are as narrow as possible. In this work, we restrict
+attention to baseline methods that admit efficient online implementation
+through simple weighting or updating schemes, and thus are well suited
+for multi-step conformal prediction in practice. Methods such as Bellman
+conformal inference \citep{yang2024ts}, which involve solving an
+optimization problem at each time step to explicitly trade off interval
+length and miscoverage, are not considered due to their substantially
+higher computational cost. Exploring how such optimization-based ideas
+can be integrated with the proposed methods to further narrow the
+resulting prediction intervals, while preserving coverage guarantees, is
+left for future work. Another important direction concerns the
+development of refined methodologies for ex-ante forecasting settings,
+where uncertainty arising from forecasting the predictors themselves
+should be incorporated into the conformal inference framework.
 
 % \newpage
 \appendix
