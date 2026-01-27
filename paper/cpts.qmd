@@ -497,6 +497,25 @@ P_elec_data
 
 Our response variable is $\texttt{Demand}$, and we use two covariates: $\texttt{Temperature}$, and $\texttt{Workday}$ (an indicator variable for if the day was a working day or not). Following @hyndman2021, we will fit a dynamic regression model with a piecewise linear function of temperature (containing a knot at $18$ degrees) to generate $1$- to $7$-step-ahead point forecasts (i.e. $H=7$). The error series in the regression is assumed to follow an ARIMA model to contain autocorrelation. We use two years of data as training sets to fit dynamic regression models, and use $100$ data points for calibration sets.
 
+````{=html}
+<!--#
+@fig-elec_winkler presents Winkler scores of each method across different forecast horizons. DR and MPID consistently perform worse in terms of Winkler scores. For $1$-, $2$-, and $3$-step ahead forecasting, MPI and AcMCP deliver comparable or even better results than MSCP, MWCP, and MACP, while still providing more precise coverage. For $4$-, $5$-, $6$-, and $7$-step ahead forecasting, MPI and AcMCP yield much larger Winkler scores than other conformal prediction methods, whereas the competing methods suffer from severe undercoverage issues. Thus, MPI and AcMCP are able to provide valid prediction intervals. We also notice that AcMCP outperforms MPI for $h=6$ and $h=7$, where both methods offer similar coverage.
+
+```{r}
+#| label: fig-elec_winkler
+#| results: hide
+#| fig-width: 5
+#| fig-height: 3
+#| fig-cap: Electricity demand data results showing Winkler scores of each method across different forecast horizons.
+
+P_elec_winkler <- readRDS(here::here("result/P_elec_winkler.rds"))
+P_elec_winkler
+```
+-->
+````
+
+We present the results in @fig-elec_cov and @fig-elec_box, comparing the rolling coverage and interval width of each method. These computations are based on a rolling window of size $100$. The DR method corresponds to the analytic intervals obtained from the dynamic regression model. First, we observe that DR consistently achieves a significantly higher coverage than the $90\%$ target coverage, resulting in much wider intervals than other methods for $h=1,2,3,4$. While such overcoverage may enhance reliability, excessively wide prediction intervals reduce forecast sharpness and can lead to overly conservative operational decisions in electricity markets, such as inflated reserve procurement and inefficient generation scheduling. Second, MSCP, MWCP, and MACP fail to sustain the target coverage and noticeably undercover after September 2014 for all forecast horizons, thus leading to narrower intervals than others. In electricity market applications, such undercoverage implies an underestimation of demand uncertainty, increasing the risk of demand exceeding the predicted upper bounds and potentially leading to insufficient reserve allocation and reliability concerns. Third, MPI, MPID, and AcMCP offer prediction intervals that are wider than those of other conformal prediction methods, effectively mitigating or avoiding the undercoverage issue observed after September 2014. Additionally, we notice that MPID performs slightly worse than MPI and AcMCP in terms of coverage for $h=3$, despite leading to wider intervals. Finally, MPI and AcMCP coverage display similar pattern, but AcMCP is capable of constructing narrower intervals than MPI, particularly for larger forecast horizons $h$. Compared with MPID, the advantage of AcMCP is also reflected in reduced interval width: its gains become increasingly pronounced as $h$ grows, while its performance does not deteriorate for smaller values of $h$.
+
 ```{r}
 #| label: fig-elec_cov
 #| fig-pos: "!hbtp"
@@ -522,6 +541,9 @@ P_elec_box <- readRDS(here::here("result/P_elec_box.rds"))
 P_elec_box
 ```
 
+<!--
+We present the forecast interval bounds for MACP, MPI, and AcMCP in @fig-elec_timeplot. The plot shows that MACP intervals are too narrow to adequately hug the true values, particularly from September to November 2014. In contrast, MPI and AcMCP perform better by widening their intervals, resulting in narrower swings away from the $90\%$ target level. The differences between MPI and AcMCP prediction intervals are most pronounced in the $5$-, $6$-, and $7$-step-ahead forecast results. For $5$-step-ahead forecasting, from May to July 2014, the upper bounds of MPI intervals struggle to capture the true values. AcMCP addresses this undercoverage by construct larger upper bounds. In August and September, AcMCP constructs smaller upper bounds than MPI while still capturing the true values effectively. For $6$-step-ahead forecasting from May to July, AcMCP offers smaller upper bounds than MPI, which provides upper bounds that are far away from the truth. Similar reaction is observed for $7$-step-ahead forecasting during August and September.
+
 ```{r}
 #| label: fig-elec_timeplot
 #| results: hide
@@ -533,27 +555,7 @@ P_elec_timeplot <- readRDS(here::here("result/P_elec_timeplot.rds"))
 P_elec_timeplot +
   theme(legend.box.margin = margin(-13, -10, -10, -10))
 ```
-
-````{=html}
-<!--#
-@fig-elec_winkler presents Winkler scores of each method across different forecast horizons. DR and MPID consistently perform worse in terms of Winkler scores. For $1$-, $2$-, and $3$-step ahead forecasting, MPI and AcMCP deliver comparable or even better results than MSCP, MWCP, and MACP, while still providing more precise coverage. For $4$-, $5$-, $6$-, and $7$-step ahead forecasting, MPI and AcMCP yield much larger Winkler scores than other conformal prediction methods, whereas the competing methods suffer from severe undercoverage issues. Thus, MPI and AcMCP are able to provide valid prediction intervals. We also notice that AcMCP outperforms MPI for $h=6$ and $h=7$, where both methods offer similar coverage.
-
-```{r}
-#| label: fig-elec_winkler
-#| results: hide
-#| fig-width: 5
-#| fig-height: 3
-#| fig-cap: Electricity demand data results showing Winkler scores of each method across different forecast horizons.
-
-P_elec_winkler <- readRDS(here::here("result/P_elec_winkler.rds"))
-P_elec_winkler
-```
 -->
-````
-
-We present the results in @fig-elec_cov and @fig-elec_box, comparing the rolling coverage and interval width of each method. These computations are based on a rolling window of size $100$. The DR method corresponds to the analytic intervals obtained from the dynamic regression model. First, we observe that DR consistently achieves a significantly higher coverage than the $90\%$ target coverage, resulting in much wider intervals than other methods for $h=1,2,3,4$. While such overcoverage may enhance reliability, excessively wide prediction intervals reduce forecast sharpness and can lead to overly conservative operational decisions in electricity markets, such as inflated reserve procurement and inefficient generation scheduling. Second, MSCP, MWCP, and MACP fail to sustain the target coverage and noticeably undercover after September 2014 for all forecast horizons, thus leading to narrower intervals than others. In electricity market applications, such undercoverage implies an underestimation of demand uncertainty, increasing the risk of demand exceeding the predicted upper bounds and potentially leading to insufficient reserve allocation and reliability concerns. Third, MPI, MPID, and AcMCP offer prediction intervals that are wider than those of other conformal prediction methods, effectively mitigating or avoiding the undercoverage issue observed after September 2014. Additionally, we notice that MPID performs slightly worse than MPI and AcMCP in terms of coverage for $h=3$, despite leading to wider intervals. Finally, MPI and AcMCP coverage display similar pattern, but AcMCP is capable of constructing narrower intervals than MPI, particularly for larger forecast horizons $h$. Compared with MPID, the advantage of AcMCP is also reflected in reduced interval width: its gains become increasingly pronounced as $h$ grows, while its performance does not deteriorate for smaller values of $h$.
-
-We present the forecast interval bounds for MACP, MPI, and AcMCP in @fig-elec_timeplot. The plot shows that MACP intervals are too narrow to adequately hug the true values, particularly from September to November 2014. In contrast, MPI and AcMCP perform better by widening their intervals, resulting in narrower swings away from the $90\%$ target level. The differences between MPI and AcMCP prediction intervals are most pronounced in the $5$-, $6$-, and $7$-step-ahead forecast results. For $5$-step-ahead forecasting, from May to July 2014, the upper bounds of MPI intervals struggle to capture the true values. AcMCP addresses this undercoverage by construct larger upper bounds. In August and September, AcMCP constructs smaller upper bounds than MPI while still capturing the true values effectively. For $6$-step-ahead forecasting from May to July, AcMCP offers smaller upper bounds than MPI, which provides upper bounds that are far away from the truth. Similar reaction is observed for $7$-step-ahead forecasting during August and September.
 
 ### Eating out expenditure data
 
@@ -573,7 +575,7 @@ P_cafe_data
 
 We consider three models: ARIMA with logarithmic transformation, ETS, and STL-ETS [@hyndman2021], and then output their simple average as final point forecasts. STL-ETS involves forecasting using the STL decomposition method, applying ETS to forecast the seasonally adjusted series. All three models can be automatically trained using the `forecast` R package [@hyndman2024]. Our goal is to forecast $12$ months ahead, i.e. $H=12$. We use $20$ years of data for training the models and $5$ years of data for calibration sets. The whole test set only has a length of $152$ months. Therefore, we will not compute rolling coverage and interval width in this experiment, but rather compute the coverage and interval width averaged over the entire test set.
 
-As the forecast horizons considered in this application are relatively long, we summarize performance in @fig-cafe_cov by reporting the average coverage and average interval width across the whole test set for each method and each forecast horizon. The results first show that MSCP, MWCP and MACP provide valid prediction intervals for smaller forecast horizon but fail to achieve the desired coverage for larger forecast horizons ($h>5$). Second, for $h \leq 5$, MPI and AcMCP can approximately achieve the desired coverage and provide comparable mean interval widths with other methods, except for MPID. Third, the coverage of MSCP, MWCP and MACP declines gradually as the forecast horizon increases, while MPI and AcMCP maintain coverage within a tighter range, albeit at the cost of interval efficiency. Lastly, compared to MPI, AcMCP exhibits slightly less deviation from the desired coverage across most forecast horizons.
+As the forecast horizons considered in this application are relatively long, we summarize performance in @fig-cafe_cov by reporting the average coverage gap and average interval width across the whole test set for each method and each forecast horizon. The results first show that MSCP, MWCP and MACP provide valid prediction intervals for smaller forecast horizon but fail to achieve the desired coverage for larger forecast horizons ($h>5$). Second, for $h \leq 5$, MPI and AcMCP can approximately achieve the desired coverage and provide comparable mean interval widths with other methods, except for MPID. Third, the coverage of MSCP, MWCP and MACP declines gradually as the forecast horizon increases, while MPI and AcMCP maintain coverage within a tighter range, albeit at the cost of interval efficiency. Lastly, compared to MPI, AcMCP exhibits slightly less deviation from the desired coverage across most forecast horizons.
 
 ```{r}
 #| label: fig-cafe_cov

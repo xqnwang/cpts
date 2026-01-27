@@ -190,9 +190,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{corollary}{Corollary}[section]
-\theoremstyle{plain}
 \newtheorem{proposition}{Proposition}[section]
+\theoremstyle{plain}
+\newtheorem{corollary}{Corollary}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -1299,51 +1299,6 @@ an ARIMA model to contain autocorrelation. We use two years of data as
 training sets to fit dynamic regression models, and use \(100\) data
 points for calibration sets.
 
-\begin{figure}[!hbtp]
-
-\centering{
-
-\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-elec_cov-1.pdf}}
-
-}
-
-\caption{\label{fig-elec_cov}Electricity demand data results showing
-rolling coverage, mean and median interval width for each forecast
-horizon. The displayed curves are smoothed over a rolling window of size
-\(100\). The target coverage level is \(1-\alpha=0.9\).}
-
-\end{figure}%
-
-\begin{figure}[!hbtp]
-
-\centering{
-
-\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-elec_box-1.pdf}}
-
-}
-
-\caption{\label{fig-elec_box}Electricity demand data results showing
-boxplots of the rolling coverage and interval width for each method
-across different forecast horizons. The red dashed lines show the target
-coverage level, while the blue dashed lines indicate the median interval
-width of the AcMCP method.}
-
-\end{figure}%
-
-\begin{figure}
-
-\centering{
-
-\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-elec_timeplot-1.pdf}}
-
-}
-
-\caption{\label{fig-elec_timeplot}Electricity demand data results
-showing the forecast interval bounds for MACP, MPI, and AcMCP over the
-whole test set.}
-
-\end{figure}%
-
 We present the results in Figure~\ref{fig-elec_cov} and
 Figure~\ref{fig-elec_box}, comparing the rolling coverage and interval
 width of each method. These computations are based on a rolling window
@@ -1374,22 +1329,36 @@ reduced interval width: its gains become increasingly pronounced as
 \(h\) grows, while its performance does not deteriorate for smaller
 values of \(h\).
 
-We present the forecast interval bounds for MACP, MPI, and AcMCP in
-Figure~\ref{fig-elec_timeplot}. The plot shows that MACP intervals are
-too narrow to adequately hug the true values, particularly from
-September to November 2014. In contrast, MPI and AcMCP perform better by
-widening their intervals, resulting in narrower swings away from the
-\(90\%\) target level. The differences between MPI and AcMCP prediction
-intervals are most pronounced in the \(5\)-, \(6\)-, and
-\(7\)-step-ahead forecast results. For \(5\)-step-ahead forecasting,
-from May to July 2014, the upper bounds of MPI intervals struggle to
-capture the true values. AcMCP addresses this undercoverage by construct
-larger upper bounds. In August and September, AcMCP constructs smaller
-upper bounds than MPI while still capturing the true values effectively.
-For \(6\)-step-ahead forecasting from May to July, AcMCP offers smaller
-upper bounds than MPI, which provides upper bounds that are far away
-from the truth. Similar reaction is observed for \(7\)-step-ahead
-forecasting during August and September.
+\begin{figure}[!hbtp]
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-elec_cov-1.pdf}}
+
+}
+
+\caption{\label{fig-elec_cov}Electricity demand data results showing
+rolling coverage, mean and median interval width for each forecast
+horizon. The displayed curves are smoothed over a rolling window of size
+\(100\). The target coverage level is \(1-\alpha=0.9\).}
+
+\end{figure}%
+
+\begin{figure}[!hbtp]
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{cpts_files/figure-pdf/fig-elec_box-1.pdf}}
+
+}
+
+\caption{\label{fig-elec_box}Electricity demand data results showing
+boxplots of the rolling coverage and interval width for each method
+across different forecast horizons. The red dashed lines show the target
+coverage level, while the blue dashed lines indicate the median interval
+width of the AcMCP method.}
+
+\end{figure}%
 
 \subsection{Eating out expenditure
 data}\label{eating-out-expenditure-data}
@@ -1431,18 +1400,18 @@ test set.
 
 As the forecast horizons considered in this application are relatively
 long, we summarize performance in Figure~\ref{fig-cafe_cov} by reporting
-the average coverage and average interval width across the whole test
-set for each method and each forecast horizon. The results first show
-that MSCP, MWCP and MACP provide valid prediction intervals for smaller
-forecast horizon but fail to achieve the desired coverage for larger
-forecast horizons (\(h>5\)). Second, for \(h \leq 5\), MPI and AcMCP can
-approximately achieve the desired coverage and provide comparable mean
-interval widths with other methods, except for MPID. Third, the coverage
-of MSCP, MWCP and MACP declines gradually as the forecast horizon
-increases, while MPI and AcMCP maintain coverage within a tighter range,
-albeit at the cost of interval efficiency. Lastly, compared to MPI,
-AcMCP exhibits slightly less deviation from the desired coverage across
-most forecast horizons.
+the average coverage gap and average interval width across the whole
+test set for each method and each forecast horizon. The results first
+show that MSCP, MWCP and MACP provide valid prediction intervals for
+smaller forecast horizon but fail to achieve the desired coverage for
+larger forecast horizons (\(h>5\)). Second, for \(h \leq 5\), MPI and
+AcMCP can approximately achieve the desired coverage and provide
+comparable mean interval widths with other methods, except for MPID.
+Third, the coverage of MSCP, MWCP and MACP declines gradually as the
+forecast horizon increases, while MPI and AcMCP maintain coverage within
+a tighter range, albeit at the cost of interval efficiency. Lastly,
+compared to MPI, AcMCP exhibits slightly less deviation from the desired
+coverage across most forecast horizons.
 
 \begin{figure}
 
