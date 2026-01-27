@@ -358,7 +358,7 @@ We examine the empirical performance of the proposed multi-step conformal predic
 (b) for the MWCP method, we use $b=0.99$ as per @barber2023;
 (c) following @angelopoulos2024, we use a step size parameter of $\gamma=0.005$ for the MACP method, a Theta model as the scorecaster in the MPID method, and a learning rate of $\eta=0.01\hat{B}_t$ for quantile tracking in the MPID and AcMCP methods, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1},\dots,s_{t|t-h}\}$ is the highest score over a tailing window and the window length $\Delta$ is set to be same as the length of the calibration set;
 (d) we adopt a nonlinear saturation function defined as $r_t(x)=K_1 \tan \left(x \log (t) / (t C_{\text {sat }})\right)$, where $\tan (x)=\operatorname{sign}(x) \cdot \infty$ for $x \notin[-\pi / 2, \pi / 2]$, and constants $C_{\text {sat }}, K_{\mathrm{I}}>0$ are chosen heuristically, as suggested by @angelopoulos2024;
-(e) we consider a clipped version of MACP by imputing infinite intervals with the largest score seen so far.
+(e) we consider a clipped version of MACP by imputing infinite intervals with the largest score seen so far. For the remaining conformal prediction methods, infinitely wide prediction intervals do not arise by design, and therefore no clipping is required.
 
 ### Simulated linear autoregressive process
 
