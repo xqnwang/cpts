@@ -190,9 +190,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{corollary}{Corollary}[section]
-\theoremstyle{plain}
 \newtheorem{proposition}{Proposition}[section]
+\theoremstyle{plain}
+\newtheorem{corollary}{Corollary}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -260,17 +260,16 @@ autoregressive data generating process. To leverage these properties, we
 propose the Autocorrelated Multi-step Conformal Prediction (AcMCP)
 method, which effectively incorporates autocorrelations in multi-step
 forecast errors, resulting in more statistically efficient prediction
-intervals. This method ensures theoretical long-run coverage guarantees
-for multi-step prediction intervals, though we note that increased
-forecasting horizons may exacerbate deviations from the target coverage,
-particularly in the context of limited sample sizes. Additionally, we
-extend several easy-to-implement conformal prediction methods,
-originally designed for single-step forecasting, to accommodate
-multi-step scenarios. Through empirical evaluations, including
-simulations and applications to data, we demonstrate that AcMCP achieves
-coverage that closely aligns with the target within local windows, while
-providing adaptive prediction intervals that effectively respond to
-varying conditions.
+intervals. This method guarantees asymptotic marginal coverage for
+multi-step prediction intervals, though we note that, for finite
+samples, the coverage error admits an upper bound that increases with
+the forecasting horizon. Additionally, we extend several
+easy-to-implement conformal prediction methods, originally designed for
+single-step forecasting, to accommodate multi-step scenarios. Through
+empirical evaluations, including simulations and applications to data,
+we demonstrate that AcMCP achieves coverage that closely aligns with the
+target within local windows, while providing adaptive prediction
+intervals that effectively respond to varying conditions.
 \end{abstract}
 
 \noindent%
@@ -376,9 +375,9 @@ discussed by \citet{bhatnagar2023}, \citet{angelopoulos2024}, and
 
 Existing conformal prediction methods for time series primarily focus on
 single-step forecasting. However, many applications require forecasts
-for multiple future time steps, not just one. Related research into
-multi-step time series forecasting is limited and does not account for
-the temporal dependencies inherent in multi-step forecasts. For example,
+for multiple future time steps, not just one. Related research on
+multi-step forecasting remains limited and often fails to consider how
+forecasts at different horizons are related. For example,
 \citet{stankeviciute2021} integrate conformal prediction with recurrent
 neural networks for multi-step forecasting and then apply Bonferroni
 correction to achieve the desired coverage rate. This approach, however,
@@ -438,12 +437,11 @@ horizon when we assume a general non-stationary autoregressive data
 generating process. Third, we introduce the autocorrelated multi-step
 conformal prediction (AcMCP) method, which accounts for the
 autocorrelations of multi-step forecast errors. Our method is proven to
-achieve long-run coverage guarantees without making any assumptions on
-data distribution shifts. In contrast to \citet{lopes2024}, our method
-targets pointwise prediction intervals for each specific forecast
-horizon, \(h\in[H]\). We also highlight that for \(t \ll \infty\),
-increasing the forecast horizon \(h\) generally leads to greater
-deviations from the target coverage, which aligns with our expectations.
+guarantee asymptotic marginal coverage for multi-step prediction
+intervals, with the coverage gap converging to zero as the sample size
+increases, without making any assumptions on data distribution shifts.
+In contrast to \citet{lopes2024}, our method targets pointwise
+prediction intervals for each specific forecast horizon, \(h\in[H]\).
 Finally, we illustrate the practical utility of these proposed methods
 through two simulations and two applications to electricity demand and
 eating-out expenditure forecasting. The results show that the proposed
@@ -954,15 +952,17 @@ one-step-ahead forecasting, Proposition~\ref{prp-cov_rt} in this paper
 is more general and establishes an explicit upper bound on the coverage
 gap for multi-step forecasting. Proposition~\ref{prp-cov_rt} indicates
 that, for \(T \ll \infty\), increasing the forecast horizon \(h\) tends
-to amplify deviations from the target coverage because \(g(T-h)/(T-h)\)
-is non-increasing, given that the admissible function \(g\) is
-sublinear, nonnegative, and nondecreasing. This is consistent with
-expectations, as extending the forecast horizon generally increases
-forecast uncertainty. As predictions extend further into the future,
-more factors contribute to variability and uncertainty. In this case,
-conformal prediction intervals may not scale perfectly with the
-increasing uncertainty, leading to a larger discrepancy between the
-desired and actual coverage.
+to amplify in-sample deviations from the target coverage because
+\(g(T-h)/(T-h)\) is non-increasing, given that the admissible function
+\(g\) is sublinear, nonnegative, and nondecreasing. Importantly, this
+effect reflects finite-sample behavior rather than a breakdown of the
+asymptotic coverage guarantee. This is consistent with expectations, as
+extending the forecast horizon generally increases forecast uncertainty.
+As predictions extend further into the future, more factors contribute
+to variability and uncertainty. In this case, conformal prediction
+intervals may not scale perfectly in finite samples with the increasing
+uncertainty, leading to a larger discrepancy between the desired and
+actual coverage.
 
 The quantile iteration
 \(q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)\) can be
@@ -998,7 +998,7 @@ upper bound on the coverage gap for multi-step forecasting.
 
 More importantly, Proposition~\ref{prp-cov_rt} is also adequate for
 establishing the coverage guarantee of the proposed AcMCP method given
-byEquation \eqref{eq-acmcp}. Following \citet{angelopoulos2024}, we
+by Equation \eqref{eq-acmcp}. Following \citet{angelopoulos2024}, we
 first reformulate Equation \eqref{eq-acmcp} as
 \begin{equation}\phantomsection\label{eq-acmcp_1}{
 q_{t+h|t}=\hat{q}_{t+h|t}+r_t\left(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\right),
@@ -1008,8 +1008,8 @@ estimates \(q_{i+h|i}\) for \(i \leq t-1\). Taking
 \(\hat{q}_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)+\tilde{e}_{t+h|t}\)
 will recover Equation \eqref{eq-acmcp}. We can consider
 \(\hat{q}_{t+h|t}\) as the forecast of the quantile \(q_{t+h|t}\) based
-on available historical data. We then present the coverage guarantee for
-AcMCP given by Equation \eqref{eq-acmcp_1}.
+on available historical data. We then present the long-run coverage
+guarantee for AcMCP given by Equation \eqref{eq-acmcp_1}.
 
 \begin{corollary}[]\protect\hypertarget{cor-cov_acmcp}{}\label{cor-cov_acmcp}
 
