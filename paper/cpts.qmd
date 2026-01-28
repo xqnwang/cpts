@@ -3,15 +3,15 @@ title: "Online conformal inference for multi-step time series forecasting"
 author:
 - name: Xiaoqian Wang
   acknowledgements: |
-      Corresponding author. Xiaoqian Wang, Department of Econometrics & Business Statistics, Monash University, Clayton VIC, 3800, Australia.
-      E-mail address: \href{mailto:xiaoqian.wang@monash.edu}{xiaoqian.wang@monash.edu} (X. Wang).
+      Corresponding author. Xiaoqian Wang, Academy of Mathematics and Systems Science, Chinese Academy of Sciences, Beijing, 100190, China.
+      E-mail address: \href{mailto:xiaoqian.wang@amss.ac.cn}{xiaoqian.wang@amss.ac.cn} (X. Wang).
   affiliations:
-    - name: Monash University
-      department: Department of Econometrics & Business Statistics
-      city: Clayton VIC
-      country: Australia
-      postal-code: 3800
-  email: xiaoqian.wang@monash.edu
+    - name: Chinese Academy of Sciences
+      department: Academy of Mathematics and Systems Science
+      city: Beijing
+      country: China
+      postal-code: 100190
+  email: xiaoqian.wang@amss.ac.cn
   corresponding: true
 - name: Rob J Hyndman
   affiliations:
