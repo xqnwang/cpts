@@ -374,27 +374,29 @@ discussed by \citet{bhatnagar2023}, \citet{angelopoulos2024}, and
 \citet{angelopoulos2024online}.
 
 Existing conformal prediction methods for time series primarily focus on
-single-step forecasting. However, many applications require forecasts
-for multiple future time steps, not just one. Related research on
-multi-step forecasting remains limited and often fails to consider how
-forecasts at different horizons are related. For example,
-\citet{stankeviciute2021} integrate conformal prediction with recurrent
-neural networks for multi-step forecasting and then apply Bonferroni
-correction to achieve the desired coverage rate. This approach, however,
-assumes data independence, which is often unrealistic for time series
-data. \citet{yang2024ts} propose Bellman conformal inference, an
-extension of adaptive conformal prediction, to control multi-step
-miscoverage rates simultaneously at each time point \(t\) by minimizing
-a loss function that balances the average interval length across
-forecast horizons with miscoverage. While this method considers
-multi-step intervals, it does not account for their temporal
-dependencies and may be computationally intensive when solving the
-associated optimisation problems at each time step. \citet{lopes2024}
-introduce ConForME, a method that focuses on generating uniform
-prediction intervals across the entire forecast horizon, aiming to
-ensure the overall validity of these intervals. Additionally, several
-extensions to multivariate targets have been explored, see, e.g.,
-\citet{schlembach2022} and \citet{sun2022}.
+single-step forecasting, even though many applications require reliable
+uncertainty quantification over multiple future horizons. The literature
+on multi-step conformal prediction is comparatively limited and, when it
+does consider multi-step forecasts, it often reduces the problem to
+\(H\) horizon-specific tasks by constructing separate prediction sets
+for each \(y_{t+h}\), \(h\in[H]\), without considering how forecasts at
+different horizons are related. For example, \citet{stankeviciute2021}
+integrate conformal prediction with recurrent neural networks for
+multi-step forecasting and then apply Bonferroni correction to achieve
+the desired coverage rate. This approach, however, assumes data
+independence, which is often unrealistic for time series data.
+\citet{yang2024ts} propose Bellman conformal inference, an extension of
+adaptive conformal prediction, to control multi-step miscoverage rates
+simultaneously at each time point \(t\) by minimizing a loss function
+that balances the average interval length across forecast horizons with
+miscoverage. While this method considers multi-step intervals, it does
+not account for their temporal dependencies and may be computationally
+intensive when solving the associated optimisation problems at each time
+step. \citet{lopes2024} introduce ConForME, a method that focuses on
+generating uniform prediction intervals across the entire forecast
+horizon, aiming to ensure the overall validity of these intervals.
+Additionally, several extensions to multivariate targets have been
+explored, see, e.g., \citet{schlembach2022} and \citet{sun2022}.
 
 We employ a unified notation to formalize the mathematical
 representation of conformal prediction for time series data. We consider
@@ -426,30 +428,33 @@ series forecasting. All the proposed methods are grounded in the split
 conformal prediction framework and an online learning scheme, which are
 well-suited to the sequential nature of time series data. First, we
 extend several widely used conformal prediction methods that are
-originally designed for single-step forecasting to accommodate
-multi-step forecasting scenarios. These extensions do not generally
-provide theoretical long-run coverage guarantees, with the exception of
-the multi-step conformal PID control (MPID) method, which admits such a
-guarantee. Second, we provide theoretical proofs demonstrating that the
-forecast errors of optimal \(h\)-step-ahead forecasts approximate a
-linear combination of at most its lag \((h-1)\) with respect to forecast
-horizon when we assume a general non-stationary autoregressive data
-generating process. Third, we introduce the autocorrelated multi-step
-conformal prediction (AcMCP) method, which accounts for the
-autocorrelations of multi-step forecast errors. Our method is proven to
-guarantee asymptotic marginal coverage for multi-step prediction
-intervals, with the coverage gap converging to zero as the sample size
-increases, without making any assumptions on data distribution shifts.
-In contrast to \citet{lopes2024}, our method targets pointwise
-prediction intervals for each specific forecast horizon, \(h\in[H]\).
-Finally, we illustrate the practical utility of these proposed methods
-through two simulations and two applications to electricity demand and
-eating-out expenditure forecasting. The results show that the proposed
-AcMCP method adapts effectively to changes in the observed data
-distribution and, among the proposed extensions that achieve coverage
-close to the target level, generally yields more informative and
-narrower prediction intervals, particularly for larger forecast
-horizons.
+originally designed for single-step forecasting to the multi-step
+setting by constructing horizon-specific prediction intervals. These
+extensions follow the common practice of treating each horizon
+independently and, in general, do not provide theoretical long-run
+coverage guarantees for multi-step prediction intervals, with the
+exception of the proposed multi-step conformal PID control (MPID)
+method, which admits such a guarantee. Second, we provide theoretical
+results showing that, under a general non-stationary autoregressive DGP,
+the forecast errors of optimal \(h\)-step-ahead forecasts can be well
+approximated by a linear combination of at most its lag \((h-1)\) with
+respect to forecast horizon. Third, building on the theoretical results,
+we introduce the autocorrelated multi-step conformal prediction (AcMCP)
+method, which explicitly accounts for the autocorrelations of multi-step
+forecast errors at the calibration stage by preserving the dependence
+structure among nonconformity scores. AcMCP is proven to guarantee
+asymptotic marginal coverage for multi-step prediction intervals, with
+the coverage gap converging to zero as the sample size increases,
+without making any assumptions on data distribution shifts. In contrast
+to \citet{lopes2024}, our method targets pointwise prediction intervals
+for each specific forecast horizon, \(h\in[H]\). Finally, we illustrate
+the practical utility of these proposed methods through two simulations
+and two applications to electricity demand and eating-out expenditure
+forecasting. The results show that the proposed AcMCP method adapts
+effectively to changes in the observed data distribution and, among the
+proposed extensions that achieve coverage close to the target level,
+generally yields more informative and narrower prediction intervals,
+particularly for larger forecast horizons.
 
 We developed the \texttt{conformalForecast} package for R to implement
 the proposed multi-step conformal prediction methods, the package is
@@ -461,18 +466,23 @@ experiments are made available at \url{https://github.com/xqnwang/cpts}.
 Let \(z_t = (\bm{x}_t, y_t)\) denote the data point (including the
 response \(y_t\) and possibly predictors \(\bm{x}_t\)) at time \(t\).
 Suppose that, at each time \(t\), we have a forecasting model
-\(\hat{f}_t\) trained using the historical data \(z_{1:t}\). Throughout
-the paper, we assume that the predictors are known into the future. In
-this way, we perform ex-post forecasting and there is no additional
-uncertainty introduced from forecasting the exogenous predictors. Using
-the forecasting model \(\hat{f}_t\), we are able to produce \(H\)-step
-point forecasts, \(\{\hat{y}_{t+h|t}\}_{h\in[H]}\), using the future
-values for the predictors. We define the \emph{nonconformity score} as
-the (signed) forecast error \[
-s_{t+h|t}=\mathcal{S}(z_{1:t}, y_{t+h}):=y_{t+h}-\hat{f}_t(z_{1:t},\bm{x}_{t+1:h})=y_{t+h}-\hat{y}_{t+h|t}.
+\(\hat{f}_t\) trained using the historical data \(z_{1:t}\). The model
+\(\hat{f}_t\) is updated over time and is re-trained whenever new
+observations become available. Throughout the paper, we assume that the
+predictors are known into the future. This corresponds to an ex-post
+forecasting setting, commonly adopted when predictors are deterministic,
+policy-driven, or provided through external scenarios. By conditioning
+on future predictors, we focus exclusively on the uncertainty in the
+response variable \(y_t\) and avoid introducing additional uncertainty
+from forecasting the exogenous inputs. Using the forecasting model
+\(\hat{f}_t\), we are able to produce \(H\)-step point forecasts,
+\(\{\hat{y}_{t+h|t}\}_{h\in[H]}\), using the future values for the
+predictors. We define the \emph{nonconformity score} as the (signed)
+forecast error \[
+s_{t+h|t}=\mathcal{S}(z_{1:t}, y_{t+h}):=y_{t+h}-\hat{f}_t(z_{1:t},\bm{x}_{(t+1):(t+h)})=y_{t+h}-\hat{y}_{t+h|t}.
 \] The task is to employ conformal inference to build \(H\)-step
 prediction intervals,
-\(\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}(z_{1:t},\bm{x}_{t+1:h})\}_{h\in[H]}\),
+\(\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}(z_{1:t},\bm{x}_{(t+1):(t+h)})\}_{h\in[H]}\),
 at the target coverage level \(1-\alpha\). For brevity, we will use
 \(\hat{\mathcal{C}}_{t+h|t}^{\alpha}\) to denote the \(h\)-step-ahead
 \(100(1-\alpha)\%\) prediction interval.
@@ -545,7 +555,10 @@ used instead.
 \begin{figure}[!hbtp]
 \vspace*{-1.5cm}
 \hspace*{-2.5cm}
-\input figs/annotation.tex
+\centering
+\scalebox{0.85}{
+  \input figs/annotation.tex
+}
 \vspace*{-1.0cm}
 
 \caption{Diagram of the online learning framework with sequential splits. White: unused data; Gray: training data; Black: forecasts in calibration set; Blue: forecasts in test set.}\label{fig-flowchart}
