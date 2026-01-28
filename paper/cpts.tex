@@ -154,6 +154,20 @@
 \widowpenalty=10000
 \clubpenalty=10000
 \brokenpenalty=10000
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -190,9 +204,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{corollary}{Corollary}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -734,8 +748,9 @@ control}\label{multi-step-conformal-pid-control}
 We introduce \textbf{multi-step conformal PID control} method (hereafter
 MPID), which extends the PID method \citep{angelopoulos2024}, originally
 developed for one-step-ahead forecasting. For each individual forecast
-horizon \(h\in[H]\), the iteration of the \(h\)-step-ahead quantile
-estimate is given by \begin{equation}\phantomsection\label{eq-mpid}{
+horizon \(h\in[H]\), the estimated \(1-\alpha\) quantile of the
+\(h\)-step-ahead score at time \(t\) is updated iteratively as
+\begin{equation}\phantomsection\label{eq-mpid}{
 q_{t+h|t}=\underbrace{q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)}_{\mathrm{P}}+\underbrace{r_t\Bigg(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\Bigg)}_{\mathrm{I}}+\underbrace{\hat{s}_{t+h|t}}_{\mathrm{D}},
 }\end{equation} where \(\eta > 0\) is a constant learning rate, and
 \(r_t\) is a saturation function that adheres to the following
@@ -770,10 +785,12 @@ forecast of the nonconformity score (i.e., the forecast error), produced
 by any suitable forecasting model (or ``scorecaster'', see
 Section~\ref{sec-acmcp} for a detailed discussion) trained using the
 \(h\)-step-ahead nonconformity scores available up to and including time
-\(t\). This module provides additional benefits only when the
-scorecaster is well-designed and there are predictable patterns in the
-nonconformity scores; otherwise, it may increase variability in the
-coverage and prediction intervals.
+\(t\). The effectiveness of the D control depends on the ability of the
+scorecaster to capture systematic and predictable patterns in the
+nonconformity scores, such as temporal dependence or conditional
+heteroskedasticity. Only when such structure is present and adequately
+modeled, this module provides additional benefits; otherwise, it may
+increase variability in the coverage and prediction intervals.
 
 The MPID method will be improved in Section~\ref{sec-acmcp} by proposing
 the AcMCP method, in which the D control component of MPID is replaced
@@ -906,8 +923,8 @@ statistically efficient.
 
 The AcMCP method updates the quantile estimate \(q_t\) in an online
 setting to achieve the goal of long-run coverage. Specifically, the
-iteration of the \(h\)-step-ahead quantile estimate is given by
-\begin{equation}\phantomsection\label{eq-acmcp}{
+iteration of the \(h\)-step-ahead quantile estimate for the score is
+given by \begin{equation}\phantomsection\label{eq-acmcp}{
 q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)+r_t\Bigg(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\Bigg)+\tilde{e}_{t+h|t},
 }\end{equation} for \(h\in[H]\). Obviously, the AcMCP method can be
 viewed as a further extension of the PID method by
@@ -1007,7 +1024,17 @@ See Section~\ref{sec-proof_cov_qt}.
 When \(h=1\), Corollary~\ref{cor-cov_qt} reduces to Proposition 1 of
 \citet{angelopoulos2024}, while Corollary~\ref{cor-cov_qt} extends this
 result to a more general multi-step setting and establishes an explicit
-upper bound on the coverage gap for multi-step forecasting.
+upper bound on the coverage gap for multi-step forecasting. The
+boundedness assumption on the nonconformity scores is imposed solely for
+theoretical analysis, ensuring control over the accumulation of
+miscoverage errors in the quantile tracking recursion. When the update
+is unraveled, the quantile tracker can be interpreted as an error
+integrator that accumulates past deviations of the empirical coverage
+from the target level. Bounded scores guarantee the stability of this
+accumulation and enable explicit bounds on the finite-sample coverage
+gap. Importantly, the bound itself is not required in practice, and the
+update proceeds agnostically and remains valid as long as the scores are
+finite.
 
 More importantly, Proposition~\ref{prp-cov_rt} is also adequate for
 establishing the coverage guarantee of the proposed AcMCP method given
@@ -1359,7 +1386,7 @@ horizon. The displayed curves are smoothed over a rolling window of size
 
 \end{figure}%
 
-\begin{figure}[!hbtp]
+\begin{figure}[!hb]
 
 \centering{
 

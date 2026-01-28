@@ -226,7 +226,7 @@ The theoretical coverage properties of ACP suggest that a larger value for $\gam
 
 ### Multi-step conformal PID control
 
-We introduce **multi-step conformal PID control** method (hereafter MPID), which extends the PID method [@angelopoulos2024], originally developed for one-step-ahead forecasting. For each individual forecast horizon $h\in[H]$, the iteration of the $h$-step-ahead quantile estimate is given by
+We introduce **multi-step conformal PID control** method (hereafter MPID), which extends the PID method [@angelopoulos2024], originally developed for one-step-ahead forecasting. For each individual forecast horizon $h\in[H]$, the estimated $1-\alpha$ quantile of the $h$-step-ahead score at time $t$ is updated iteratively as
 $$
 q_{t+h|t}=\underbrace{q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)}_{\mathrm{P}}+\underbrace{r_t\Bigg(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\Bigg)}_{\mathrm{I}}+\underbrace{\hat{s}_{t+h|t}}_{\mathrm{D}},
 $$ {#eq-mpid}
@@ -240,7 +240,7 @@ The P control in MPID shows a delayed correction of the quantile estimate for a 
 
 The I control accounts for the cumulative historical coverage errors associated with $h$-step-ahead prediction intervals during the update process, thereby enhancing the stability of the interval coverage.
 
-The D control involves $\hat{s}_{t+h|t}$ as the $h$-step-ahead forecast of the nonconformity score (i.e., the forecast error), produced by any suitable forecasting model (or "scorecaster", see @sec-acmcp for a detailed discussion) trained using the $h$-step-ahead nonconformity scores available up to and including time $t$. This module provides additional benefits only when the scorecaster is well-designed and there are predictable patterns in the nonconformity scores; otherwise, it may increase variability in the coverage and prediction intervals.
+The D control involves $\hat{s}_{t+h|t}$ as the $h$-step-ahead forecast of the nonconformity score (i.e., the forecast error), produced by any suitable forecasting model (or "scorecaster", see @sec-acmcp for a detailed discussion) trained using the $h$-step-ahead nonconformity scores available up to and including time $t$. The effectiveness of the D control depends on the ability of the scorecaster to capture systematic and predictable patterns in the nonconformity scores, such as temporal dependence or conditional heteroskedasticity. Only when such structure is present and adequately modeled, this module provides additional benefits; otherwise, it may increase variability in the coverage and prediction intervals.
 
 The MPID method will be improved in @sec-acmcp by proposing the AcMCP method, in which the D control component of MPID is replaced by a specific and structured approach to explicitly capture the autocorrelations of multi-step forecast errors. As a consequence, the long-run coverage guarantees established for AcMCP in @sec-cov also apply to the MPID method.
 
@@ -296,7 +296,7 @@ See @sec-proof_ma.
 
 We can exploit these properties of multi-step forecast errors, leading to a new method that we call the **autocorrelated multi-step conformal prediction** (AcMCP) method. Unlike extensions of existing conformal prediction methods, which treat multi-step forecasting as independent events (see @sec-ext), the AcMCP method integrates the autocorrelations inherent in multi-step forecast errors, thereby making the output multi-step prediction intervals more statistically efficient.
 
-The AcMCP method updates the quantile estimate $q_t$ in an online setting to achieve the goal of long-run coverage. Specifically, the iteration of the $h$-step-ahead quantile estimate is given by
+The AcMCP method updates the quantile estimate $q_t$ in an online setting to achieve the goal of long-run coverage. Specifically, the iteration of the $h$-step-ahead quantile estimate for the score is given by
 $$
 q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)+r_t\Bigg(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\Bigg)+\tilde{e}_{t+h|t},
 $$ {#eq-acmcp}
@@ -338,7 +338,7 @@ Therefore the prediction intervals obtained by the iteration yield the correct l
 See @sec-proof_cov_qt.
 :::
 
-When $h=1$, @cor-cov_qt reduces to Proposition 1 of @angelopoulos2024, while @cor-cov_qt extends this result to a more general multi-step setting and establishes an explicit upper bound on the coverage gap for multi-step forecasting.
+When $h=1$, @cor-cov_qt reduces to Proposition 1 of @angelopoulos2024, while @cor-cov_qt extends this result to a more general multi-step setting and establishes an explicit upper bound on the coverage gap for multi-step forecasting. The boundedness assumption on the nonconformity scores is imposed solely for theoretical analysis, ensuring control over the accumulation of miscoverage errors in the quantile tracking recursion. When the update is unraveled, the quantile tracker can be interpreted as an error integrator that accumulates past deviations of the empirical coverage from the target level. Bounded scores guarantee the stability of this accumulation and enable explicit bounds on the finite-sample coverage gap. Importantly, the bound itself is not required in practice, and the update proceeds agnostically and remains valid as long as the scores are finite.
 
 More importantly, @prp-cov_rt is also adequate for establishing the coverage guarantee of the proposed AcMCP method given by Equation \eqref{eq-acmcp}. Following @angelopoulos2024, we first reformulate Equation \eqref{eq-acmcp} as
 $$
@@ -535,7 +535,7 @@ P_elec_cov +
 ```{r}
 #| label: fig-elec_box
 #| results: hide
-#| fig-pos: "!hbtp"
+#| fig-pos: "!hb"
 #| fig-width: 10
 #| fig-height: 6.5
 #| fig-cap: Electricity demand data results showing boxplots of the rolling coverage and interval width for each method across different forecast horizons. The red dashed lines show the target coverage level, while the blue dashed lines indicate the median interval width of the AcMCP method.
