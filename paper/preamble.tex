@@ -8,17 +8,18 @@
 \usepackage{amsmath} % Ensure amsmath is included for \eqref
 \usepackage{bbm}
 \usepackage[]{natbib}
-\usepackage[top=2cm, bottom=2cm, left=2.5cm, right=2.5cm]{geometry}
+%\usepackage[top=2cm, bottom=2cm, left=2.5cm, right=2.5cm]{geometry}
+%\usepackage[letterpaper, margin=1in]{geometry}
 \allowdisplaybreaks
 \sloppy
 \setlength{\parskip}{0pt}
 \setlength{\parindent}{15pt}
 \expandafter\def\expandafter\normalsize\expandafter{%
   \normalsize
-  \setlength\abovedisplayskip{1ex}
-  \setlength\belowdisplayskip{1ex}
-  \setlength\abovedisplayshortskip{1ex}
-  \setlength\belowdisplayshortskip{1ex}
+  \setlength\abovedisplayskip{6pt}
+  \setlength\belowdisplayskip{6pt}
+  \setlength\abovedisplayshortskip{3pt}
+  \setlength\belowdisplayshortskip{3pt}
 }
 \setlength{\bibsep}{0pt plus 0.3ex}
 \usepackage{microtype}
@@ -31,12 +32,16 @@
 \def\fps@figure{!tbh}
 \makeatother
 
+%% CAPTIONS
+\usepackage{setspace}
 \usepackage{caption}
 \DeclareCaptionStyle{italic}[justification=centering]
  {labelfont={bf},textfont={it},labelsep=colon}
-\captionsetup[figure]{style=italic,format=hang,singlelinecheck=true}
-\captionsetup[table]{style=italic,format=hang,singlelinecheck=true}
+\captionsetup[figure]{style=italic,format=hang,singlelinecheck=true,font=singlespacing}
+\captionsetup[table]{style=italic,format=hang,singlelinecheck=true,font=singlespacing}
 
-\widowpenalty=10000
-\clubpenalty=10000
-\brokenpenalty=10000
+\usepackage{titlesec}
+\titlespacing*{\section}
+  {0pt}{0.3\baselineskip}{0.1\baselineskip}
+\titlespacing*{\subsection}
+  {0pt}{0.3\baselineskip}{0.1\baselineskip}
