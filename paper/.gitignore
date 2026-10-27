@@ -1,5 +1,7 @@
+cpts_cache/*
 /agsm.bst
 /*.png
 /*.jpg
-cpts_cache/*
+reviews/*.png
+reviews/*.jpg
 comments/

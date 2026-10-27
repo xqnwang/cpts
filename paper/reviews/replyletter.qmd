@@ -1,7 +1,7 @@
 ---
 title: "Response to reviewer comments"
 author: "Online conformal inference for multi-step time series forecasting"
-bibliography: ../../references.bib
+bibliography: ../references.bib
 editor: visual
 format: memo-pdf
 include-in-header: preamble.tex
