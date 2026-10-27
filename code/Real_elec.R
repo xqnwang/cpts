@@ -8,7 +8,8 @@ library(lubridate)
 library(fable)
 library(ggplot2)
 library(patchwork)
-library(stringr)
+reticulate::use_virtualenv("r-spci", required = TRUE)
+source("code/spci.R")
 
 vic_elec_daily <- vic_elec |>
   index_by(Date = date(Time)) |>
@@ -27,16 +28,31 @@ P_elec_ts <- vic_elec_daily |>
   pivot_longer(c(Demand, Temperature)) |>
   ggplot(aes(x = Date, y = value)) +
   geom_line() +
-  facet_grid(name ~ ., scales = "free_y") +
+  facet_grid(name ~ ., scales = "free_y", switch = "y") +
   labs(
     y = ""
   ) +
-  theme_bw()
+  theme_bw(base_size = 10) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(colour = "grey93", linewidth = 0.25),
+    panel.border = element_rect(colour = "grey50", linewidth = 0.35),
+    strip.background = element_blank(),
+    strip.placement = "outside",
+    strip.text.y.left = element_text(size = 10, angle = 90),
+    axis.text = element_text(colour = "grey20")
+  )
 P_elec_sc <- vic_elec_daily |>
   ggplot(aes(x=Temperature, y=Demand)) +
   geom_point(alpha = 0.6) +
   labs(x = "Temperature", y = "Demand") +
-  theme_bw()
+  theme_bw(base_size = 10) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(colour = "grey93", linewidth = 0.25),
+    panel.border = element_rect(colour = "grey50", linewidth = 0.35),
+    axis.text = element_text(colour = "grey20")
+  )
 P_elec_data <- ggpubr::ggarrange(P_elec_ts, P_elec_sc,
                                  ncol = 2, nrow = 1)
 saveRDS(P_elec_data, file = "result/P_elec_data.rds")
@@ -79,6 +95,10 @@ mscp <- scp(fc, symmetric = symmetric, ncal = cal_window, rolling = rolling,
 expweight <- function(n) 0.99^{n+1-(1:n)}
 mwcp <- scp(fc, symmetric = symmetric, ncal = cal_window, rolling = rolling,
             weightfun = expweight, kess = TRUE, quantiletype = type)
+
+# SPCI
+spci <- spci(fc, ncal = cal_window, rolling = rolling, w = 10,
+             random_state = 0L)
 
 # MACP
 gamma <- 0.005
@@ -125,6 +145,9 @@ acmcp <- acmcp(fc, ncal = cal_window, rolling = rolling,
                integrate = TRUE, scorecast = TRUE,
                lr = lr, KI = KI, Csat = Csat)
 
+saveRDS(mget(c("mscp", "mwcp", "spci", "macp", "mpi", "mpid", "acmcp")),
+        file = "result/elec_cp.rds")
+
 #------------------------------------
 # Result analysis
 library(dplyr)
@@ -132,25 +155,42 @@ library(tidyr)
 library(tibble)
 library(tsibble)
 
-candidates <- c("fc", "mscp", "mwcp", "macp", "mpi", "mpid", "acmcp")
-methods <- c("DR", "MSCP", "MWCP", "MACP", "MPI", "MPID", "AcMCP")
+candidates <- c("fc", "mscp", "mwcp", "spci", "macp", "mpi", "mpid", "acmcp")
+methods <- c("DR", "MSCP", "MWCP", "SPCI", "MACP", "MPI", "MPID", "AcMCP")
 cols <- c(
-  "DR" = "black", "MSCP" = "yellow", "MWCP" = "orange", "MACP" = "green",
-  "MPI" = "blue", "MPID" = "purple", "AcMCP" = "red"
+  "DR" = "#222222", "MSCP" = "#AAAAAA", "MWCP" = "#A879CF",
+  "SPCI" = "#377EB8", "MACP" = "#20AF35", "MPID" = "#F2BC12",
+  "AcMCP" = "#D7191C", "MPI" = "blue"
 )
 linetypes <- c(
-  "DR" = "solid", "MSCP" = "dashed", "MWCP" = "twodash", "MACP" = "dotted",
-  "MPI" = "longdash", "MPID" = "twodash", "AcMCP" = "solid"
+  "DR" = "solid", "MSCP" = "solid", "MWCP" = "dashed",
+  "SPCI" = "dashed", "MACP" = "solid", "MPID" = "solid",
+  "AcMCP" = "solid", "MPI" = "solid"
 )
+plot_methods <- methods
+linewidths <- c("DR" = 0.35, "MSCP" = 0.35, "MWCP" = 0.35,
+                  "SPCI" = 0.35, "MACP" = 0.45, "MPID" = 0.45, "AcMCP" = 0.45, "MPI" = 0.35)
+theme_cov <- theme_bw(base_size = 10) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(colour = "grey93", linewidth = 0.25),
+    panel.border = element_rect(colour = "grey50", linewidth = 0.35),
+    strip.background = element_blank(),
+    strip.text = element_text(size = 10),
+    axis.text = element_text(colour = "grey20"),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 9),
+    legend.key.width = grid::unit(1, "cm"),
+    legend.margin = margin(0, 0, 0, 0),
+    legend.box.spacing = grid::unit(0, "pt"),
+    panel.spacing.x = grid::unit(0.7, "lines")
+  )
 
 cov_list <- sapply(candidates, function(i) {
   coverage(get(i), window = calc_window, level = level)
 }, simplify = FALSE,USE.NAMES = TRUE)
 wid_list <- sapply(candidates, function(i) {
   width(get(i), window = calc_window, level = level, includemedian = TRUE)
-}, simplify = FALSE,USE.NAMES = TRUE)
-score_list <- sapply(candidates, function(i) {
-  accuracy(get(i), byhorizon = TRUE)
 }, simplify = FALSE,USE.NAMES = TRUE)
 
 ## Coverage
@@ -205,127 +245,6 @@ for (i in 1:length(candidates)) {
 }
 wid_md <- bind_rows(mget(paste0(methods, "_wid_md")))
 
-## Overall measurements
-complete.obs <- function(x) {
-  x[complete.cases(x),]
-}
-increase.cols <- function(x) {
-  ifinc <- matrix(nrow = nrow(x), ncol = ncol(x)-1)
-  for (i in 2:ncol(x)) {
-    ifinc[,i-1] <- x[,i] >= x[,i-1]
-  }
-  sum(apply(ifinc, 1, all))/nrow(ifinc)
-}
-info <- lapply(1:length(candidates), function(i) {
-  out_cov <- cov_list[[i]]
-  out_wid <- wid_list[[i]]
-  out_score <- score_list[[i]]
-  out_mean <- data.frame(
-    method = methods[i],
-    covmean = as.vector(out_cov$mean),
-    covmin = apply(out_cov$rollmean, 2, min, na.rm = TRUE),
-    covmax = apply(out_cov$rollmean, 2, max, na.rm = TRUE),
-    widmean = as.vector(out_wid$mean),
-    widmedian = as.vector(out_wid$median),
-    fanout = increase.cols(complete.obs(out_wid$width)),
-    winkler = as.vector(out_score[, paste0("Winkler_", level)]),
-    msis = as.vector(out_score[, paste0("MSIS_", level)])
-  ) |>
-    as_tibble() |>
-    rownames_to_column("horizon") |>
-    mutate(horizon = paste0("h=", horizon))
-  out_mean
-})
-elec_info <- do.call(bind_rows, info) |>
-  mutate(
-    method = factor(method, levels = methods),
-    covmean = round(covmean, 3)
-  ) |>
-  mutate(
-    covmean = covmean - 0.01*level,
-    covmin = covmin - 0.01*level,
-    covmax = covmax - 0.01*level
-  ) |>
-  arrange(horizon, method)
-
-P_elec_winkler <- elec_info |>
-  mutate(horizon = str_sub(horizon, start = 3, end = -1) |> as.numeric()) |>
-  ggplot(aes(x = horizon, y = winkler, colour = method)) +
-  geom_line(linewidth = 0.8) +
-  scale_colour_manual(values = cols) +
-  labs(
-    x = "Forecast horizon",
-    y = "Winkler score",
-    colour = "Methods"
-  ) +
-  scale_x_continuous(breaks = seq_len(horizon)) +
-  theme_bw() +
-  theme(
-    legend.position = "bottom",
-    panel.grid.minor = element_blank()
-  ) +
-  guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
-saveRDS(P_elec_winkler, file = "result/P_elec_winkler.rds")
-
-#--------------------------
-# Plots: Coverage and width
-# cov_plot <- cov |>
-#   filter(index >= ymd("2014-07-19")) |>
-#   as_tsibble(index = index, key = c(horizon, method)) |>
-#   mutate(method = factor(method, levels = methods)) |>
-#   ggplot(aes(x = index, y = coverage, group = method, colour = method)) +
-#   geom_line(size = 0.6, alpha = 0.9) +
-#   scale_colour_manual(values = cols) +
-#   geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "black") +
-#   # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
-#   facet_grid(cols = vars(horizon)) +
-#   labs(
-#     x = "Time (Year 2014)",
-#     y = "",
-#     title = "Local coverage level"
-#   ) +
-#   theme_bw() +
-#   theme(legend.position="none")
-# 
-# wid_me_plot <- wid_me |>
-#   filter(index >= ymd("2014-07-19")) |>
-#   as_tsibble(index = index, key = c(horizon, method)) |>
-#   mutate(method = factor(method, levels = methods)) |>
-#   ggplot(aes(x = index, y = width, group = method, colour = method)) +
-#   geom_line(size = 0.6, alpha = 0.9) +
-#   scale_colour_manual(values = cols) +
-#   # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
-#   facet_grid(cols = vars(horizon)) +
-#   labs(
-#     x = "Time (Year 2014)",
-#     y = "",
-#     title = "Mean interval width"
-#   ) +
-#   theme_bw() +
-#   theme(legend.position="none")
-# 
-# wid_md_plot <- wid_md |>
-#   filter(index >= ymd("2014-07-19")) |>
-#   as_tsibble(index = index, key = c(horizon, method)) |>
-#   mutate(method = factor(method, levels = methods)) |>
-#   ggplot(aes(x = index, y = width, group = method, colour = method)) +
-#   geom_line(size = 0.6, alpha = 0.9) +
-#   scale_colour_manual(values = cols) +
-#   # ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
-#   facet_grid(cols = vars(horizon)) +
-#   labs(
-#     x = "Time (Year 2014)",
-#     y = "",
-#     title = "Median interval width",
-#     colour = "Methods"
-#   ) +
-#   theme_bw() +
-#   theme(legend.position = "bottom") +
-#   guides(colour = guide_legend(nrow = 1))
-# 
-# P_elec_cov <- cov_plot / wid_me_plot / wid_md_plot
-# saveRDS(P_elec_cov, file = "result/P_elec_cov.rds")
-
 #--------------------------
 # Plots: Coverage and width as panels
 df <- bind_rows(
@@ -342,111 +261,88 @@ df <- bind_rows(
       method = factor(method, levels = methods),
       yvar = width,
       panel = "Mean interval width"
-    ),
-  wid_md |>
-    filter(index >= ymd("2014-07-19")) |>
-    mutate(
-      method = factor(method, levels = methods),
-      yvar = width,
-      panel = "Median interval width"
     )
 ) |>
   as_tsibble(index = index, key = c(horizon, method, panel))
 
-P_elec_cov2 <- df |>
-  ggplot(aes(x = index, y = yvar, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.9) +
-  scale_colour_manual(values = cols) +
-  facet_grid(rows = vars(panel),cols = vars(horizon), scales = "free_y") +
-  labs(
-    x = "Time (Year 2014)",
-    y = "",
-  ) +
-  theme_bw() +
-  theme(legend.position="bottom")
+cov_plot <- df |>
+  filter(panel == "Local coverage level") |>
+  ggplot(aes(x = index, y = yvar, colour = method, linetype = method)) +
+  geom_hline(yintercept = 0.01 * level, colour = "black",
+             linetype = "dashed", linewidth = 0.35) +
+  geom_line(aes(linewidth = method)) +
+  scale_linewidth_manual(values = linewidths, guide = "none") +
+  scale_colour_manual(values = cols, breaks = plot_methods) +
+  scale_linetype_manual(values = linetypes, breaks = plot_methods) +
+  scale_y_continuous(labels = scales::label_percent(accuracy = 1)) +
+  facet_grid(cols = vars(horizon)) +
+  labs(x = NULL, y = "Rolling coverage") +
+  guides(colour = guide_legend(nrow = 1), linetype = guide_legend(nrow = 1)) +
+  theme_cov +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
-saveRDS(P_elec_cov2, file = "result/P_elec_cov2.rds")
+wid_me_plot <- df |>
+  filter(panel == "Mean interval width") |>
+  ggplot(aes(x = index, y = yvar, colour = method, linetype = method)) +
+  geom_line(aes(linewidth = method)) +
+  scale_linewidth_manual(values = linewidths, guide = "none") +
+  scale_colour_manual(values = cols, breaks = plot_methods) +
+  scale_linetype_manual(values = linetypes, breaks = plot_methods) +
+  facet_grid(cols = vars(horizon)) +
+  labs(x = "Time (Year 2014)", y = "Mean interval width") +
+  guides(colour = guide_legend(nrow = 1), linetype = guide_legend(nrow = 1)) +
+  theme_cov +
+  theme(strip.text = element_blank(), axis.text.x = element_text(size = 6))
+
+P_elec_cov2 <- (cov_plot / wid_me_plot) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom",
+        legend.margin = margin(4, 0, 0, 0),
+        legend.box.spacing = grid::unit(0, "pt"),
+        panel.spacing.x = grid::unit(0.3, "lines"))
+saveRDS(P_elec_cov2, file = "result/P_elec_cov.rds")
 
 #--------------------------
 # Boxplots: rolling coverage and width
 cov_boxplot <- cov |>
   mutate(
-    method = factor(method, levels = methods),
+    method = factor(method, levels = rev(methods)),
   ) |>
-  ggplot(aes(x = method, y = coverage)) +
+  ggplot(aes(x = method, y = coverage, colour = method)) +
   geom_boxplot(outlier.size = 1, outlier.colour = "grey", outliers = FALSE) +
-  geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "red") +
+  scale_colour_manual(values = cols) +
+  geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "black") +
   coord_flip() +
-  facet_grid(rows = vars(horizon)) +
+  facet_grid(rows = vars(horizon), switch = "y") +
   labs(
     x = "",
     y = "Rolling coverage",
   ) +
-  theme_bw()
+  theme_cov +
+  theme(legend.position = "none", strip.placement = "outside",
+        strip.text.y.left = element_text(angle = 0))
 
 wid_boxplot <- wid |>
   mutate(
-    method = factor(method, levels = methods),
+    method = factor(method, levels = rev(methods)),
   ) |>
-  ggplot(aes(x = method, y = width)) +
-  geom_boxplot(outlier.size = 1, outlier.colour = "grey", outliers = FALSE)
-for (h in seq_len(horizon)) {
-  wid_boxplot <- wid_boxplot +
-    geom_hline(
-      data = filter(wid, horizon == paste0("h=", h)),
-      aes_string(yintercept = wid |> filter(horizon == paste0("h=", h) & method == "AcMCP") |> pull(width) |> median(na.rm = TRUE)),
-      linetype = "dashed", colour = "blue")
-}
-wid_boxplot <- wid_boxplot +
+  ggplot(aes(x = method, y = width, colour = method)) +
+  geom_boxplot(outlier.size = 1, outlier.colour = "grey", outliers = FALSE) +
+  scale_colour_manual(values = cols) +
+  geom_hline(
+    data = wid |> filter(method == "AcMCP") |>
+      group_by(horizon) |> summarise(width = median(width, na.rm = TRUE)),
+    aes(yintercept = width),
+    linetype = "dashed", colour = "black") +
   coord_flip() +
-  facet_grid(rows = vars(horizon)) +
+  facet_grid(rows = vars(horizon), switch = "y") +
   labs(
     x = "",
     y = "Interval width",
   ) +
-  theme_bw()
-P_elec_box <- ggpubr::ggarrange(cov_boxplot, wid_boxplot,
-                               ncol = 2, nrow = 1,
-                               common.legend = TRUE, legend = "bottom")
-saveRDS(P_elec_box, file = "result/P_elec_box.rds")
+  theme_cov +
+  theme(legend.position = "none", strip.placement = "outside",
+        strip.text.y = element_blank())
 
-#--------------------------
-# Plots: time plot
-clip_start <- fit_window + cal_window + 1
-clip_end <- length(y)
-x <- subset(fc$x, start = clip_start, end = clip_end)
-for (h in seq_len(horizon)) {
-  tb <- tibble(
-    time = (distinct(cov, index) |> pull(index))[-1],
-    x = x,
-    horizon = paste0("h=", h),
-    lower_acmcp = window(acmcp$LOWER[[1]][,h], start = start(x), end = end(x)),
-    upper_acmcp = window(acmcp$UPPER[[1]][,h], start = start(x), end = end(x)),
-    lower_mpi = window(mpi$LOWER[[1]][,h], start = start(x), end = end(x)),
-    upper_mpi = window(mpi$UPPER[[1]][,h], start = start(x), end = end(x)),
-    lower_macp = window(macp$LOWER[[1]][,h], start = start(x), end = end(x)),
-    upper_macp = window(macp$UPPER[[1]][,h], start = start(x), end = end(x)),
-  )
-  assign(paste0("tp_h", h), tb)
-}
-tp_data <- bind_rows(mget(paste0("tp_h", seq_len(horizon))))
-P_elec_timeplot <- tp_data |>
-  ggplot(aes(x = time)) +
-  geom_line(aes(y = x, colour = "Observation"), linewidth = 1) +
-  geom_line(aes(y = lower_macp, colour="MACP"), alpha = 1) +
-  geom_line(aes(y = upper_macp, colour="MACP"), alpha = 1) +
-  geom_line(aes(y = lower_mpi, colour="MPI"), alpha = 0.8) +
-  geom_line(aes(y = upper_mpi, colour="MPI"), alpha = 0.8) +
-  geom_line(aes(y = lower_acmcp, colour="AcMCP"), alpha = 0.7) +
-  geom_line(aes(y = upper_acmcp, colour="AcMCP"), alpha = 0.7) +
-  facet_grid(horizon~.) +
-  scale_color_manual(
-    name = "Methods",
-    values = c("Observation" = "black", "MACP" = "green", "MPI" = "blue", "AcMCP" = "red"),
-    breaks = c('Observation','MACP','MPI','AcMCP'),
-    labels = c('Observation','MACP','MPI','AcMCP')) +
-  xlab("Time (Year 2014)") +
-  ylab("") +
-  theme_bw() +
-  theme(legend.position = "bottom")
-saveRDS(P_elec_timeplot, file = "result/P_elec_timeplot.rds")
+P_elec_box <- cov_boxplot | wid_boxplot
+saveRDS(P_elec_box, file = "result/P_elec_box.rds")

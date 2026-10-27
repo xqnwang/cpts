@@ -1,4 +1,4 @@
-% Created by tikzDevice version 0.12.6 on 2025-12-21 17:29:12
+% Created by tikzDevice version 0.12.6 on 2026-10-17 19:48:20
 % !TEX encoding = UTF-8 Unicode
 \begin{tikzpicture}[x=1pt,y=1pt]
 \definecolor{fillColor}{RGB}{255,255,255}
@@ -7,7 +7,7 @@
 \path[clip] (  0.00,  0.00) rectangle (578.16,289.08);
 \definecolor{drawColor}{RGB}{0,0,0}
 
-\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  1.00] at (301.08, 15.60) {};
+\node[text=drawColor,anchor=base,inner sep=0pt, outer sep=0pt, scale=  1.00] at (301.08, 15.60) {$t$};
 \end{scope}
 \begin{scope}
 \path[clip] (  0.00,  0.00) rectangle (578.16,289.08);
@@ -964,7 +964,7 @@
 \coordinate (yhat) at (496.99,216.29);
 \draw[decorate] (yhat) -- node {\small $\{\hat{y}_{t+h|t}\}_{t_r \le t \le t_r+t_c-h}$} (yhat);
 \coordinate (shat) at (496.99,184.48);
-\draw[decorate] (shat) -- node {\small $\{s_{t+h|t}\}_{t_r \le t \le t_r+t_c-h}$} (shat);
+\draw[decorate] (shat) -- node {\small $\{s^{+}_{t+h|t},s^{-}_{t+h|t}\}_{t_r \le t \le t_r+t_c-h}$} (shat);
 \coordinate (Chat) at (496.99,152.66);
 \draw[decorate] (Chat) -- node {\small \textcolor{blue}{$\{\hat{\cal{C}}^{\alpha}_{t_r+t_c+h|t_r+t_c}\}_{1 \le h \le H}$}} (Chat);
 \coordinate (Chat2) at (496.99,69.94);

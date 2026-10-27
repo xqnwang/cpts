@@ -1,0 +1,126 @@
+---
+title: "Response to reviewer comments"
+author: "Online conformal inference for multi-step time series forecasting"
+bibliography: ../../references.bib
+editor: visual
+format: memo-pdf
+include-in-header: preamble.tex
+date: ""
+number-sections: false
+branding: false
+execute:
+  echo: false
+  warning: false
+  message: false
+  cache: false
+---
+
+We thank the editors and reviewers for their careful reading of our paper and helpful suggestions; their comments have led to several improvements and corrections. In this revision, we have addressed all the comments raised by the reviewers. The revised and newly added text is highlighted in \textcolor{blue}{blue} within the marked manuscript. Here we provide a point-by-point response to each comment of the review team. Reviewer comments are in black, and our responses are in \textcolor{darkgreen}{green}.
+
+# Reviewer 1
+
+The authors propose, analyze and compare two conformal inference methods for multi-step forecasting, both of which build on the PID method of Angelopoulos et al. (2023). The first extension is multi-step conformal PID (MPID); the second is autocorrelated multi-step conformal prediction (AcMCP), which is refinement using a structured mechanism that capures autocorrelation in the multi-step forecast errors. The authors derive theoretical coverage guarantees for these methods and evaluate them in simulations and in two real-world applications, forecasting electricity demand and forecasting eating-out expenditure.
+
+## General comments:
+
+The exposition needs to be tighter and focused on the contribution of the paper, namely a conformal inference approach to multi-step forecasting. The literature review should focus on conformal inference for time series rather than conformal inference generally. The paper can be considerably shorter if this is done.
+
+> We agree, and we have reorganized the paper to focus more clearly on its core contribution and have tightened the exposition throughout. The main text is now one page shorter, despite the additional material included in response to the reviewers' comments.
+>
+> The Introduction section has been rewritten to focus on conformal inference for time series. Specifically, we removed the general background on classical conformal methods and the broad survey of extensions to nonexchangeable data. The literature review is now organized around three strands of research directly relevant to our setting: (i) methods that replace exchangeability with weaker, time-series-specific assumptions; (ii) online methods that adjust prediction intervals using sequential coverage feedback; and (iii) existing conformal methods for multi-step forecasting. The Introduction then identifies the challenges specific to multi-step forecasting and summarizes the contributions of the paper.
+
+Related to this, it's not necessary to extend various methods designed for the single-step setting to the multi-step setting if they don't have any theoretical coverage guarantees - this is perhaps useful to know, but not needed for this paper. The paper should concentrate on just the multi-step conformal PID (MPID) method, which does have this guarantee, and comparing this to the proposed autocorrelated multi-step conformal prediction (AcMCP).
+
+> We have moved the definitions of MSCP, MWCP, and MACP, the multi-step extensions of existing conformal methods that lack theoretical coverage guarantees, from Section 3 to Appendix A1. We agree that these methods are still useful to know, and we have therefore retained them as benchmarks in our experiments, because they are direct multi-step extensions of widely used conformal methods that commonly serve as baselines in the literature [e.g., @zaffran2022; @angelopoulos2024].
+
+An exception to this is the paper by Yang, Candes and Lei (2024), which proposes Bellman conformal inference. As the authors note, this method jointly controls multi-step miscoverage, and is in some sense a competitor to the methods proposed in this paper. Discussing this paper in more detail would therefore be warranted, and could possibly be included in the simulation and application sections.
+
+> Bellman conformal inference [BCI, @yang2024ts] takes as input a family of nested prediction intervals, which the other conformal methods considered here do not require, and uses multi-step forecasts in a look-ahead optimization that trades off interval length against a miscoverage penalty. However, at each round the algorithm issues only the one-step-ahead interval and replans after observing the next outcome, and its coverage guarantee likewise concerns only the sequence of one-step-ahead intervals.
+>
+> In our setting, by contrast, an interval for $y_{t+h}$ is issued at time $t$, and its coverage feedback becomes available only at time $t+h$. A comparison with BCI for $h>1$ would therefore require an explicit delayed-feedback adaptation of the method, which lies beyond the scope of this paper. For this reason, we do not include BCI in our simulations and applications. We have, however, added multi-step SPCI as a new benchmark, as detailed in our response to the next comment.
+>
+> In the revised manuscript, we have now discussed BCI in more detail in the fifth paragraph of the Introduction. In the last paragraph of the Conclusion, we have also identified, as a promising direction for future research, extending its optimization principle to multi-step interval construction while retaining coverage guarantees.
+
+It would also be useful, in the simulations and applications, to compare the proposed methods to other well-known conformal prediction time series papers, even though they don't have formal guarantees for multi-step forecasts. That is, instead of these other methods appearing in the theoretical section, they would be most useful if they appear (with very brief explanations) in the empirical section.
+
+> Thank you for this suggestion. To give readers a clearer picture of current developments in multi-step conformal prediction, we have rewritten the review of existing multi-step conformal methods and their limitations (the fifth paragraph of the Introduction). As discussed there, these methods differ substantially in their targets and requirements, and most are not directly comparable with ours. The multi-step extension of SPCI [@xu2023], however, constructs multi-step-ahead intervals for a single time series based on past forecast errors and therefore provides a relevant benchmark.
+>
+> We have therefore added SPCI as a benchmark in all four experiments in Section 5. The figures and accompanying discussion of the results in Sections 5.1–5.4 have also been updated to include SPCI. In brief, SPCI exhibits much more volatile rolling coverage than MPID and AcMCP in both simulations, and in the two applications it produces narrower intervals at the cost of substantial undercoverage across horizons.
+
+The limitation of the coverage guarantee of the proposed methods to the case where predictors are known into the future is an important one. This should be highlighted earlier, and related to the assumptions made in other papers that do conformal inference for time series. In many economic forecasting settings, we are not going to have fully known future regressors. This could also perhaps be analyzed in the simulation section.
+
+> We agree that future regressors are often unavailable in practice, and we have now stated this limitation earlier and more explicitly as per your suggestions. The contributions paragraph of the Introduction (Section 1) now states that the forecast-error analysis treats future exogenous predictors as known; Section 2 distinguishes ex-ante and ex-post forecasts in the problem setup; Section 4.1 states the assumption where it is used.
+>
+> We have also clarified how the assumption relates to the theory. It is used only in the forecast-error analysis of Section 4.1, which motivates AcMCP's scorecaster, and not in the coverage guarantees of Section 4.3. The calibration conditions concern the realized scores and baseline thresholds, not the information used to construct the forecasts. When predictors are forecast using information available at the forecast origin, the coverage guarantees remain applicable provided the resulting scores and baseline thresholds satisfy their stated conditions. Section 4.3 and the third paragraph of the Conclusion (Section 6) now state this explicitly.
+>
+> Following your suggestion, we have added a simulation in Appendix A11 comparing known and forecast future predictors over 100 paired replications of an ARX(2) process with an AR(1) predictor, for two levels of predictor noise ($\tau\in\{0.25,1\}$) and horizons $h=1,2,3$. Both settings achieve empirical coverage close to the nominal 90% level, with local coverage MAE below 0.3 percentage points. Forecasting future predictors produces wider intervals, with larger increases at higher predictor uncertainty and longer horizons. These findings are now summarized in the second and third paragraphs of the Conclusion.
+
+At various points in the discussion of the electricity demand example, there are references to how this method can inform operational decisions ("excessive reserve procurement", "risk of insufficient reserve allocation"). Conformal inference provides guarantees relating to marginal coverage, not conditional coverage. This is important for practical applications and could be discussed here. My interpretation of this in the application here is that the marginal coverage guarantee (whether one-step or multi-step) means that, on average over multiple forecasts, the prediction interval will cover the realized value with coverage level $1-\alpha$. This might or might not be useful when planning operational decisions for electricity generation, depending on the context. If the decisions relate to, say, a firm that runs many power plants, then "being right on average" is perhaps OK because a miscoverage event in one plant could be compensated by generation in the others. But if the decisions relate to a single plant, or to planning total reserve procurement for a region (which is the application here), it's not so useful, because a single miscoverage event would be very costly.
+
+(NB: This is the forecasting analog to the medical example of Barber-Candes-Ramdas-Tibshirani (2021), "The limits of distribution-free conditional predictive inference": Marginal coverage means a doctor's statements have a 95% chance of being right on average, across all possible patients; conditional coverage means they have a 95% chance of being true for every individual patient.)
+
+> We thank the reviewer for this important point. We have made three changes in response to this comment.
+>
+> First, we have removed the statements in Section 5.3 that linked overcoverage and undercoverage directly to operational decisions ("excessive reserve procurement" and "risk of insufficient reserve allocation"). The comparison of methods in this section is now stated purely in terms of coverage and interval width.
+>
+> Second, we have added a new paragraph at the end of Section 5.3 on the practical utility of the guarantee in this application. It states that satisfactory overall and rolling coverage does not imply conditional coverage under extreme temperatures, high demand, or other critical operating conditions. The theoretical guarantees concern empirical coverage at each horizon and ensure neither coverage conditional on the information available for a given decision nor simultaneous coverage across horizons. Therefore, the intervals in this example are presented as a tool for flagging days that warrant closer review of capacity margins and for supporting assessments of candidate generation plans under different demand scenarios.
+>
+> Third, the nature of the guarantee is now stated consistently throughout the paper. The Introduction and Section 4.3 clarify that the guarantees concern coverage averaged over time at each horizon, not conditional coverage at individual forecast origins or simultaneous coverage across horizons.
+
+## Detailed comments:
+
+The novelty of the $MA(h-1)$ claim feels overstated. The authors' contribution is the linearized version, but the abstract reads as if this is a major theoretical contribution.
+
+> We agree that the original wording overstated the scope and novelty of the MA claim. We have revised the Abstract, Introduction, and Conclusion to distinguish first-order approximations from exact linear-model results. In Section 4.1, we now present Propositions 1 and 2 with the Taylor remainders retained and explicitly bounded under the stated assumptions. Our contribution in this analysis is to characterize dependence among multi-step forecast errors through linear approximations with explicit remainder bounds, thereby motivating the design of AcMCP’s scorecaster, rather than to establish an exact MA representation for general processes. Additionally, in the final two paragraphs of Section 4.1, we distinguish the linear case, in which the remainders vanish, from the nonlinear case and summarize conditions under which the remainders are negligible relative to the innovation scale.
+
+The asymptotic coverage guarantee (Theorem 3) seems to follow a standard online quantile tracking argument. The estimator doesn't depend on the $MA(h-1)$ structure. The autocorrelation component in the online update rule is an efficiency heuristic as written and only empirically shown to improve over not including it (AcMCP vs MPID).
+
+> We agree that the coverage guarantee does not depend on the MA structure. The error representations in Section 4.1 are used to motivate the design of AcMCP's scorecaster. Sections 4.2 and 4.3 now separate the scorecaster's role from the coverage guarantee. Specifically, Section 4.2 now ends by stating that the coverage guarantees do not require the linear approximations to be accurate. The discussion following Corollary 2 in Section 4.3 states that integral feedback ensures calibration for any baseline $\hat{q}_{t+h|t}$, and that the scorecaster aims to improve interval efficiency by accounting for error dependence, while this improvement is not guaranteed by the corollary. The scorecaster's benefits are assessed empirically through comparisons with bechmarks in Section 5.
+
+The authors could do a better job at explaining the target coverage notion. They target horizon-specific marginal (asymptotic) coverage, not joint path coverage or conditional coverage. "Multi-step prediction interval" could be interpreted as something like joint 90% coverage of the entire future path, not just 90% interval at each horizon. I could imagine that in a lot of settings, if the $t+h-2$ interval doesn't cover the true value, then it is more likely that the $t+h-1$ also doesn't contain the true value: $\operatorname{Pr}\left(y_t \in C_t^\alpha \mid y_{t-1} \notin C_{t-1}\right)<1-\alpha$.
+
+> We have clarified the coverage target throughout the manuscript. Section 2 now defines the goal as horizon-specific long-run coverage (Equation 1), with a limit inferior of at least $1-\alpha$ separately for each fixed horizon $h$. Immediately after the equation, we explain that this criterion concerns coverage averaged over time at each horizon, rather than coverage conditional on the available information or simultaneous coverage of the entire future path. The Introduction, Section 4.3, and the Conclusion now use terminology consistent with this target.
+
+It isn't clear what score is used. In the formal setup the authors use the signed forecast error, and how they write the various prediction sets throughout the document implies a one-sided interval. However, they report interval width and plot lower and upper intervals bounds. The authors should clarify if they are using the absolute forecast error to form symmetric intervals, or whether they are separately estimating lower and upper signed quantiles. The theory as written doesn't control two-sided miscoverage.
+
+> We have clarified the construction in Section 2. Specifically, we separately calibrate the lower and upper tails using signed scores $s^{+}=e$ and $s^{-}=-e$, with target tail levels $\alpha^{-},\alpha^{+}>0$ satisfying $\alpha^{+}+\alpha^{-}=\alpha$, to obtain the asymmetric interval $[\hat y-q^{-},\,\hat y+q^{+}]$ in Equation (2), so we do not use absolute errors to construct symmetric intervals.
+>
+> Sections 3 and 4 now present the methods and single-tail results for a generic tail, and the MPID and AcMCP updates are stated to be applied separately to the two tails at levels $\alpha^{-}$ and $\alpha^{+}$ before being combined through Equation (2). Figure 1 and the online learning steps in Section 2 have been updated to show both tail scores, and Section 5 states that $\alpha^{-}=\alpha^{+}=0.05$ is used in all experiments.
+>
+> Regarding two-sided miscoverage, the newly added Corollary 3 establishes finite-sample and long-run coverage guarantees for the two-sided interval, explicitly accounting for endpoint crossings, and Corollary 4 in Appendix A9 gives the corresponding result for constant-step quantile tracking.
+
+However, if they use the absolute forecast error, then the forecast error autocorrelation motivation based on the signed forecast-error no longer directly applies as $|e_{t+h|t}|$ has a different dependence structure from $e_{t+h|t}$.
+
+> As explained in our response to the previous comment, our construction uses the signed forecast error and its negative, rather than the absolute error, to construct asymmetric intervals.
+
+No conditions are given under which the Taylor remainder is negligible.
+
+> We have now revised Propositions 1 and 2 to retain the Taylor remainders and bound their conditional mean absolute sizes. We have also added discussion in Section 4.1 and Appendix A4 to clarify when these remainders vanish exactly or become negligible under the stated conditions.
+
+# Reviewer 2
+
+This paper studies distribution-free prediction intervals for multi-step time series forecasting. The authors extend several existing easy-to-implement conformal prediction methods to accommodated multi-step scenarios. What's more, the authors propose the Autocorrelated Multi-step Conformal Prediction (AcMCP) method that incorporates autocorrelations in multi-step forecast errors. Empirical studies are provided to demonstrate the empirical performance of the proposed multi-step conformal prediction methods.
+
+Overall, the paper is well-written. The topic is practically important. Multi-step conformal prediction is relatively underexplored, and the paper addresses an important gap in this aspect. I have some concerns regarding theoretical clarity. Below are detailed comments.
+
+-   In the abstract, the paper states "we establish that the optimal h-step-ahead forecast errors exhibit serial correlation up to lag (h-1) under a general non-stationary autoregressive data generating process". However, this result relies on an approximation (see the comment below) whose approximation error is not formally characterized. Similar statements are also presented in the Introduction and Conclusion without clearly stating the conditions under which the approximation holds. Such conflation of approximation with exactness is likely to cause confusions and mislead readers.
+
+    > We agree and have now revised the Abstract, Introduction, and Conclusion accordingly. For example, the Abstract now states that "we derive first-order representations of the optimal forecast errors ... together with explicit bounds on the remainder terms". The Introduction now states that "we analyze optimal forecast errors ... derive first-order error decompositions, and bound the Taylor remainders under suitable smoothness and moment conditions".
+    >
+    > We have also revised Propositions 1 and 2 in Section 4.1 to retain the Taylor remainders and give explicit bounds under stated assumptions. The final two paragraphs of Section 4.1 also distinguish the zero-remainder linear case from general nonlinear models, and the new Appendix A4 gives conditions under which remainders have mean absolute size $O(\delta^2)$ and are therefore negligible relative to the innovation scale $\delta$ as $\delta\downarrow0$.
+
+-   The approximation step is somewhat simplified. Theoretical results in Propositions 1 and 2 rely on a first-order Taylor expansion with higher-order remainder terms discarded. However, formal characterizations of the approximation errors are missing, and no rate of approximation is established. The two propositions are presented as formal mathematical results with proofs, yet the proofs in the appendix proceeds with the remainder ignored. Given the foundational role of the two propositions in the proposed method, it would be important to quantify the approximation error.
+
+    > We have revised Propositions 1 and 2 and their proofs in Appendices A2 and A3 to retain, rather than discard, the remainder terms. Proposition 1 now states explicit smoothness, moment, and integrability assumptions and bounds the conditional mean absolute magnitude of the centered remainder by a Hessian bound times the sum of the relevant conditional mean squared forecast errors in Equation (8). Proposition 2 additionally controls recursive propagation in Equation (10). Moreover, we have added Appendix A4, where we derive $O(\delta^2)$ mean absolute approximation errors under uniform derivative bounds and innovation conditional variances of order at most $\delta^2$, with the forecast origin, horizon, and autoregressive order held fixed. Finally, the last paragraph of Section 4.1 now clarifies that this analysis motivates AcMCP’s scorecaster as a simplified specification that captures dependence among forecast errors without reproducing their optimal dynamics exactly.
+
+-   It would be helpful if the authors could further clarify the set of conditions under which the approximation error is expected to be negligible for the validity of AcMCP, and discuss how deviations from these conditions, such as strong nonlinearities, may affect the results.
+
+    > Section 4.1 and Appendix A4 now specify conditions under which the remainders become negligible and explain how curvature, mean squared forecast errors, and propagation across horizons affect their bounds. In Sections 4.2 and 4.3, we have clarified that approximation accuracy is not required for AcMCP’s coverage guarantees: the representations motivate a scorecaster designed to improve interval efficiency by accounting for error dependence, whereas coverage follows from the calibration mechanism under the assumptions in Section 4.3. Strong nonlinearity may increase the approximation errors and limit the scorecaster's efficiency gains, but the coverage guarantees remain valid whenever the calibration assumptions in Section 4.3 hold.
+
+-   The paper establishes long-run time-average coverage guarantees on $\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T I\left\{y_t \in \hat{\mathcal{C}}_{t \mid t-h}\right\}$. While this is a meaningful asymptotic result, it is weaker than what is typically required in practice. It would be helpful if the authors could provide stronger guarantees on the local coverage such as $I\left\{y_t \in \hat{\mathcal{C}}_{t \mid t-h}\right\}$, or discuss the gap if stronger guarantees are not attainable within the proposed framework.
+
+    > We agree that long-run coverage alone does not guarantee reliable coverage locally. Section 4.3 and the Conclusion now make these limitations explicit. We have also added Appendix A10, which derives finite-window lower bounds on empirical coverage by expressing the cumulative calibration error within a window as the difference between cumulative errors at its endpoints. The resulting coverage shortfall bound vanishes when the window length grows faster than the sum of the cumulative calibration bounds at those endpoints, but may remain uninformative for fixed-length rolling windows, as discussed in the final paragraph of Section 4.3. We therefore do not claim nominal coverage at each forecast origin or in every local window, and the local coverage performance reported in Section 5 remains empirical. The new paragraph at the end of Section 5.3 discusses the practical implications of this gap in the electricity application.
+
+-   Minor comments: some figures are quite dense and difficult to read, e.g., the top panels of Figures 2 and 5.
+
+    > We have redrawn the figures to improve readability. Figures 2, 5, and 8 previously stacked three rows (rolling coverage, mean interval width, and median interval width) with thin, similarly styled lines. They now only show two rows, rolling coverage and mean interval width; the rolling median widths follow the means closely and are omitted, as noted in Section 5.1. Each method is now drawn with a distinct combination of color and line type, with slightly thicker lines for the proposed methods. The boxplot figures (Figures 3, 6, and 9) now use the same color scheme as the line plots.

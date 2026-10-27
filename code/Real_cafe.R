@@ -8,6 +8,9 @@ library(lubridate)
 library(fable)
 library(ggplot2)
 library(stringr)
+library(patchwork)
+reticulate::use_virtualenv("r-spci", required = TRUE)
+source("code/spci.R")
 
 # Cafes, restaurants and takeaway food services in Victoria, Australia
 cafe_vic <- readabs::read_abs_series("A3349417W", release_date = "2024-04-01") |>
@@ -26,7 +29,11 @@ P_cafe_data <- cafe_vic |>
     y = "Turnover",
     title = ""
   ) +
-  theme_bw()
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(colour = "grey93", linewidth = 0.25)
+  )
 saveRDS(P_cafe_data, file = "result/P_cafe_data.rds")
 
 #------------------------------------
@@ -68,6 +75,11 @@ mwcp <- scp(fc, alpha = 1 - 0.01 * level,
             symmetric = symmetric, ncal = cal_window, rolling = rolling,
             weightfun = expweight, kess = TRUE, quantiletype = type)
 
+# SPCI
+spci <- spci(fc, alpha = 1 - 0.01 * level,
+             ncal = cal_window, rolling = rolling, w = 10,
+             random_state = 0L)
+
 # MACP
 gamma <- 0.005
 macp <- acp(fc, alpha = 1 - 0.01 * level,
@@ -101,6 +113,9 @@ acmcp <- acmcp(fc, alpha = 1 - 0.01 * level,
                integrate = TRUE, scorecast = TRUE,
                lr = lr, KI = KI, Csat = Csat)
 
+saveRDS(mget(c("mscp", "mwcp", "spci", "macp", "mpi", "mpid", "acmcp")),
+        file = "result/cafe_cp.rds")
+
 #------------------------------------
 # Result analysis
 library(dplyr)
@@ -109,16 +124,36 @@ library(tibble)
 library(tsibble)
 y <- cafe
 
-candidates <- c("mscp", "mwcp", "macp", "mpi", "mpid", "acmcp")
-methods <- c("MSCP", "MWCP", "MACP", "MPI", "MPID", "AcMCP")
+candidates <- c("mscp", "mwcp", "spci", "macp", "mpi", "mpid", "acmcp")
+methods <- c("MSCP", "MWCP", "SPCI", "MACP", "MPI", "MPID", "AcMCP")
 cols <- c(
-  "MSCP" = "yellow", "MWCP" = "orange", "MACP" = "green",
-  "MPI" = "blue", "MPID" = "purple", "AcMCP" = "red"
+  "MSCP" = "#AAAAAA", "MWCP" = "#A879CF",
+  "SPCI" = "#377EB8", "MACP" = "#20AF35", "MPID" = "#F2BC12",
+  "AcMCP" = "#D7191C", "MPI" = "blue"
 )
 linetypes <- c(
-  "MSCP" = "dashed", "MWCP" = "twodash", "MACP" = "dotted",
-  "MPI" = "longdash", "MPID" = "twodash", "AcMCP" = "solid"
+  "MSCP" = "solid", "MWCP" = "dashed",
+  "SPCI" = "dashed", "MACP" = "solid", "MPID" = "solid",
+  "AcMCP" = "solid", "MPI" = "solid"
 )
+plot_methods <- methods
+linewidths <- c("MSCP" = 0.35, "MWCP" = 0.35,
+                  "SPCI" = 0.35, "MACP" = 0.45, "MPID" = 0.45, "AcMCP" = 0.45, "MPI" = 0.35)
+theme_cov <- theme_bw(base_size = 10) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(colour = "grey93", linewidth = 0.25),
+    panel.border = element_rect(colour = "grey50", linewidth = 0.35),
+    strip.background = element_blank(),
+    strip.text = element_text(size = 10),
+    axis.text = element_text(colour = "grey20"),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 9),
+    legend.key.width = grid::unit(1, "cm"),
+    legend.margin = margin(0, 0, 0, 0),
+    legend.box.spacing = grid::unit(0, "pt"),
+    panel.spacing.x = grid::unit(0.7, "lines")
+  )
 
 cov_list <- sapply(candidates, function(i) {
   coverage(get(i), window = calc_window, level = level)
@@ -227,209 +262,218 @@ cafe_info <- do.call(bind_rows, info) |>
 
 P_cafe_covdiff <- cafe_info |>
   mutate(horizon = str_sub(horizon, start = 3, end = -1) |> as.numeric()) |>
-  ggplot(aes(x = horizon, y = covmean, colour = method)) +
-  geom_line(linewidth = 0.8) +
+  ggplot(aes(x = horizon, y = covmean, colour = method, linetype = method)) +
+  geom_line(aes(linewidth = method)) +
+  scale_linewidth_manual(values = linewidths, guide = "none") +
+  scale_linetype_manual(name = NULL, values = linetypes, breaks = methods) +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  scale_colour_manual(values = cols) +
-  ylim(c(-0.1, 0.1)) +
+  scale_colour_manual(name = NULL, values = cols, breaks = methods) +
+  expand_limits(y = c(-0.1, 0.1)) +
   labs(
     x = "Forecast horizon",
     y = "Coverage gap",
     colour = "Methods"
   ) +
   scale_x_continuous(breaks = seq_len(horizon)) +
-  theme_bw() +
+  theme_cov +
   theme(
     legend.position = "bottom",
     panel.grid.minor = element_blank()
   ) +
-  guides(colour = guide_legend(nrow = 1, keyheight = 0.5))
+  guides(colour = guide_legend(nrow = 1), linetype = guide_legend(nrow = 1))
   # + guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
 
 P_cafe_width <- cafe_info |>
   mutate(horizon = str_sub(horizon, start = 3, end = -1) |> as.numeric()) |>
-  ggplot(aes(x = horizon, y = widmean, colour = method)) +
-  geom_line(linewidth = 0.8) +
-  scale_colour_manual(values = cols) +
+  ggplot(aes(x = horizon, y = widmean, colour = method, linetype = method)) +
+  geom_line(aes(linewidth = method)) +
+  scale_linewidth_manual(values = linewidths, guide = "none") +
+  scale_linetype_manual(name = NULL, values = linetypes, breaks = methods) +
+  scale_colour_manual(name = NULL, values = cols, breaks = methods) +
   labs(
     x = "Forecast horizon",
     y = "Mean interval width",
     colour = "Methods"
   ) +
   scale_x_continuous(breaks = seq_len(horizon)) +
-  theme_bw() +
+  theme_cov +
   theme(
     legend.position = "bottom",
     panel.grid.minor = element_blank()
   ) +
-  guides(colour = guide_legend(nrow = 1, keyheight = 0.5))
+  guides(colour = guide_legend(nrow = 1), linetype = guide_legend(nrow = 1))
   # + guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
 
 P_cafe_winkler <- cafe_info |>
   mutate(horizon = str_sub(horizon, start = 3, end = -1) |> as.numeric()) |>
-  ggplot(aes(x = horizon, y = winkler, colour = method)) +
-  geom_line(linewidth = 0.8) +
-  scale_colour_manual(values = cols) +
+  ggplot(aes(x = horizon, y = winkler, colour = method, linetype = method)) +
+  geom_line(aes(linewidth = method)) +
+  scale_linewidth_manual(values = linewidths, guide = "none") +
+  scale_linetype_manual(name = NULL, values = linetypes, breaks = methods) +
+  scale_colour_manual(name = NULL, values = cols, breaks = methods) +
   labs(
     x = "Forecast horizon",
     y = "Winkler score",
     colour = "Methods"
   ) +
   scale_x_continuous(breaks = seq_len(horizon)) +
-  theme_bw() +
+  theme_cov +
   theme(
     legend.position = "bottom",
     panel.grid.minor = element_blank()
   ) +
-  guides(colour = guide_legend(nrow = 1, keyheight = 0.5))
+  guides(colour = guide_legend(nrow = 1), linetype = guide_legend(nrow = 1))
   # + guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
 
-P_cafe_result <- ggpubr::ggarrange(P_cafe_covdiff, P_cafe_width, P_cafe_winkler,
-                                   ncol = 1, nrow = 3,
-                                   common.legend = TRUE, legend = "bottom")
+P_cafe_result <- (P_cafe_covdiff / P_cafe_width / P_cafe_winkler) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom",
+        legend.margin = margin(4, 0, 0, 0))
 saveRDS(P_cafe_result, file = "result/P_cafe_result.rds")
 
-P_cafe_cov <- ggpubr::ggarrange(P_cafe_covdiff, P_cafe_width,
-                                ncol = 2, nrow = 1,
-                                common.legend = TRUE, legend = "bottom")
+P_cafe_cov <- (P_cafe_covdiff | P_cafe_width) +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom",
+        legend.margin = margin(0, 0, 0, 0),
+        legend.box.spacing = grid::unit(0, "pt"))
 saveRDS(P_cafe_cov, file = "result/P_cafe_cov.rds")
 
 #--------------------------
 # Plots: Coverage and width
-cov_plot <- cov |>
-  filter(yearmonth(index) >= yearmonth("2012 Mar") & yearmonth(index) <= yearmonth("2019 Dec")) |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = coverage, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.9) +
-  scale_colour_manual(values = cols) +
-  geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "black") +
-  ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
-  labs(
-    x = "Time",
-    y = "",
-    title = "Local coverage level",
-    colour = "Methods"
-  ) +
-  guides(colour = guide_legend(nrow = 1)) +
-  theme_bw()
+# cov_plot <- cov |>
+#   filter(yearmonth(index) >= yearmonth("2012 Mar") & yearmonth(index) <= yearmonth("2019 Dec")) |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = coverage, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.9) +
+#   scale_colour_manual(values = cols) +
+#   geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "black") +
+#   ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
+#   labs(
+#     x = "Time",
+#     y = "",
+#     title = "Local coverage level",
+#     colour = "Methods"
+#   ) +
+#   guides(colour = guide_legend(nrow = 1)) +
+#   theme_bw()
 
-wid_me_plot <- wid_me |>
-  filter(yearmonth(index) >= yearmonth("2012 Mar") & yearmonth(index) <= yearmonth("2019 Dec")) |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = width, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.9) +
-  scale_colour_manual(values = cols) +
-  ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
-  labs(
-    x = "Time",
-    y = "",
-    title = "Average interval width"
-  ) +
-  theme_bw()
+# wid_me_plot <- wid_me |>
+#   filter(yearmonth(index) >= yearmonth("2012 Mar") & yearmonth(index) <= yearmonth("2019 Dec")) |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = width, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.9) +
+#   scale_colour_manual(values = cols) +
+#   ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
+#   labs(
+#     x = "Time",
+#     y = "",
+#     title = "Average interval width"
+#   ) +
+#   theme_bw()
 
-wid_md_plot <- wid_md |>
-  filter(yearmonth(index) >= yearmonth("2012 Mar") & yearmonth(index) <= yearmonth("2019 Dec")) |>
-  as_tsibble(index = index, key = c(horizon, method)) |>
-  mutate(method = factor(method, levels = methods)) |>
-  ggplot(aes(x = index, y = width, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.9) +
-  scale_colour_manual(values = cols) +
-  ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
-  labs(
-    x = "Time",
-    y = "",
-    title = "Median interval width"
-  ) +
-  theme_bw()
+# wid_md_plot <- wid_md |>
+#   filter(yearmonth(index) >= yearmonth("2012 Mar") & yearmonth(index) <= yearmonth("2019 Dec")) |>
+#   as_tsibble(index = index, key = c(horizon, method)) |>
+#   mutate(method = factor(method, levels = methods)) |>
+#   ggplot(aes(x = index, y = width, group = method, colour = method)) +
+#   geom_line(size = 0.6, alpha = 0.9) +
+#   scale_colour_manual(values = cols) +
+#   ggh4x::facet_grid2(cols = vars(horizon), scales = "free_y", independent = "y") +
+#   labs(
+#     x = "Time",
+#     y = "",
+#     title = "Median interval width"
+#   ) +
+#   theme_bw()
 
-P_cafe_cov <- ggpubr::ggarrange(cov_plot, wid_me_plot, wid_md_plot,
-                                ncol = 1, nrow = 3,
-                                common.legend = TRUE, legend = "bottom")
+# P_cafe_cov <- ggpubr::ggarrange(cov_plot, wid_me_plot, wid_md_plot,
+#                                 ncol = 1, nrow = 3,
+#                                 common.legend = TRUE, legend = "bottom")
 # saveRDS(P_cafe_cov, file = "result/P_cafe_cov.rds")
 
 #--------------------------
 # Boxplots: rolling coverage and width
-cov_boxplot <- cov |>
-  mutate(
-    method = factor(method, levels = methods),
-  ) |>
-  ggplot(aes(x = method, y = coverage)) +
-  geom_boxplot(outlier.size = 1, outlier.colour = "grey") +
-  geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "red") +
-  coord_flip() +
-  facet_grid(rows = vars(horizon)) +
-  labs(
-    x = "",
-    y = "Rolling coverage",
-  ) +
-  theme_bw()
+# cov_boxplot <- cov |>
+#   mutate(
+#     method = factor(method, levels = methods),
+#   ) |>
+#   ggplot(aes(x = method, y = coverage)) +
+#   geom_boxplot(outlier.size = 1, outlier.colour = "grey") +
+#   geom_hline(yintercept = 0.01*level, linetype = "dashed", colour = "red") +
+#   coord_flip() +
+#   facet_grid(rows = vars(horizon)) +
+#   labs(
+#     x = "",
+#     y = "Rolling coverage",
+#   ) +
+#   theme_bw()
 
-wid_boxplot <- wid |>
-  mutate(
-    method = factor(method, levels = methods),
-  ) |>
-  ggplot(aes(x = method, y = width)) +
-  geom_boxplot(outlier.size = 1, outlier.colour = "grey", outliers = FALSE)
-for (h in seq_len(horizon)) {
-  wid_boxplot <- wid_boxplot +
-    geom_hline(
-      data = filter(wid, horizon == paste0("h=", h)),
-      aes_string(yintercept = wid |> filter(horizon == paste0("h=", h) & method == "AcMCP") |> pull(width) |> median(na.rm = TRUE)),
-      linetype = "dashed", colour = "blue")
-}
-wid_boxplot <- wid_boxplot +
-  coord_flip() +
-  facet_grid(rows = vars(horizon)) +
-  labs(
-    x = "",
-    y = "Width",
-  ) +
-  theme_bw()
-P_cafe_box <- ggpubr::ggarrange(cov_boxplot, wid_boxplot,
-                                ncol = 2, nrow = 1,
-                                common.legend = TRUE, legend = "bottom")
+# wid_boxplot <- wid |>
+#   mutate(
+#     method = factor(method, levels = methods),
+#   ) |>
+#   ggplot(aes(x = method, y = width)) +
+#   geom_boxplot(outlier.size = 1, outlier.colour = "grey", outliers = FALSE)
+# for (h in seq_len(horizon)) {
+#   wid_boxplot <- wid_boxplot +
+#     geom_hline(
+#       data = filter(wid, horizon == paste0("h=", h)),
+#       aes_string(yintercept = wid |> filter(horizon == paste0("h=", h) & method == "AcMCP") |> pull(width) |> median(na.rm = TRUE)),
+#       linetype = "dashed", colour = "blue")
+# }
+# wid_boxplot <- wid_boxplot +
+#   coord_flip() +
+#   facet_grid(rows = vars(horizon)) +
+#   labs(
+#     x = "",
+#     y = "Width",
+#   ) +
+#   theme_bw()
+# P_cafe_box <- ggpubr::ggarrange(cov_boxplot, wid_boxplot,
+#                                 ncol = 2, nrow = 1,
+#                                 common.legend = TRUE, legend = "bottom")
 # saveRDS(P_cafe_box, file = "result/P_cafe_box.rds")
 
 #--------------------------
 # Plots: time plot
-month <- cafe_vic |> distinct(Month) |> pull(Month)
-clip_start <- fit_window + cal_window + 1
-clip_end <- length(y)
-x <- subset(fc$x, start = clip_start, end = clip_end)
-for (h in seq_len(horizon)) {
-  tb <- tibble(
-    time = month[clip_start:clip_end],
-    x = x,
-    horizon = paste0("h=", h),
-    lower_acmcp = window(acmcp$LOWER[[1]][,h], start = start(x), end = end(x)),
-    upper_acmcp = window(acmcp$UPPER[[1]][,h], start = start(x), end = end(x)),
-    lower_mpi = window(mpi$LOWER[[1]][,h], start = start(x), end = end(x)),
-    upper_mpi = window(mpi$UPPER[[1]][,h], start = start(x), end = end(x)),
-    lower_macp = window(macp$LOWER[[1]][,h], start = start(x), end = end(x)),
-    upper_macp = window(macp$UPPER[[1]][,h], start = start(x), end = end(x)),
-  )
-  assign(paste0("tp_h", h), tb)
-}
-tp_data <- bind_rows(mget(paste0("tp_h", seq_len(horizon))))
-P_cafe_timeplot <- tp_data |>
-  ggplot(aes(x = time)) +
-  geom_line(aes(y = x, colour = "Observation"), linewidth = 1) +
-  geom_line(aes(y = lower_macp, colour="MACP"), alpha = 1) +
-  geom_line(aes(y = upper_macp, colour="MACP"), alpha = 1) +
-  #geom_line(aes(y = lower_mpi, colour="MPI"), alpha = 0.8) +
-  #geom_line(aes(y = upper_mpi, colour="MPI"), alpha = 0.8) +
-  geom_line(aes(y = lower_acmcp, colour="AcMCP"), alpha = 0.7) +
-  geom_line(aes(y = upper_acmcp, colour="AcMCP"), alpha = 0.7) +
-  facet_grid(horizon~.) +
-  scale_color_manual(
-    name = "Methods",
-    values = c("Observation" = "black", "MACP" = "green", "MPI" = "blue", "AcMCP" = "red"),
-    breaks = c('Observation','MACP','MPI','AcMCP'),
-    labels = c('Observation','MACP','MPI','AcMCP')) +
-  xlab("Time") +
-  ylab("") +
-  theme_bw() +
-  theme(legend.position = "bottom")
+# month <- cafe_vic |> distinct(Month) |> pull(Month)
+# clip_start <- fit_window + cal_window + 1
+# clip_end <- length(y)
+# x <- subset(fc$x, start = clip_start, end = clip_end)
+# for (h in seq_len(horizon)) {
+#   tb <- tibble(
+#     time = month[clip_start:clip_end],
+#     x = x,
+#     horizon = paste0("h=", h),
+#     lower_acmcp = window(acmcp$LOWER[[1]][,h], start = start(x), end = end(x)),
+#     upper_acmcp = window(acmcp$UPPER[[1]][,h], start = start(x), end = end(x)),
+#     lower_mpi = window(mpi$LOWER[[1]][,h], start = start(x), end = end(x)),
+#     upper_mpi = window(mpi$UPPER[[1]][,h], start = start(x), end = end(x)),
+#     lower_macp = window(macp$LOWER[[1]][,h], start = start(x), end = end(x)),
+#     upper_macp = window(macp$UPPER[[1]][,h], start = start(x), end = end(x)),
+#   )
+#   assign(paste0("tp_h", h), tb)
+# }
+# tp_data <- bind_rows(mget(paste0("tp_h", seq_len(horizon))))
+# P_cafe_timeplot <- tp_data |>
+#   ggplot(aes(x = time)) +
+#   geom_line(aes(y = x, colour = "Observation"), linewidth = 1) +
+#   geom_line(aes(y = lower_macp, colour="MACP"), alpha = 1) +
+#   geom_line(aes(y = upper_macp, colour="MACP"), alpha = 1) +
+#   #geom_line(aes(y = lower_mpi, colour="MPI"), alpha = 0.8) +
+#   #geom_line(aes(y = upper_mpi, colour="MPI"), alpha = 0.8) +
+#   geom_line(aes(y = lower_acmcp, colour="AcMCP"), alpha = 0.7) +
+#   geom_line(aes(y = upper_acmcp, colour="AcMCP"), alpha = 0.7) +
+#   facet_grid(horizon~.) +
+#   scale_color_manual(
+#     name = "Methods",
+#     values = c("Observation" = "black", "MACP" = "green", "MPI" = "blue", "AcMCP" = "red"),
+#     breaks = c('Observation','MACP','MPI','AcMCP'),
+#     labels = c('Observation','MACP','MPI','AcMCP')) +
+#   xlab("Time") +
+#   ylab("") +
+#   theme_bw() +
+#   theme(legend.position = "bottom")
 # saveRDS(P_cafe_timeplot, file = "result/P_cafe_timeplot.rds")

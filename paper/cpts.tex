@@ -5,6 +5,7 @@
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
 %
 \documentclass[
+  american,
   12pt]{article}
 \usepackage{xcolor}
 \usepackage{amsmath,amssymb}
@@ -92,6 +93,17 @@
 
 
 
+\ifLuaTeX
+\usepackage[bidi=basic]{babel}
+\else
+\usepackage[bidi=default]{babel}
+\fi
+% get rid of language-specific shorthands (see #6817):
+\let\LanguageShortHands\languageshorthands
+\def\languageshorthands#1{}
+\ifLuaTeX
+  \usepackage[english]{selnolig} % disable illegal ligatures
+\fi
 
 
 \setlength{\emergencystretch}{3em} % prevent overfull lines
@@ -216,6 +228,7 @@
 \hypersetup{
   pdftitle={Online conformal inference for multi-step time series forecasting},
   pdfauthor={Xiaoqian Wang; Rob J Hyndman},
+  pdflang={en-US},
   pdfkeywords={Conformal prediction, Coverage
 guarantee, Distribution-free inference, Exchangeability, Weighted
 quantile estimate},
@@ -255,25 +268,28 @@ University \vspace{0.2em}\\
 \bigskip
 \bigskip
 \begin{abstract}
-We consider the problem of constructing distribution-free prediction
-intervals for multi-step time series forecasting, with a focus on the
-temporal dependencies inherent in multi-step forecast errors. We
-establish that the optimal \(h\)-step-ahead forecast errors exhibit
-serial correlation up to lag \((h-1)\) under a general non-stationary
-autoregressive data generating process. To leverage these properties, we
-propose the Autocorrelated Multi-step Conformal Prediction (AcMCP)
-method, which effectively incorporates autocorrelations in multi-step
-forecast errors, resulting in more statistically efficient prediction
-intervals. This method guarantees asymptotic marginal coverage for
-multi-step prediction intervals, though we note that, for finite
-samples, the coverage error admits an upper bound that increases with
-the forecasting horizon. Additionally, we extend several
-easy-to-implement conformal prediction methods, originally designed for
-single-step forecasting, to accommodate multi-step scenarios. Through
-empirical evaluations, including simulations and applications to data,
-we demonstrate that AcMCP achieves coverage that closely aligns with the
-target within local windows, while providing adaptive prediction
-intervals that effectively respond to varying conditions.
+We study the construction of distribution-free prediction intervals for
+multi-step time series forecasting. In this setting, forecast errors at
+different horizons are serially dependent, and feedback is delayed,
+since the realized error of an \(h\)-step-ahead forecast becomes
+available only after \(h\) periods. We propose autocorrelated multi-step
+conformal prediction (AcMCP), an online procedure that accommodates
+delayed feedback and explicitly incorporates the dependence among
+multi-step forecast errors into conformal calibration. To characterize
+this dependence, we derive first-order representations of the optimal
+forecast errors under a general nonstationary autoregressive
+data-generating process, together with explicit bounds on the remainder
+terms. AcMCP guarantees long-run coverage of at least the nominal level
+at every horizon, without requiring exchangeability or any assumption on
+how the data distribution evolves over time. We also establish a
+finite-sample bound on the empirical coverage shortfall, which depends
+explicitly on the forecast horizon and the evaluation sample size.
+Notably, these guarantees do not rely on the accuracy of the linear
+approximations. Simulations and real-data applications show that AcMCP
+adapts to time-varying dynamics and maintains rolling coverage close to
+the nominal level. By exploiting the dependence among multi-step errors,
+it often yields narrower intervals than comparably well-calibrated
+methods, particularly at longer horizons.
 \end{abstract}
 
 \noindent%
@@ -289,206 +305,218 @@ quantile estimate
 \setcounter{proposition}{0}
 
 \renewcommand{\thecorollary}{\arabic{corollary}} % numbering corollaries sequentially and individually
+\counterwithout{corollary}{section}
 \setcounter{corollary}{0}
 
 \section{Introduction}\label{sec-intro}
 
-Conformal prediction \citep{papadopoulos2002, vovk2005} is a simple yet
-powerful framework for uncertainty quantification. It constructs valid
-prediction intervals that achieve nominal coverage without imposing
-stringent assumptions on the data generating distribution, other than
-requiring the data to be i.i.d. or, more generally, exchangeable. Its
-credibility and potential make it widely used to quantify uncertainty
-for predictions produced by black-box machine learning models
-\citep{papadopoulos2007, papadopoulos2008, shafer2008, barber2021} or
-non-parametric models \citep{lei2014}.
+Conformal prediction \citep{papadopoulos2002, vovk2005} is a
+model-agnostic framework for uncertainty quantification that constructs
+prediction intervals with valid coverage, without requiring stringent
+assumptions on the underlying data distribution. Its classical
+guarantees, however, rely on the data being i.i.d. or, more generally,
+exchangeable. In time series forecasting, observations are typically
+serially dependent and may exhibit nonstationarity or distributional
+shifts, so exchangeability generally fails and the standard guarantees
+no longer hold.
 
-Three widely used classes of conformal prediction methods for
-constructing distribution-free prediction intervals are split conformal
-prediction \citep{vovk2005}, full conformal prediction \citep{vovk2005},
-and jackknife+ \citep{barber2021}. Split conformal, which relies on a
-holdout set, offers computational efficiency but sacrifices some
-statistical efficiency due to data splitting. Full conformal prediction
-avoids data splitting, providing higher accuracy at the cost of
-increased computational complexity. Both split and full conformal
-prediction methods guarantee coverage at the target level under the
-assumption of data exchangeability. Jackknife+ strikes a balance between
-these methods, offering a compromise between statistical precision and
-computational demands. Under assumptions of algorithmic stability,
-Jackknife+ attains near-nominal coverage, while under the weaker
-assumption of exchangeability alone, it guarantees coverage of at least
-\(1-2\alpha\) in the worst case. \citet{gupta2022} further generalize
-jackknife+ and related out-of-bag conformal methods through a unified
-framework based on nested families of prediction sets.
+Recent work has sought to relax this requirement. One line of research
+replaces exchangeability with weaker, time-series-specific assumptions.
+To handle temporal dependence, approximate coverage guarantees have been
+obtained through permutation schemes that preserve the temporal
+dependence structure \citep{chernozhukov2018, yu2022} and through
+concentration and decoupling arguments for split conformal prediction
+\citep{oliveira2024}. \citet{xu2021} use bootstrap ensemble predictors
+to obtain out-of-bag residuals and update their empirical distribution
+as new observations arrive, establishing approximate coverage under
+stationary, strongly mixing errors. Under covariate shift,
+\citet{tibshirani2019} and \citet{yang2024} establish coverage
+guarantees when the training and test distributions differ only in their
+covariate marginals. Other work generalizes conformal calibration by
+replacing the unweighted empirical distribution of nonconformity scores
+with a weighted one \citep{barber2023, guan2023}.
 
-Nevertheless, the data exchangeability assumption is often violated in
-many applied domains, where challenges such as non-stationarity,
-distributional drift, temporal and spatial dependencies are prevalent.
-In response, several extensions to conformal prediction have been
-proposed to handle non-exchangeable data. Notable examples include
-methods for handling covariate shift \citep{tibshirani2019, yang2024},
-online distribution shift
-\citep{gibbs2021, gibbs2024, zaffran2022, bastani2022}, time series data
-\citep{chernozhukov2018, gibbs2021, xu2021, xu2023, zaffran2022}, and
-methods based on certain distributional assumptions of the data rather
-than exchangeability
-\citep{chernozhukov2018, oliveira2024, xu2021, xu2023}. Additionally,
-some methods propose weighting nonconformity scores (e.g., prediction
-errors) differently, either using non-data-dependent weights
-\citep{barber2023} or weights based on observed feature values
-\citep{tibshirani2019, guan2023}.
+A separate strand of research develops online conformal methods that
+adjust prediction intervals using sequential coverage feedback. Adaptive
+conformal inference \citep[ACI,][]{gibbs2021} updates the working
+miscoverage level in response to observed coverage errors, so that
+empirical coverage converges to the target level without distributional
+assumptions on the time series. Subsequent extensions use expert
+aggregation and adaptive online learning to reduce sensitivity to the
+learning rate and to improve adaptation to distribution shifts
+\citep{zaffran2022, gibbs2024, bhatnagar2023}. Conformal PID control
+\citep{angelopoulos2024} builds on the same feedback principle but
+adjusts the thresholds of the nonconformity scores directly, combining
+quantile tracking, correction for cumulative coverage errors, and a
+scorecaster that exploits predictable temporal structure in the scores.
+Further refinements improve stability through decaying step sizes
+\citep{angelopoulos2024online}, reduce tuning through parameter-free
+updates \citep{podkopaev2024}, and incorporate smooth feedback that
+reflects the magnitude of the discrepancy between scores and thresholds
+\citep{wu2025}.
 
-Recent work has sought to extend conformal prediction to time series
-settings, where exchangeability obviously fails due to inherent temporal
-dependencies. One line of research has focused on developing
-conformal-type methods that offer coverage guarantees under certain
-relaxations of exchangeability. For example, within the full conformal
-prediction framework, \citet{chernozhukov2018} and \citet{yu2022}
-construct prediction sets for time series by using a group of
-permutations that are specifically designed to preserve the dependence
-structure in the data, ensuring validity under weak assumptions on the
-nonconformity score. In the split conformal prediction framework,
-\citet{xu2021} and \citet{xu2023} extend conformal prediction methods to
-time series settings and establish asymptotically valid conditional
-coverage under the assumption that model errors are stationary and
-strongly mixing. \citet{barber2023} use weighted residual distributions
-to provide robustness against distribution drift. Additionally,
-\citet{oliveira2024} introduce a general framework based on
-concentration inequalities and data decoupling properties of the data to
-retain asymptotic coverage guarantees across several dependent data
-settings.
+Most of this literature, however, targets single-step forecasting,
+whereas many applications require uncertainty quantification over
+several future horizons. Multi-step forecasting poses two additional
+challenges for conformal methods. First, feedback is delayed: the
+realized error of an \(h\)-step-ahead forecast becomes available only
+\(h\) periods after the forecast is issued, so online updates must rely
+on outdated information. Second, forecast errors at different horizons
+issued from the same origin are dependent, because errors propagate
+through the forecasting recursion.
 
-In a separate strand of research, \citet{gibbs2021} develop adaptive
-conformal inference (ACI, denoted as ACP hereafter) in an online manner
-to manage temporal distribution shifts and ensure long-run coverage
-guarantees. The basic idea is to adapt the miscoverage rate, \(\alpha\),
-based on historical miscoverage frequencies. However, ACP may yield
-infinite or empty prediction intervals when the \(\alpha\) drifts below
-\(0\) or exceeds \(1\), respectively. Follow-up work has refined this
-idea by introducing time-dependent step sizes to respond to arbitrary
-distribution shifts, as seen in studies by \citet{bastani2022},
-\citet{zaffran2022}, and \citet{gibbs2024}. Recent research has proposed
-a generalized updating process that tracks the quantile of the
-nonconformity score sequence, rather than the miscoverage rate, as
-discussed by \citet{bhatnagar2023}, \citet{angelopoulos2024}, and
-\citet{angelopoulos2024online}.
+Existing conformal methods for multi-step forecasting address these
+challenges only partially. \citet{stankeviciute2021} integrate conformal
+prediction with recurrent neural networks for multi-step forecasting and
+apply a Bonferroni correction to obtain simultaneous coverage across
+horizons, but their guarantee relies on exchangeability across time
+series. \citet{schlembach2025} extend this approach to multivariate
+targets under nonexchangeability, with a joint miscoverage bound across
+horizons and response dimensions. Bellman conformal inference
+\citep{yang2024ts} uses multi-step forecasts in a look-ahead
+optimization that trades off interval length against a miscoverage
+penalty, but it outputs, and guarantees coverage for, only the resulting
+sequence of one-step-ahead intervals; it also requires nested interval
+families, which calls for additional construction when only point
+forecasts are available, and solves a dynamic program at every time
+step. The multi-step extension of sequential predictive conformal
+inference \citep[SPCI,][]{xu2023} fits a separate predictor and
+conditional quantile model for each horizon and uses past residuals to
+adapt the interval bounds; although SPCI has asymptotic conditional
+coverage guarantees under suitable assumptions, its multi-step
+implementation is not analyzed separately. To our knowledge, existing
+multi-step conformal methods seldom provide coverage guarantees without
+exchangeability, and none exploits the dependence among forecast errors
+across horizons. A method that handles delayed feedback, accounts for
+this dependence, and retains distribution-free coverage guarantees is
+therefore still lacking.
 
-Existing conformal prediction methods for time series primarily focus on
-single-step forecasting, even though many applications require reliable
-uncertainty quantification over multiple future horizons. The literature
-on multi-step conformal prediction is comparatively limited and, when it
-does consider multi-step forecasts, it often reduces the problem to
-\(H\) horizon-specific tasks by constructing separate prediction sets
-for each \(y_{t+h}\), \(h\in[H]\), without considering how forecasts at
-different horizons are related. For example, \citet{stankeviciute2021}
-integrate conformal prediction with recurrent neural networks for
-multi-step forecasting and then apply Bonferroni correction to control
-coverage. This approach, however, assumes data independence, which is
-often unrealistic for time series. \citet{yang2024ts} propose Bellman
-conformal inference to jointly control multi-step miscoverage by
-minimizing a loss that balances average interval length across horizons
-and miscoverage, which however ignores temporal dependencies across
-horizons and can be computationally intensive due to related
-optimization at each time step. Related extensions to multivariate
-targets have also been studied; see, for example,
-\citet{schlembach2025}.
+We consider a time series \(\{y_t\}_{t\ge1}\) generated by an unknown,
+possibly nonstationary data-generating process (DGP) that may depend on
+its own past and on exogenous predictors \(\bm{x}_t\in\mathbb{R}^p\). At
+each time \(t\), we wish to construct a prediction interval
+\(\hat{\mathcal{C}}_{t+h|t}\) for \(y_{t+h}\) at every horizon
+\(h\in[H]\). Given a user-specified miscoverage level
+\(\alpha\in(0,1)\), the goal is horizon-specific long-run coverage,
+namely
+\(\liminf_{T\to\infty}\frac{1}{T}\sum_{t=1}^{T}\mathbbm{1}\left\{y_{t+h}\in\hat{\mathcal{C}}_{t+h|t}\right\}\geq 1-\alpha\),
+for \(h\in[H]\).
 
-We employ a unified notation to formalize the mathematical
-representation of conformal prediction for time series data. We consider
-a general sequential setting in which we observe a time series
-\(\{y_t\}_{t \geq 1}\) generated by an unknown data generating process
-(DGP), which may depend on its own past, along with other exogenous
-predictors, \(\bm{x}_t=(x_{1,t}, \dots, x_{p,t})^{\prime}\), and their
-histories. The joint distribution of \(\{(\bm{x}_t, y_t)\}_{t \geq 1}\),
-where \(\bm{x}_t\in\mathbb{R}^p\) and \(y_t\in\mathbb{R}\), is allowed
-to vary over time, thereby accommodating non-stationary processes. At
-each time point \(t\), we aim to forecast \(H\) steps into the future,
-providing a \emph{prediction set} (which is a prediction interval in
-this setting), \(\hat{\mathcal{C}}_{t+h|t}\), for the realization
-\(y_{t+h}\) for each \(h\in[H]\). The \(h\)-step-ahead forecast uses the
-previously observed data \(\{(\bm{x}_i, y_i)\}_{1 \leq i \leq t}\) along
-with the new information of the exogenous predictors
-\(\{\bm{x}_{t+j}\}_{1\leq j\leq h}\). Note that we can generate ex-ante
-forecasts by using forecasts of the predictors based on information
-available up to and including time \(t\). Alternatively, ex-post
-forecasts are generated assuming that actual values of the predictors
-from the forecast period are available. Given a nominal
-\emph{miscoverage rate} \(\alpha \in (0,1)\) specified by the user, we
-expect to construct prediction intervals \(\hat{\mathcal{C}}_{t+h|t}\)
-that achieve long-run coverage guarantees, in the sense that
-\(\lim _{T \rightarrow \infty} \frac{1}{T} \sum_{t=1}^T\mathbbm{1}\left\{y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}\right\} \geq 1-\alpha\).
-
-Our goal is to achieve long-run coverage for multi-step univariate time
-series forecasting. All the proposed methods are grounded in the split
-conformal prediction framework and an online learning scheme, which are
-well-suited to the sequential nature of time series data. First, we
-extend several widely used conformal prediction methods that are
-originally designed for single-step forecasting to the multi-step
-setting by constructing horizon-specific prediction intervals. These
-extensions follow the common practice of treating each horizon
-independently and, in general, do not provide theoretical long-run
-coverage guarantees for multi-step prediction intervals, except for the
-proposed multi-step conformal PID control (MPID) method, which admits
-such a guarantee. Second, we provide theoretical results showing that,
-under a general non-stationary autoregressive DGP, the forecast errors
-of optimal \(h\)-step-ahead forecasts can be well approximated by a
-linear combination of at most its lag \((h-1)\) with respect to forecast
-horizon. Third, building on the theoretical results, we introduce the
-autocorrelated multi-step conformal prediction (AcMCP) method, which
-explicitly accounts for the autocorrelations of multi-step forecast
-errors at the calibration stage by preserving the dependence structure
-among nonconformity scores. AcMCP is proven to guarantee asymptotic
-marginal coverage for multi-step prediction intervals, with the coverage
-gap converging to zero as the sample size increases, without making any
-assumptions on data distribution shifts. Our method targets pointwise
-prediction intervals for each specific forecast horizon, \(h\in[H]\).
-Finally, we illustrate the practical utility of these proposed methods
-through two simulations and two applications to electricity demand and
-eating-out expenditure forecasting. The results show that the proposed
-AcMCP method adapts effectively to changes in the observed data
-distribution and, among the proposed extensions that achieve coverage
-close to the target level, generally yields more informative and
-narrower prediction intervals, particularly for larger forecast
-horizons.
+This paper makes three contributions. First, we develop multi-step
+conformal prediction methods within an online learning framework with
+sequential training and calibration splits. Building on conformal PID
+control of \citet{angelopoulos2024}, we introduce its multi-step
+extension (MPID), which accommodates delayed coverage feedback. Second,
+we propose autocorrelated multi-step conformal prediction (AcMCP), which
+explicitly incorporates the dependence among multi-step forecast errors
+into the scorecaster. To motivate its design, we analyze optimal
+forecast errors under a general nonstationary autoregressive DGP with
+future exogenous predictors treated as known, derive first-order error
+decompositions, and bound the Taylor remainders under suitable
+smoothness and moment conditions. These results lead to a scorecaster
+that combines a moving average model for errors at a fixed horizon with
+a regression on errors across horizons from the same forecast origin.
+AcMCP combines these error forecasts with online calibration of the two
+tails to construct asymmetric prediction intervals for each horizon.
+Third, for both MPID and AcMCP, we establish finite-sample bounds on
+empirical coverage that explicitly account for delayed feedback and
+imply long-run coverage of at least the nominal level at each fixed
+horizon. These guarantees hold under suitable conditions on the scores
+and the calibration procedure, without any assumption on how the data
+distribution changes over time. They concern coverage averaged over time
+at each horizon, rather than simultaneous coverage across horizons or
+conditional coverage at individual forecast origins. Importantly, the
+coverage guarantees of AcMCP do not depend on the accuracy of the
+forecast-error approximations; the contribution of the scorecaster to
+interval efficiency is assessed empirically. Simulations and
+applications to electricity demand and eating-out expenditure show that
+AcMCP adapts to distributional changes and often produces narrower
+intervals than competing methods with comparable coverage, particularly
+at longer horizons.
 
 We developed the \texttt{conformalForecast} package for R to implement
-the proposed multi-step conformal prediction methods, the package is
+the proposed multi-step conformal prediction methods. The package is
 publicly available on CRAN. All the data and code to reproduce the
 experiments are made available at \url{https://github.com/xqnwang/cpts}.
 
 \section{Online learning with sequential splits}\label{sec-setup}
 
-Let \(z_t = (\bm{x}_t, y_t)\) denote the data point (including the
-response \(y_t\) and possibly predictors \(\bm{x}_t\)) at time \(t\).
-Suppose that, at each time \(t\), a forecasting model \(\hat{f}_t\) is
-trained on historical data \(z_{1:t}\) and updated (re-trained) as new
-observations arrive. We assume that the predictors are known into the
-future, corresponding to an ex-post forecasting setting commonly used
-when predictors are deterministic, policy-driven, or externally
-specified. By conditioning on future predictors, we focus exclusively on
-the uncertainty in the response variable \(y_t\) and avoid introducing
-additional uncertainty from forecasting the exogenous inputs. Using the
-forecasting model \(\hat{f}_t\), we are able to produce \(H\)-step point
-forecasts, \(\{\hat{y}_{t+h|t}\}_{h\in[H]}\), using the future values
-for the predictors. We define the \emph{nonconformity score} as the
-(signed) forecast error \[
-s_{t+h|t}=\mathcal{S}(z_{1:t}, y_{t+h}):=y_{t+h}-\hat{f}_t(z_{1:t}, \bm{x}_{(t+1):(t+h)})=y_{t+h}-\hat{y}_{t+h|t}.
-\] The task is to employ conformal inference to build \(H\)-step
-prediction intervals,
-\(\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}(z_{1:t}, \bm{x}_{(t+1):(t+h)})\}_{h\in[H]}\),
-at the target coverage level \(1-\alpha\). For brevity, we will use
-\(\hat{\mathcal{C}}_{t+h|t}^{\alpha}\) to denote the \(h\)-step-ahead
-\(100(1-\alpha)\%\) prediction interval.
+\textbf{Problem setup.} We observe a time series \(\{y_t\}_{t\geq1}\)
+generated by an unknown DGP, which may depend on its own past as well as
+on exogenous predictors
+\(\bm{x}_t=(x_{1,t},\dots,x_{p,t})^{\prime}\in\mathbb{R}^p\) and their
+histories. Write \(z_t=(\bm{x}_t,y_t)\). The joint distribution of
+\(\{z_t\}_{t\geq1}\) is allowed to vary over time, thereby accommodating
+nonstationary processes, and we impose no assumption on how it evolves.
+At each time \(t\), we forecast \(H\) steps ahead and, for each
+\(h\in[H]\), construct a \emph{prediction set}
+\(\hat{\mathcal{C}}^{\alpha}_{t+h|t}\) for \(y_{t+h}\), which is a
+prediction interval in this setting. The \(h\)-step-ahead forecast uses
+the observed data \(\{z_i\}_{1\leq i\leq t}\) together with the
+exogenous predictors \(\{\bm{x}_{t+j}\}_{1\leq j\leq h}\) over the
+forecast period. These future predictors may be replaced by forecasts
+based on information available up to and including time \(t\)
+(\emph{ex-ante} forecasts), or the actual values may be assumed
+available (\emph{ex-post} forecasts). Given a user-specified
+\emph{miscoverage level} \(\alpha\in(0,1)\), we seek intervals with
+horizon-specific long-run coverage,
+\begin{equation}\phantomsection\label{eq-longrun}{
+\liminf_{T\to\infty}\frac{1}{T-h}\sum_{t=h+1}^{T}\mathbbm{1}\left\{y_t\in\hat{\mathcal{C}}^{\alpha}_{t|t-h}\right\}\geq 1-\alpha,\qquad h\in[H].
+}\end{equation} This criterion concerns coverage averaged over time at
+each forecast horizon, rather than coverage conditional on the available
+information or simultaneous coverage of the entire future path. The
+parametric form of the DGP is assumed only for the forecast-error
+analysis in Section~\ref{sec-ppt}; the coverage guarantees in
+Section~\ref{sec-cov} do not require it.
+
+\textbf{Forecasts and errors.} Suppose that, at each time \(t\), a
+forecasting model \(\hat{f}_t\) is trained on historical data
+\(z_{1:t}\) and updated (retrained) as new observations arrive. Using
+\(\hat{f}_t\), we produce point forecasts \(\hat{y}_{t+h|t}\) and signed
+forecast errors \(e_{t+h|t}=y_{t+h}-\hat{y}_{t+h|t}\) for \(h\in[H]\).
+Conformal inference then calibrates these errors to turn the point
+forecasts into prediction intervals.
+
+\textbf{Prediction intervals.} We construct generally asymmetric
+intervals by calibrating the lower and upper tails separately. Choose
+tail levels \(\alpha^{-},\alpha^{+}>0\) satisfying
+\(\alpha^{-}+\alpha^{+}=\alpha\). The two calibration procedures use the
+\emph{nonconformity scores} \(s_{t+h|t}^{-}=-e_{t+h|t}\) and
+\(s_{t+h|t}^{+}=e_{t+h|t}\), respectively, and produce thresholds
+\(q_{t+h|t}^{-}\) and \(q_{t+h|t}^{+}\). These thresholds define the
+prediction interval
+\begin{equation}\phantomsection\label{eq-two-sided-pi}{
+\hat{\mathcal{C}}_{t+h|t}^{\alpha}
+:=\left[\hat y_{t+h|t}-q_{t+h|t}^{-},\ \hat y_{t+h|t}+q_{t+h|t}^{+}\right].
+}\end{equation} For each tail \(a\in\{-,+\}\), the \emph{miscoverage
+indicator}
+\(\mathrm{err}_{t+h|t}^{a}:=\mathbbm{1}\{s_{t+h|t}^{a}>q_{t+h|t}^{a}\}\)
+records whether the observation falls beyond the corresponding interval
+bound. Using opposite signed scores allows both tails to be calibrated
+through the same score-exceedance rule, with observations at either
+endpoint counted as covered. Because \(y_{t+h}\), and hence
+\(s_{t+h|t}^{a}\) and \(\mathrm{err}_{t+h|t}^{a}\), is revealed only at
+time \(t+h\), feedback is delayed: at time \(t\), the information
+available for horizon \(h\) comes from forecast origins \(t-h\) and
+earlier. We use \(\alpha^{-}=\alpha^{+}=\alpha/2\) throughout the
+empirical analysis.
+
+Unless otherwise stated, we present the methods and theoretical results
+in subsequent sections for a generic single tail, omitting the tail
+superscript for simplicity. Accordingly, \(\alpha\) denotes the target
+tail miscoverage level in single-tail statements and the total
+miscoverage level in two-sided statements. For a candidate response
+\(y\), \(s_{t+h|t}^{y}\) denotes the score obtained by replacing
+\(y_{t+h}\) with \(y\).
 
 \textbf{Sequential split.} In a time series context, it is inappropriate
 to perform \emph{random splitting}, a standard strategy in much of the
 conformal prediction literature, due to the temporal dependency present
 in the data. Following related work such as \citet{wisniewski2020} and
-\citet{zaffran2022}, throughout the conformal prediction methods
-proposed in this paper, we use a \emph{sequential split} to preserve the
-temporal structure. For example, the \(t\) available data points,
-\(z_{1:t}\), are sequentially split into two consecutive sets, a
-\emph{proper training set}
+\citet{zaffran2022}, all conformal methods proposed in this paper use a
+\emph{sequential split} to preserve the temporal structure. For example,
+the \(t\) available data points, \(z_{1:t}\), are sequentially split
+into two consecutive sets, a \emph{proper training set}
 \(\mathcal{D}_{\text{tr}} \subset \{1, \dots, t_r\}\) and a
 \emph{calibration set}
 \(\mathcal{D}_{\text{cal}} \subset \{t_r+1, \dots, t\}\), where
@@ -497,21 +525,19 @@ temporal structure. For example, the \(t\) available data points,
 and
 \(\mathcal{D}_{\text{tr}} \cap \mathcal{D}_{\text{cal}} = \varnothing\).
 Here, ``proper'' means that the training set is used exclusively for
-fitting the model, with no overlap into the calibration set, which is
-essential for ensuring the validity of coverage in conformal prediction
+fitting the model, with no overlap with the calibration set, which is
+essential for the validity of coverage in conformal prediction
 \citep{papadopoulos2002, vovk2005}. With sequential splitting, multiple
-\(H\)-step forecasts and their respective nonconformity scores can be
-computed on the calibration set.
+\(H\)-step forecasts and their nonconformity scores can be computed on
+the calibration set.
 
-\textbf{Online learning.} We will adapt the following generic online
-learning framework, which is closely related to \citet{zaffran2022}, for
-all conformal prediction methods to be discussed in later sections. The
-entire procedure for the online learning framework with sequential
-splits is also illustrated in \autoref{fig-flowchart}. This framework
-updates prediction intervals as new data points arrive, allowing us to
-assess their long-run coverage behavior. It adopts a standard rolling
-window evaluation strategy, although expanding windows could easily be
-used instead.
+\textbf{Online learning.} We adopt the following generic online learning
+framework, closely related to \citet{zaffran2022}, for all conformal
+methods discussed in later sections. The procedure is illustrated in
+\autoref{fig-flowchart}. This framework updates prediction intervals as
+new data points arrive, allowing us to assess their long-run coverage
+behavior. It adopts a standard rolling window evaluation strategy,
+although expanding windows could easily be used instead.
 
 \begin{figure}[!hbtp]
 \vspace*{-1.5cm}
@@ -520,9 +546,9 @@ used instead.
 \scalebox{0.85}{
   \input figs/annotation.tex
 }
-\vspace*{-1.0cm}
+\vspace*{-0.5cm}
 
-\caption{Online learning framework with sequential splits. White: unused data; Gray: training data; Black: forecasts in calibration set; Blue: forecasts in test set.}\label{fig-flowchart}
+\caption{Online learning framework with sequential splits. White: unused data; Gray: training data; Black: forecasts in the calibration set; Blue: forecasts in the test set.}\label{fig-flowchart}
 \end{figure}
 
 \begin{enumerate}
@@ -531,258 +557,113 @@ used instead.
   \emph{Initialization}. Train a forecasting model on the initial proper
   training set \(z_{(1+t-t_r):t}\), setting \(t=t_r\). Then generate
   \(H\)-step-ahead point forecasts \(\{\hat{y}_{t+h|t}\}_{h\in[H]}\) and
-  compute the corresponding nonconformity scores
-  \(\{s_{t+h|t}=\mathcal{S}(z_{(1+t-t_r):t}, y_{t+h})\}_{h\in[H]}\)
-  based on the true values \(H\) steps ahead,
-  i.e.~\(\{y_{t+h}\}_{h\in[H]}\).
+  compute the corresponding upper- and lower-tail nonconformity scores
+  \(\{s_{t+h|t}^{+},s_{t+h|t}^{-}\}_{h\in[H]}\) based on the true values
+  \(\{y_{t+h}\}_{h\in[H]}\).
 \item
   \emph{Recurring procedure}. Roll the training set forward by one data
   point by setting \(t \rightarrow t+1\). Then repeat step 1 until the
   nonconformity scores on the entire initial calibration set,
-  \(\{s_{t+h|t}\}_{t_r \leq t \leq t_r+t_c-h}\) for \(h\in[H]\), are
-  computed.
+  \(\{s_{t+h|t}^{+},s_{t+h|t}^{-}\}_{t_r \leq t \leq t_r+t_c-h}\) for
+  \(h\in[H]\), are computed.
 \item
-  \emph{Quantile estimation and prediction interval calculation}. Use
-  nonconformity scores obtained from the calibration set to perform
-  quantile estimation and compute \(H\)-step-ahead prediction intervals
-  on the test set.
+  \emph{Quantile estimation and prediction interval calculation}. For
+  each tail, use the nonconformity scores from the calibration set to
+  estimate horizon-specific quantiles. Combine the two one-sided
+  thresholds via Equation \eqref{eq-two-sided-pi} to compute
+  \(H\)-step-ahead prediction intervals on the test set.
 \item
-  \emph{Online updating}. Continuously roll the training set and
-  calibration set forward, one data point at a time, to update the
-  nonconformity scores for calibration, and then repeat step 3 until
-  prediction intervals for the entire test set are obtained. That is,
+  \emph{Online updating}. Continuously roll the training and calibration
+  sets forward, one data point at a time, to update the nonconformity
+  scores used for calibration, and repeat step 3 until prediction
+  intervals for the entire test set are obtained. These intervals are
   \(\{\hat{\mathcal{C}}_{t+h|t}^{\alpha}\}_{t_r+t_c \leq t \leq T-H}\)
   for \(h \in [H]\), where \(T-t_r-t_c\) is the length of the test set
-  used for testing coverage. Our goal is to achieve long-run coverage in
-  time.
+  used to evaluate coverage against the long-run target in Equation
+  \eqref{eq-longrun}.
 \end{enumerate}
 
-\section{Extending conformal prediction for multi-step
-forecasting}\label{sec-ext}
+\section{Multi-step conformal PID control}\label{sec-mpid}
 
-In this section, we apply the online learning framework outlined in
-Section~\ref{sec-setup} to extend several popular conformal prediction
-methods to multi-step forecasting. In time series forecasting, when a
-model is properly specified and well-trained, the forecasts that
-minimize the mean squared error can be considered optimal in the sense
-of achieving the lowest possible expected squared forecast error. A key
-property of optimal forecast errors, which holds generally for linear
-models, is that the variance of the forecast error \(e_{t+h|t}\) is
-non-decreasing in \(h\) \citep{diebold1996, patton2007}. Therefore, a
-horizon-specific conformal prediction procedure is required for each
-\(h \in [H]\). We note that the extensions of existing approaches
-introduced in this section do not provide theoretical long-run coverage
-guarantees, except for the multi-step conformal PID control (MPID)
-method, which admits such a guarantee.
+For a well-specified forecasting model, the conditional mean minimizes
+the expected squared forecast error, and for covariance-stationary
+linear processes the variance of the resulting error \(e_{t+h|t}\) is
+non-decreasing in \(h\) \citep{diebold1996, patton2007}. The
+distribution of nonconformity scores therefore differs across horizons,
+so the thresholds should be calibrated separately for each \(h\in[H]\).
+Calibration also need to cope with delayed feedback: at time \(t\), the
+realized \(h\)-step score is available only for forecasts issued at
+origin \(t-h\) or earlier.
 
-\subsection{Online multi-step split conformal
-prediction}\label{online-multi-step-split-conformal-prediction}
-
-Split conformal prediction \citep[SCP, also called inductive conformal
-prediction,][]{papadopoulos2002, vovk2005}, is a holdout method for
-building prediction intervals using a pre-trained model on a training
-set. A key advantage of SCP is its ability to guarantee coverage by
-assuming data exchangeability. In regression setting, SCP randomly
-separates the available \(n\) data points,
-\(Z_i = (X_i, Y_i) \in \mathbb{R}^d \times \mathbb{R}\),
-\(i=1, \dots, n\), into a proper training set of size \(n_t\) and a
-calibration set of size \(n_c\). Given a regression model
-\(\hat{\mu}: \mathbb{R}^d \rightarrow \mathbb{R}\) fitted on the
-training set and a score function \(\mathcal{S}\), nonconformity scores
-\(s_i = \mathcal{S}\left(X_i, Y_i\right)\) are computed on the
-calibration set to measure the nonconformity between the calibration's
-response values and the predicted values obtained from the fitted model
-\(\hat{\mu}\). Then SCP computes the prediction interval for the test
-data \(Y_{n+1}\) using \[
-\hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right) = \left\{y\in\mathbb{R}: \mathcal{S}\left(X_{n+1}, y\right) \leq Q_{1-\alpha}\left(\sum_{i \in \mathcal{D}_{\text{cal}}}\frac{1}{n_c+1}\cdot\delta_{s_{i}}+\frac{1}{n_c+1}\cdot\delta_{+\infty}\right)\right\},
-\] where \(\mathrm{Q}_\tau(\cdot)\) denotes the \(\tau\)-quantile of its
-argument, and \(\delta_a\) denotes the point mass at \(a\). Time series
-data are inherently nonexchangeable due to their temporal dependence and
-autocorrelation. Therefore, directly applying SCP to time series data
-would violate the method's exchangeability assumption and compromise its
-coverage guarantee.
-
-Here we introduce online \textbf{multi-step split conformal prediction}
-(MSCP) as a generalization of SCP to recursively update all
-\(h\)-step-ahead prediction intervals over time. MSCP applies conformal
-inference in an online fashion, updating prediction intervals as new
-data points are received. Specifically, for each \(h \in [H]\), we
-consider the following simple online update to construct prediction
-intervals on the test set:
-\begin{equation}\phantomsection\label{eq-mscp}{
-\hat{\mathcal{C}}_{t+h|t}^{\alpha} = \Bigg\{y\in\mathbb{R}: s_{t+h|t}^{y} \leq Q_{1-\alpha}\Bigg(\sum_{i=t-t_c+1}^{t}\frac{1}{t_c+1}\cdot\delta_{s_{i|i-h}}+\frac{1}{t_c+1}\cdot\delta_{+\infty}\Bigg)\Bigg\},
-}\end{equation} where \(s_{t+h|t}^{y}:=\mathcal{S}(z_{1:t}, y)\) denotes
-the \(h\)-step-ahead nonconformity score calculated at time \(t\) using
-a hypothesized test observation \(y\).
-
-\subsection{Online multi-step weighted conformal
-prediction}\label{online-multi-step-weighted-conformal-prediction}
-
-\citet{barber2023} propose nonexchangeable conformal prediction
-procedure (NexCP) that generalizes SCP to certain nonexchangeable
-settings by assigning higher weights to observations believed to share
-the same distribution as the test data. NexCP assumes these weights are
-fixed and data-independent. Under exchangeability, NexCP retains the
-same coverage guarantees as SCP; when exchangeability is violated, the
-coverage gap is governed by the total variation distance between swapped
-nonconformity score vectors, which can be substantial in time series
-settings.
-
-The online \textbf{multi-step weighted conformal prediction} (MWCP)
-method we propose here adapts the NexCP method to the online setting for
-time series forecasting. MWCP uses weighted quantile estimate for
-constructing prediction intervals, contrasting with the MSCP definitions
-where all nonconformity scores for calibration are implicitly assigned
-equal weight.
-
-For the subsequent empirical study, we choose fixed weights
-\(w_i = b^{t+1-i}\), \(b \in (0, 1)\) and \(i=t-t_c+1, \dots, t\), for
-nonconformity scores on the corresponding calibration set. In this
-setting, weights decay exponentially as the nonconformity scores get
-older, akin to the rationale behind the simple exponential smoothing
-method in time series forecasting \citep{hyndman2021}. Then for each
-\(h \in [H]\), MWCP updates the \(h\)-step-ahead prediction interval: \[
-\hat{\mathcal{C}}_{t+h|t}^{\alpha} = \Bigg\{y\in\mathbb{R}: s_{t+h|t}^{y} \leq Q_{1-\alpha}\Bigg(\sum_{i=t-t_c+1}^{t}\tilde{w}_i\cdot\delta_{s_{i|i-h}}+\tilde{w}_{t+1}\cdot\delta_{+\infty}\Bigg)\Bigg\},
-\] where \(\tilde{w}_i\) and \(\tilde{w}_{t+1}\) are normalized weights
-given by \[
-\tilde{w}_i = \frac{w_i}{\sum_{i=t-t_c+1}^{t}w_i+1}, \text{ for } i \in \{t-t_c+1, \dots, t\} \quad \text{and} \quad \tilde{w}_{t+1} =  \frac{1}{\sum_{i=t-t_c+1}^{t}w_i+1}.
-\]
-
-\subsection{Multi-step adaptive conformal
-prediction}\label{multi-step-adaptive-conformal-prediction}
-
-Next we extend the adaptive conformal inference (ACI, denoted as ACP
-hereafter) method proposed by \citet{gibbs2021} to address multi-step
-time series forecasting, introducing the \textbf{multi-step adaptive
-conformal prediction} (MACP) method. Assuming that
-\(\beta \mapsto \mathbb{P}(y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}^{\beta})\)
-is continuous and non-increasing, with
-\(\mathbb{P}(y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}^{0}) = 1\) and
-\(\mathbb{P}(y_{t+h} \in \hat{\mathcal{C}}_{t+h|t}^{1}) = 0\), an
-optimal value \(\alpha_{t+h|t}^{*} \in [0,1]\) exists such that the
-realised miscoverage rate of the corresponding prediction interval
-closely approximates the nominal miscoverage rate \(\alpha\).
-Specifically, for each \(h \in [H]\), we iteratively estimate
-\(\alpha_{t+h|t}^{*}\) by updating a parameter \(\alpha_{t+h|t}\)
-through a sequential adjustment process
-\begin{equation}\phantomsection\label{eq-macp}{
-\alpha_{t+h|t} := \alpha_{t+h-1|t-1} + \gamma(\alpha - \mathrm{err}_{t|t-h}).
-}\end{equation} Then the \(h\)-step-ahead prediction interval is
-computed using Equation \eqref{eq-mscp} by setting
-\(\alpha = \alpha_{t+h|t}\). Here, \(\gamma > 0\) denotes a fixed step
-size parameter, \(\alpha_{2h|h}\) denotes the initial estimate typically
-set to \(\alpha\), and \(\mathrm{err}_{t|t-h}\) denotes the miscoverage
-event
-\(\mathrm{err}_{t|t-h} = \mathbbm{1}\left\{y_t \notin \hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}\right\}\).
-
-Equation \eqref{eq-macp} indicates that the correction to the estimation
-of \(\alpha_{t+h|t}^{*}\) at time \(t+h\) is determined by the
-historical miscoverage frequency up to time \(t\). At each iteration,
-the estimate used for quantile calibration is increased if
-\(\hat{\mathcal{C}}_{t|t-h}^{\alpha_{t|t-h}}\) covers \(y_t\) and
-decreased otherwise. Therefore, the miscoverage event has a delayed
-impact on the estimation of \(\alpha_{t+h|t}^{*}\) over \(h\) periods,
-indicating that the correction of the \(\alpha_{t+h|t}^{*}\) estimate
-becomes less prompt with increasing values of \(h\). In particular,
-Equation \eqref{eq-macp} reduces to the update for ACP for \(h=1\).
-
-We do not consider the update equation
-\(\alpha_{t+1|t-h+1} := \alpha_{t|t-h} + \gamma(\alpha - \mathrm{err}_{t|t-h})\)
-in this context, as the available information at time \(t\) is
-insufficient to estimate \(\alpha_{t+h|t}^{*}\) required for \(h\)-step
-forecasts.
-
-Selecting the parameter \(\gamma\) is pivotal yet challenging.
-\citet{gibbs2021} suggest setting \(\gamma\) in proportion to the degree
-of variation of the unknown \(\alpha_{t}^{*}\) over time. Several
-strategies have been proposed to avoid the necessity of selecting
-\(\gamma\). For example, \citet{zaffran2022} use an adaptive aggregation
-of multiple ACPs with a set of candidate values for \(\gamma\),
-determining weights based on their historical performance.
-\citet{bastani2022} propose a multivalid prediction algorithm in which
-the prediction set is established by selecting a threshold from a
-sequence of candidate thresholds. Both methods rely on update schemes
-that place substantial weight on older historical data, which may impede
-rapid adaptation to abrupt changes \citep{gibbs2024}. Therefore,
-\citet{gibbs2024} propose an alternative expert selection scheme that
-adaptively tunes the step-size parameter over time and places greater
-emphasis on more recent observations by construction, enabling faster
-responses to sudden environmental shifts.
-
-The theoretical coverage properties of ACP suggest that a larger value
-for \(\gamma\) generally results in less deviation from the target
-coverage. As there is no restriction on \(\alpha_{t+h|t}\), and it can
-drift below \(0\) or above \(1\), a larger \(\gamma\) may lead to
-frequent output of null or infinite prediction sets in order to quickly
-adapt to the current miscoverage status.
-
-\subsection{Multi-step conformal PID
-control}\label{multi-step-conformal-pid-control}
-
-We introduce \textbf{multi-step conformal PID control} method (hereafter
-MPID), which extends the PID method \citep{angelopoulos2024}, originally
-developed for one-step-ahead forecasting. For each individual forecast
-horizon \(h\in[H]\), the estimated \(1-\alpha\) quantile of the
-\(h\)-step-ahead score at time \(t\) is updated iteratively as
+We introduce the \textbf{multi-step conformal PID control} method
+(hereafter MPID), which extends the PID method \citep{angelopoulos2024},
+originally developed for one-step-ahead forecasting, to the multi-step
+setting within the online learning framework of Section~\ref{sec-setup}.
+For each forecast horizon \(h\in[H]\), define the P-control state
+\begin{equation}\phantomsection\label{eq-p-state}{
+q^{\mathrm P}_{t+h|t}=q^{\mathrm P}_{t+h-1|t-1}+\eta(\mathrm{err}_{t|t-h}-\alpha),
+}\end{equation} with a finite initial state \(q^{\mathrm P}_{2h|h}\),
+typically zero. The estimated \(1-\alpha\) quantile of the
+\(h\)-step-ahead score at time \(t\) is updated as
 \begin{equation}\phantomsection\label{eq-mpid}{
-q_{t+h|t}=\underbrace{q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)}_{\mathrm{P}}+\underbrace{r_t\Bigg(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\Bigg)}_{\mathrm{I}}+\underbrace{\hat{s}_{t+h|t}}_{\mathrm{D}},
+q_{t+h|t}=\underbrace{q^{\mathrm P}_{t+h|t}}_{\mathrm P}+\underbrace{r_t\Bigg(\sum_{i=h+1}^t(\mathrm{err}_{i|i-h}-\alpha)\Bigg)}_{\mathrm I}+\underbrace{\hat{s}_{t+h|t}}_{\mathrm D},
 }\end{equation} where \(\eta > 0\) is a constant learning rate, and
 \(r_t\) is a saturation function that adheres to
-\pagebreak[1]\begin{equation}\phantomsection\label{eq-saturation_h}{
+\begin{equation}\phantomsection\label{eq-saturation_h}{
 x \geq c \cdot g(t-h) \Longrightarrow r_t(x) \geq b, \quad \text {and} \quad x \leq-c \cdot g(t-h) \Longrightarrow r_t(x) \leq -b,
-}\end{equation} for constant \(b, c > 0\), and an admissible function
-\(g\) that is sublinear, nonnegative, and nondecreasing. With this
-updating equation, we can obtain all required \(h\)-step-ahead
-prediction intervals using information available at time \(t\). When
-\(h=1\), Equation \eqref{eq-mpid} simplifies to the PID update, which
-guarantees long-run coverage. More importantly, Equation \eqref{eq-mpid}
-represents a specific instance of Equation \eqref{eq-acmcp_1} that we
-will introduce later, thereby ensuring long-run coverage for each
-individual forecast horizon \(h\) according to
-Corollary~\ref{cor-cov_acmcp}.
+}\end{equation} for constants \(b, c > 0\) and an admissible function
+\(g\) that is nonnegative, nondecreasing and sublinear, i.e.,
+\(g(n)/n\to0\). For \(h=1\), Equation \eqref{eq-mpid} reduces to the
+standard PID update. For each \(h\in[H]\), we apply this update
+separately to the lower and upper tails, using the tail levels
+\(\alpha^{-}\) and \(\alpha^{+}\) and the feedback available at time
+\(t\), and combine the resulting thresholds via Equation
+\eqref{eq-two-sided-pi} to form the prediction interval for \(y_{t+h}\).
 
-The ``P'' control shows an \(h\)-period delay in updating the quantile
-estimate. The underlying intuition is similar to that of MACP: it
-increases (or decreases) the \(h\)-step-ahead quantile estimate if the
-prediction set at time \(t\) miscovered (or covered) the corresponding
-realization. MACP can be considered as a special case of the P control,
-while the P control has the ability to prevent the generation of null or
-infinite prediction sets after a sequence of miscoverage events.
+The three components play distinct roles.
 
-The ``I'' control captures cumulative historical coverage errors
-associated with \(h\)-step-ahead prediction intervals during updates,
-thereby enhancing the stability of the interval coverage.
+\emph{P (quantile tracking).} The P state moves up or down according to
+whether \(y_t\) fell outside or inside the one-sided prediction set
+issued at time \(t-h\). It thus incorporates the \(h\)-period feedback
+delay explicitly: the most recent feedback usable at time \(t\) is
+\(\mathrm{err}_{t|t-h}\).
 
-The ``D'' control involves \(\hat{s}_{t+h|t}\) as the \(h\)-step-ahead
-forecast of the nonconformity score (i.e., the forecast error), produced
-by any suitable forecasting model (or ``scorecaster'', see
-Section~\ref{sec-acmcp} for a detailed discussion) trained using the
-\(h\)-step-ahead nonconformity scores available up to and including time
-\(t\). The effectiveness of the D control depends on the ability of the
-scorecaster to capture systematic and predictable patterns in the
-nonconformity scores, such as temporal dependence or conditional
-heteroskedasticity. Only when such structure is present and adequately
-modeled, this module provides additional benefits; otherwise, it may
-increase variability in the coverage and prediction intervals.
+\emph{I (error integration).} The I term accumulates the historical
+coverage errors of the \(h\)-step-ahead one-sided prediction sets,
+during updates, thereby enhancing the stability of coverage.
 
-The MPID method will be improved in Section~\ref{sec-acmcp} by proposing
-the AcMCP method, which replaces the D-control component of MPID with a
-structured mechanism that explicitly captures autocorrelation in
-multi-step forecast errors. As a result, the long-run coverage
-guarantees established for AcMCP in Section~\ref{sec-cov} also apply to
-MPID.
+\emph{D (scorecasting).} The D term \(\hat{s}_{t+h|t}\) is a forecast of
+the \(h\)-step-ahead nonconformity score, produced by any suitable
+forecasting model (a ``scorecaster''; see Section~\ref{sec-acmcp})
+trained on the \(h\)-step-ahead scores available up to and including
+time \(t\). Its effectiveness depends on the ability of the scorecaster
+to capture systematic and predictable structure in the scores, such as
+temporal dependence or conditional heteroskedasticity. Only when such
+structure is present and adequately modeled does the D term provide
+additional benefits; otherwise, it can increase the variability of
+coverage and of the prediction sets.
+
+MPID is a special case of the generic update in Equation
+\eqref{eq-acmcp_1}, with
+\(\hat q_{t+h|t}=q^{\mathrm P}_{t+h|t}+\hat s_{t+h|t}\). Its one- and
+two-sided prediction sets therefore inherit the finite-sample empirical
+coverage bounds and long-run guarantees of Corollary~\ref{cor-cov_acmcp}
+and Corollary~\ref{cor-cov-two-sided}, respectively, under the stated
+assumptions. For reference, Appendix \ref{sec-extensions} presents
+multi-step extensions of split conformal prediction \citep{vovk2005},
+conformal prediction with weighted quantiles \citep{barber2023}, and ACI
+\citep{gibbs2021}; we do not establish coverage guarantees for these.
 
 \section{Autocorrelated multi-step conformal
 prediction}\label{sec-acmcp}
 
-In the PID method proposed by \citet{angelopoulos2024}, a notable
-feature is the inclusion of a scorecaster, a model trained on the score
-sequence to forecast the future score. The rationale behind it is to
-identify any leftover signal in the score distribution not captured by
-the base forecasting model. While this is appropriate in the context of
-huge data sets and potentially weak learners, it is unlikely to be a
-useful strategy for time series models. We expect to use a forecasting
-model that leaves only white noise in the residuals (equivalent to the
+The scorecaster in MPID is a model trained on the score sequence to
+forecast the future score. The rationale behind it is to identify any
+leftover signal in the score distribution not captured by the base
+forecasting model. While this is appropriate in the context of huge data
+sets and potentially weak learners, it is unlikely to be a useful
+strategy for time series models. We expect to use a forecasting model
+that leaves only white noise in the residuals (equivalent to the
 one-step nonconformity scores). Moreover, the inclusion of a scorecaster
 often only introduces variance to the quantile estimate, resulting in
 inefficient (wider) prediction intervals.
@@ -795,40 +676,65 @@ forecasting procedure over the forecast horizon. However, no conformal
 prediction methods have taken this potential dependence into account in
 their methodological construction.
 
-In this section, we will explore the properties of multi-step forecast
-errors and propose a novel conformal prediction method that accounts for
-their autocorrelations while providing theoretical long-run coverage
-guarantees.
+This section studies the structure of multi-step forecast errors, uses
+it to design the AcMCP scorecaster, and establishes coverage guarantees
+that do not depend on how accurately the scorecaster approximates the
+errors.
 
 \subsection{Properties of multi-step forecast errors}\label{sec-ppt}
 
 We assume that a time series \(\{y_t\}_{t \geq 1}\) follows a general
-non-stationary autoregressive process:
+nonstationary autoregressive process:
 \begin{equation}\phantomsection\label{eq-dgp}{
 y_t = f_{t}(y_{(t-d):(t-1)}, \bm{x}_{(t-k):t}) + \varepsilon_t,
-}\end{equation} where \(f_{t}\) is a nonlinear function in \(d\) lagged
-values of \(y_t\), the current value of the exogenous predictors, along
-with the preceding \(k\) values, and \(\varepsilon_t\) is white noise
-innovation with mean zero and constant variance. The sequence of model
-coefficients that parameterizes the function \(f\) is restricted to
-ensure that the stochastic process is locally stationary
-\citep{dahlhaus2012}.
+}\end{equation} where \(f_{t}\) depends on \(d\) lagged values of
+\(y_t\) and on the current and \(k\) preceding values of the exogenous
+predictors, and \(\varepsilon_t\) is the innovation. To isolate
+uncertainty in future responses, we treat future exogenous predictors as
+known. Let \(\mathcal F_t\) be the information generated by the
+responses observed through time \(t\) and the exogenous predictor path.
+The optimal point forecast under squared loss is
+\(\hat y_{t+h|t}=\mathbb E(y_{t+h}|\mathcal F_t)\), with error
+\(e_{t+h|t}=y_{t+h}-\hat y_{t+h|t}\).
 
-\begin{proposition}[Autocorrelations of multi-step optimal forecast
-errors]\protect\hypertarget{prp-ar}{}\label{prp-ar}
+At origin \(t\), \(p_h=\min\{d,h-1\}\) of the lagged responses entering
+\(f_{t+h}\) are unobserved. For \(h\geq2\), collect them in
+\(\bm z_{t,h}=(y_{t+h-1},\dots,y_{t+h-p_h})^{\prime}\), with conditional
+mean \(\bm m_{t,h}=\mathbb E(\bm z_{t,h}|\mathcal F_t)\), and let
+\(F_{t,h}\) denote \(f_{t+h}\) as a function of \(\bm z_{t,h}\) with all
+other arguments held fixed. We write \(\partial_i\) for differentiation
+in the \(i\)th coordinate, and \(\|\cdot\|_2\) and
+\(\|\cdot\|_{\mathrm{op}}\) for the Euclidean and operator norms,
+respectively.
 
-Let \(\{y_t\}_{t \geq 1}\) be a time series generated by a general
-non-stationary autoregressive process as given in Equation
-\eqref{eq-dgp}, and assume that any exogenous predictors are known into
-the future. The forecast errors for optimal \(h\)-step-ahead forecasts
-can be approximately expressed as
+\begin{proposition}[Autoregressive representation of optimal multi-step
+forecast errors]\protect\hypertarget{prp-ar}{}\label{prp-ar}
+
+Consider the process in Equation \eqref{eq-dgp}. Assume that each
+\(f_s\) is twice continuously differentiable in the lagged responses,
+that \(\mathbb E(y_s^2)<\infty\) and
+\(\mathbb E(\varepsilon_s|\mathcal F_{s-1})=0\) for all \(s\geq1\), and
+that the first-order Taylor terms and remainder below are integrable.
+Then, for each \(h\in[H]\),
 \begin{equation}\phantomsection\label{eq-ar}{
-e_{t+h|t} = \omega_{t+h} + \phi_1e_{t+h-1|t} + \dots + \phi_{p}e_{t+h-p|t},
-}\end{equation} where \(p=\min\{d, h-1\}\), and \(\omega_{t}\) is white
-noise. The approximation is obtained in the proof via a first-order
-Taylor series expansion of the forecasting function, where higher-order
-remainder terms are neglected. Therefore, the optimal \(h\)-step-ahead
-forecast errors are at most serially correlated to lag \((h-1)\).
+e_{t+h|t}
+=\varepsilon_{t+h}+\sum_{i=1}^{p_h}\phi_{t,h,i}e_{t+h-i|t}+\widetilde R_{t,h},
+}\end{equation} where \(\phi_{t,h,i}=\partial_iF_{t,h}(\bm m_{t,h})\)
+and \(\widetilde R_{t,h}=R_{t,h}-\mathbb E(R_{t,h}|\mathcal F_t)\), with
+\(R_{t,h}\) the remainder of the first-order Taylor expansion of
+\(F_{t,h}\) at \(\bm m_{t,h}\). In particular,
+\(\mathbb E(\widetilde R_{t,h}|\mathcal F_t)=0\) and
+\(\widetilde R_{t,1}=0\).
+
+Moreover, for \(h\geq2\), if there is a finite deterministic
+\(M_{t,h}\geq0\) with \[
+\sup_{u\in[0,1]}
+\left\|\nabla^2F_{t,h}\!\left(\bm m_{t,h}+u(\bm z_{t,h}-\bm m_{t,h})\right)\right\|_{\mathrm{op}}
+\leq M_{t,h}\quad\text{almost surely},
+\] then \begin{equation}\phantomsection\label{eq-remainder-bound}{
+\mathbb E(|\widetilde R_{t,h}|\,|\,\mathcal F_t)
+\leq M_{t,h}\sum_{i=1}^{p_h}\mathbb E(e_{t+h-i|t}^2|\mathcal F_t).
+}\end{equation}
 
 \end{proposition}
 
@@ -836,46 +742,37 @@ forecast errors are at most serially correlated to lag \((h-1)\).
 See Appendix \ref{sec-proof_ar}.
 \end{proof}
 
-Proposition~\ref{prp-ar} suggests that the optimal \(h\)-step ahead
-forecast error, \(e_{t+h|t}\), is serially correlated with the forecast
-errors from at most the past \(h-1\) steps, i.e.,
-\(e_{t+1|t}, \dots, e_{t+h-1|t}\). However, the autocorrelation among
-errors associated with optimal forecasts can not be used to improve
-forecasting performance, as it does not incorporate any new information
-available when the forecast was made. If we could forecast the forecast
-error, then we could improve the forecast, indicating that the initial
-forecast couldn't have been optimal.
-
-The proof of Proposition~\ref{prp-ar}, provided in Appendix
-\ref{sec-proof_ar}, suggests that, if \(f_t\) is a linear autoregressive
-model, then the coefficients in Equation \eqref{eq-ar} are the linear
-coefficients of the optimal forecasting model. However, when \(f_t\)
-takes on a more complex nonlinear structure, the coefficients become
-complicated functions of observed data and unobserved model
-coefficients.
-
 It is well-established in the forecasting literature that, for a
 zero-mean covariance-stationary time series, the optimal linear
 least-squares forecasts have \(h\)-step-ahead errors that are at most
 MA\((h-1)\) process \citep{harvey1997}, a property that can be derived
-using Wold's representation theorem. The statement can be extended to
-time series generated by a general non-stationary autoregressive process
-\citep{sommer2023}, as described in Proposition~\ref{prp-ma}. We provide
-the proof of this proposition in Appendix \ref{sec-proof_ma} based on
-Proposition~\ref{prp-ar}.
+using Wold's representation theorem. For the general nonstationary
+autoregressive setting considered here, Proposition~\ref{prp-ma} gives
+an innovation representation with an explicit remainder.
 
-\begin{proposition}[MA\((h-1)\) process for \(h\)-step-ahead optimal
+\begin{proposition}[Innovation representation of optimal multi-step
 forecast errors]\protect\hypertarget{prp-ma}{}\label{prp-ma}
 
-Let \(\{y_t\}_{t \geq 1}\) be a time series generated by a general
-non-stationary autoregressive process as given in Equation
-\eqref{eq-dgp}, and assume that any exogenous predictors are known into
-the future. Under the approximation in Proposition~\ref{prp-ar}, the
-forecast errors of optimal \(h\)-step-ahead forecasts follow an
-approximate MA(\(h-1\)) process
+Under the assumptions of Proposition~\ref{prp-ar}, for each \(h\in[H]\),
 \begin{equation}\phantomsection\label{eq-ma}{
-e_{t+h|t} = \omega_{t+h} + \theta_1\omega_{t+h-1} + \dots + \theta_{h-1}\omega_{t+1}.
-}\end{equation} where \(\omega_{t}\) is white noise.
+e_{t+h|t}=\varepsilon_{t+h}+
+\sum_{i=1}^{h-1}\theta_{t,h,i}\varepsilon_{t+h-i}+U_{t,h},
+}\end{equation} where the coefficients \(\theta_{t,h,i}\) are
+\(\mathcal F_t\)-measurable and the propagated remainders satisfy
+\(U_{t,1}=0\) and
+\(U_{t,j}=\widetilde R_{t,j}+\sum_{i=1}^{p_j}\phi_{t,j,i}U_{t,j-i}\) for
+\(j\geq2\).
+
+Moreover, for \(h\geq2\), suppose that the Hessian bounds of
+Proposition~\ref{prp-ar} hold and that, for finite deterministic
+constants \(M,L,V\geq0\) and all \(2\leq j\leq h\), \[
+M_{t,j}\leq M,\qquad
+\sum_{i=1}^{p_j}|\phi_{t,j,i}|\leq L,
+\qquad \sum_{i=1}^{p_j}\mathbb E(e_{t+j-i|t}^2|\mathcal F_t)\leq V\quad\text{almost surely}.
+\] Then \begin{equation}\phantomsection\label{eq-propagated-bound}{
+\mathbb E\!\left(|U_{t,h}|\,|\,\mathcal F_t\right)
+\leq MV\sum_{k=0}^{h-2}L^k\quad\text{almost surely}.
+}\end{equation}
 
 \end{proposition}
 
@@ -883,65 +780,90 @@ e_{t+h|t} = \omega_{t+h} + \theta_1\omega_{t+h-1} + \dots + \theta_{h-1}\omega_{
 See Appendix \ref{sec-proof_ma}.
 \end{proof}
 
+Dropping the remainders in Propositions \ref{prp-ar} and \ref{prp-ma}
+gives linear approximations that motivate regression and moving-average
+specifications for multi-step errors, respectively. If the
+autoregressive functions are linear in their lagged responses, allowing
+intercepts, both remainders vanish and the representations are exact.
+Otherwise, Equation \eqref{eq-remainder-bound} controls the Taylor
+remainder through curvature and shorter-horizon mean squared errors, and
+Equation \eqref{eq-propagated-bound} controls its propagation across
+horizons.
+
+Appendix \ref{sec-approximation-errors} shows that, with \(t\), \(h\),
+and \(d\) fixed, both remainders have mean absolute size \(O(\delta^2)\)
+and are therefore negligible relative to the innovation scale \(\delta\)
+as \(\delta\downarrow0\). This requires deterministic bounds on
+gradients and Hessians along the expansion segments that do not depend
+on \(\delta\), and innovation conditional variances that are uniformly
+\(O(\delta^2)\). The analysis motivates the AcMCP scorecaster in
+Section~\ref{sec-novel}, a simplified specification that accounts for
+dependence among forecast errors rather than reproducing their optimal
+dynamics exactly.
+
 \subsection{The AcMCP method}\label{sec-novel}
 
-We can exploit these properties of multi-step forecast errors, leading
-to a new method that we call the \textbf{autocorrelated multi-step
-conformal prediction} (AcMCP) method. Unlike extensions of existing
-conformal prediction methods, which treat multi-step forecasting as
-independent events (see Section~\ref{sec-ext}), the AcMCP method
-integrates the autocorrelations inherent in multi-step forecast errors,
-thereby making the output multi-step prediction intervals more
-statistically efficient.
-
-The AcMCP method updates the quantile estimate \(q_t\) in an online
-setting to achieve the goal of long-run coverage. Specifically, the
-iteration of the \(h\)-step-ahead quantile estimate for the score is
-\begin{equation}\phantomsection\label{eq-acmcp}{
-q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)+r_t\Bigg(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\Bigg)+\tilde{e}_{t+h|t},
-}\end{equation} for \(h\in[H]\). Obviously, the AcMCP method can be
-viewed as a further extension of the PID method by
-\citet{angelopoulos2024}. Nevertheless, AcMCP diverges from PID with
-several innovations and differences.
+Motivated by these properties, we propose \textbf{autocorrelated
+multi-step conformal prediction} (AcMCP). Whereas multi-step extensions
+of existing conformal methods in Section~\ref{sec-mpid} treat horizons
+separately, AcMCP exploits the dependence among multi-step forecast
+errors. For each \(h\in[H]\), the \(h\)-step-ahead threshold is updated
+online as \begin{equation}\phantomsection\label{eq-acmcp}{
+q_{t+h|t}=q^{\mathrm P}_{t+h|t}+r_t\Bigg(\sum_{i=h+1}^t(\mathrm{err}_{i|i-h}-\alpha)\Bigg)+\tilde{s}_{t+h|t},
+}\end{equation} where the lower- and upper-tail thresholds are updated
+separately at levels \(\alpha^{-}\) and \(\alpha^{+}\) and combined into
+a prediction interval via Equation \eqref{eq-two-sided-pi}. AcMCP
+extends the PID method of \citet{angelopoulos2024} in two respects.
 
 First, we are no longer confined to predicting just one step ahead.
-Instead, we can make multi-step forecasts with accompanying theoretical
-coverage guarantees, constructing distribution-free prediction intervals
-for steps \(t+1, \dots, t+H\) based on available information up to time
-\(t\).
+Instead, we can produce multi-step forecasts with accompanying
+theoretical coverage guarantees, constructing distribution-free
+prediction intervals for \(y_{t+1},\dots,y_{t+H}\) from information
+available at time \(t\)
 
-Additionally, in AcMCP, \(\tilde{e}_{t+h|t}\) is a forecast combination
-of two simple models: one being an MA\((h-1)\) model trained on the
-\(h\)-step-ahead forecast errors available up to and including time
-\(t\) (i.e.~\(e_{1+h|1}, \dots, e_{t|t-h}\)), and the other a linear
-regression model trained by regressing \(e_{t+h|t}\) on forecast errors
-from past steps (i.e.~\(e_{t+h-1|t}, \dots, e_{t+1|t}\)). Unlike MPID,
-which treats multi-step prediction problems independently across
-horizons, AcMCP performs multi-step conformal prediction recursively,
-explicitly accounting for the serial dependence among multi-step
-forecast errors. Importantly, the role of \(\tilde{e}_{t+h|t}\) is not
-to forecast the nonconformity scores themselves, but to incorporate the
-autocorrelation structure of multi-step forecast errors into the
-construction of the resulting prediction intervals.
+Second, AcMCP's scorecaster accounts for error dependence. Let
+\(\tilde e_{t+h|t}\) denote the forecast of \(e_{t+h|t}\), obtained by
+equally combining two simple models: (i) an MA\((h-1)\) model fitted to
+the \(h\)-step-ahead errors available up to and including time \(t\),
+namely \(e_{1+h|1},\dots,e_{t|t-h}\), which captures serial dependence
+within a horizon; and (ii) a linear regression of each \(h\)-step-ahead
+error on the shorter-horizon errors from the same forecast origin, which
+captures dependence across horizons and takes the recursively predicted
+errors \(\tilde e_{t+h-1|t},\dots,\tilde e_{t+1|t}\) as inputs, since
+the corresponding realized errors are not yet observed at time \(t\).
+The score forecast in Equation \eqref{eq-acmcp} is
+\(\tilde s_{t+h|t}=\tilde e_{t+h|t}\) for upper-tail calibration and
+\(\tilde s_{t+h|t}=-\tilde e_{t+h|t}\) for lower-tail calibration.
+Importantly, the role of \(\tilde e_{t+h|t}\) is not to forecast the
+errors precisely, but to incorporate the autocorrelation structure of
+multi-step forecast errors into the resulting prediction intervals.
+
+The coverage guarantees below hold under the stated calibration
+conditions and do not require the linear approximations in Propositions
+\ref{prp-ar} and \ref{prp-ma} to be accurate.
 
 \subsection{Coverage guarantees}\label{sec-cov}
 
+Proposition~\ref{prp-cov_rt} and Corollaries
+\ref{cor-cov_qt}, \ref{cor-cov_acmcp} concern single-tail calibration
+with fixed target tail miscoverage level \(\alpha\).
+Corollary~\ref{cor-cov-two-sided} combines the lower and upper tails at
+levels \(\alpha^{-}\) and \(\alpha^{+}\) with
+\(\alpha=\alpha^{-}+\alpha^{+}\) the total miscoverage level.
+
 \begin{proposition}[]\protect\hypertarget{prp-cov_rt}{}\label{prp-cov_rt}
 
-Let \(\{s_{t+h|t}\}_{t\in\mathbb{N}}\) be any sequence of numbers in
-\([-b, b]\) for any \(h\in[H]\), where \(b>0\), and may be infinite.
-Assume that \(r_t\) is a saturation function obeying Equation
-\eqref{eq-saturation_h}, for an admissible function \(g\). Then the
-iteration
+Fix \(h\in[H]\) and \(\alpha\in(0,1)\). Let \(\{s_{t+h|t}\}_{t\geq1}\)
+be any sequence of finite scores in \((-b,b)\) with \(b\in(0,\infty]\),
+and let \(r_t\) satisfy Equation \eqref{eq-saturation_h} and an
+admissible function \(g\). Then the iteration
 \(q_{t+h|t}=r_t\left(\sum_{i=h+1}^t(\mathrm{err}_{i|i-h}-\alpha)\right)\)
-satisfies \begin{equation}\phantomsection\label{eq-cov_rt}{
+satisfies, for every \(T\geq h+1\),
+\begin{equation}\phantomsection\label{eq-cov_rt}{
 \left|\frac{1}{T-h}\sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha)\right| \leq \frac{c \cdot g(T-h) + h}{T-h},
-}\end{equation} for any \(T \geq h+1\), where \(c>0\) is the constant in
-Equation \eqref{eq-saturation_h}.
-
-Therefore the prediction intervals obtained by the iteration yield the
-correct long-run coverage; i.e.,
-\(\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha\).
+}\end{equation} with \(c\) the constant in Equation
+\eqref{eq-saturation_h}. Consequently,
+\(\lim_{T\to\infty}\frac{1}{T-h}\sum_{t=h+1}^{T}\mathrm{err}_{t|t-h}=\alpha\).
 
 \end{proposition}
 
@@ -949,42 +871,28 @@ correct long-run coverage; i.e.,
 See Appendix \ref{sec-proof_cov_rt}.
 \end{proof}
 
-When \(h=1\), Proposition~\ref{prp-cov_rt} reduces to Proposition 2 of
-\citet{angelopoulos2024}. While \citet{angelopoulos2024} only consider
-one-step-ahead forecasting, Proposition~\ref{prp-cov_rt} extends their
-result to the multi-step setting and provides an explicit upper bound on
-the coverage gap. For finite \(T\), Proposition~\ref{prp-cov_rt}
-indicates that increasing the forecast horizon \(h\) amplifies in-sample
-deviations from the target coverage because \(g(T-h)/(T-h)\) is
-non-increasing, given that the admissible function \(g\) is sublinear,
-nonnegative, and nondecreasing. Importantly, this reflects finite-sample
-behavior rather than a breakdown of the asymptotic coverage guarantee.
-As expected, forecast uncertainty increases with the horizon, since
-predictions further into the future are affected by more sources of
-variability. In finite samples, conformal prediction intervals may not
-fully scale with this growing uncertainty, leading to a larger gap
-between nominal and empirical coverage.
+For \(h=1\), Proposition~\ref{prp-cov_rt} recovers Proposition 2 of
+\citet{angelopoulos2024}. With \(n=T-h\) evaluated forecasts, the bound
+decomposes into \(c\,g(n)/n\), determined by the integrator's
+saturation, and \(h/n\), which captures the feedback delay. For fixed
+\(n\), a longer horizon enlarges the delay term, although actual
+calibration errors need not grow. For every fixed \(h\) the bound
+vanishes because \(g\) is sublinear, so the delay affects the
+finite-sample guarantee but not long-run calibration.
 
-The quantile iteration
-\(q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)\) can be
-seen as a particular instance of the iteration outlined in
-Proposition~\ref{prp-cov_rt} if we set \(q_{2h|h}=0\) without losing
-generality. Thus, its coverage bounds can be easily derived as a result
-of Proposition~\ref{prp-cov_rt}.
+The constant-step quantile iteration is a special case of
+Proposition~\ref{prp-cov_rt}, so its calibration bound follows directly.
 
 \begin{corollary}[]\protect\hypertarget{cor-cov_qt}{}\label{cor-cov_qt}
 
-Let \(\{s_{t+h|t}\}_{t\in\mathbb{N}}\) be any sequence of numbers in
-\([-b, b]\) for any \(h\in[H]\), where \(b>0\), and may be infinite.
-Then the iteration
-\(q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)\) satisfies
-\[
-\left|\frac{1}{T-h}\sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha)\right| \leq \frac{b + \eta h}{\eta(T-h)},
-\] for any learning rate \(\eta > 0\) and \(T \geq h+1\).
-
-Therefore the prediction intervals obtained by the iteration yield the
-correct long-run coverage; i.e.,
-\(\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha\).
+Fix \(h\in[H]\) and \(\alpha\in(0,1)\). Let \(\{s_{t+h|t}\}_{t\geq1}\)
+be any sequence of finite scores in \((-b,b)\) with \(0<b<\infty\), and
+let \(q_{2h|h}\in\mathbb R\) be an arbitrary initial threshold. Then the
+iteration \(q_{t+h|t}=q_{t+h-1|t-1}+\eta(\mathrm{err}_{t|t-h}-\alpha)\)
+with \(\eta>0\) satisfies, for every \(T\geq h+1\), \[
+\left|\frac{1}{T-h}\sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha)\right| \leq \frac{b+|q_{2h|h}|+\eta h}{\eta(T-h)}.
+\] In particular,
+\(\lim_{T\to\infty}\frac{1}{T-h}\sum_{t=h+1}^{T}\mathrm{err}_{t|t-h}=\alpha\).
 
 \end{corollary}
 
@@ -992,45 +900,40 @@ correct long-run coverage; i.e.,
 See Appendix \ref{sec-proof_cov_qt}.
 \end{proof}
 
-When \(h=1\), Corollary~\ref{cor-cov_qt} reduces to Proposition 1 of
-\citet{angelopoulos2024}. More generally, Corollary~\ref{cor-cov_qt}
-extends this result to the multi-step setting and establishes an
-explicit upper bound on the finite-sample coverage gap. The boundedness
-assumption on the nonconformity scores is imposed solely for theoretical
-analysis, ensuring control over the accumulation of miscoverage errors
-in the quantile tracking recursion. When the update is unraveled, the
-quantile tracker can be interpreted as an error integrator that
-accumulates past deviations of the empirical coverage from the target
-level. Bounded scores guarantee the stability of this accumulation and
-enable explicit bounds on the finite-sample coverage gap. Importantly,
-the bound itself is not required in practice, and the update proceeds
-agnostically and remains valid as long as the scores are finite.
+For \(h=1\), Corollary~\ref{cor-cov_qt} recovers Proposition 1 of
+\citet{angelopoulos2024}. The multi-step bound,
+\((b+|q_{2h|h}|)/(\eta n)+h/n\), separates the effects of score
+magnitude, initialization, and learning rate from that of the feedback
+delay. The boundedness of the scores is a purely theoretical assumption
+that keeps the accumulated miscoverage error of the quantile-tracking
+recursion under control. In practice, the bound itself need not be
+known, and the update runs unchanged as long as the scores are finite.
 
-More importantly, Proposition~\ref{prp-cov_rt} is also adequate for
-establishing the coverage guarantee of AcMCP given by Equation
-\eqref{eq-acmcp}. We first reformulate Equation \eqref{eq-acmcp} as
-\begin{equation}\phantomsection\label{eq-acmcp_1}{
+More importantly, Proposition~\ref{prp-cov_rt} also establishes
+one-sided calibration for AcMCP. We first write Equation
+\eqref{eq-acmcp} as \begin{equation}\phantomsection\label{eq-acmcp_1}{
 q_{t+h|t}=\hat{q}_{t+h|t}+r_t\left(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\right),
-}\end{equation} where \(\hat{q}_{t+h|t}\) can be any function of the
-past observations \(\{(\bm{x}_i, y_i)\}_{1 \leq i \leq t}\) and quantile
-estimates \(q_{i+h|i}\) for \(i \leq t-1\). Taking
-\(\hat{q}_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)+\tilde{e}_{t+h|t}\)
-will recover Equation \eqref{eq-acmcp}. We can consider
-\(\hat{q}_{t+h|t}\) as the forecast of the quantile \(q_{t+h|t}\) based
-on available historical data. We then present the long-run coverage
-guarantee for AcMCP given by Equation \eqref{eq-acmcp_1}.
+}\end{equation} where \(\hat{q}_{t+h|t}\) may be any function of the
+past observations \(\{(\bm{x}_i,y_i)\}_{1\leq i\leq t}\) and the earlier
+thresholds \(q_{i+h|i}\), \(i\leq t-1\), and can be viewed as a forecast
+of the next threshold from the available history. Taking
+\(\hat q_{t+h|t}=q^{\mathrm P}_{t+h|t}+\tilde s_{t+h|t}\) recovers
+AcMCP, and taking
+\(\hat q_{t+h|t}=q^{\mathrm P}_{t+h|t}+\hat s_{t+h|t}\) recovers MPID.
 
 \begin{corollary}[]\protect\hypertarget{cor-cov_acmcp}{}\label{cor-cov_acmcp}
 
-Let \(\{\hat{q}_{t+h|t}\}_{t\in\mathbb{N}}\) be any sequence of numbers
-in \([-\frac{b}{2}, \frac{b}{2}]\), and
-\(\{s_{t+h|t}\}_{t\in\mathbb{N}}\) be any sequence of numbers in
-\([-\frac{b}{2},\frac{b}{2}]\), for any \(h\in[H]\), \(b>0\) and may be
-infinite. Assume that \(r_t\) is a saturation function obeying Equation
-\eqref{eq-saturation_h}, for an admissible function \(g\). Then the
-prediction intervals obtained by the AcMCP iteration given by Equation
-\eqref{eq-acmcp_1} yield the correct long-run coverage; i.e.,
-\(\lim _{T \rightarrow \infty} \frac{1}{T-h} \sum_{t=h+1}^T \mathrm{err}_{t|t-h} = \alpha\).
+Fix \(h\in[H]\) and \(\alpha\in(0,1)\). Let the scores \(s_{t+h|t}\) and
+baselines \(\hat q_{t+h|t}\) be finite with
+\(|s_{t+h|t}-\hat q_{t+h|t}|<b\) for all \(t\geq1\), where
+\(b\in(0,\infty]\), and let \(r_t\) satisfy Equation
+\eqref{eq-saturation_h} and an admissible function \(g\). Then the
+iteration in Equation \eqref{eq-acmcp_1} satisfies, for every
+\(T\geq h+1\), \[
+\left|\frac{1}{T-h}\sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha)\right|
+\leq \frac{c \cdot g(T-h)+h}{T-h}.
+\] In particular,
+\(\lim_{T\to\infty}\frac{1}{T-h}\sum_{t=h+1}^{T}\mathrm{err}_{t|t-h}=\alpha\).
 
 \end{corollary}
 
@@ -1038,42 +941,119 @@ prediction intervals obtained by the AcMCP iteration given by Equation
 See Appendix \ref{sec-proof_cov_acmcp}.
 \end{proof}
 
-\section{Experiments}\label{experiments}
+Under the stated conditions, integral feedback ensures calibration for
+any baseline \(\hat q_{t+h|t}\), and thus without requiring accurate
+forecasts from the scorecaster. The scorecaster instead aims to improve
+interval efficiency by accounting for error dependence, although this
+improvement is not guaranteed by the corollary. Unlike
+Corollary~\ref{cor-cov_qt}, which bounds the scores themselves,
+Corollary~\ref{cor-cov_acmcp} bounds only their deviations from the
+baselines, \(s_{t+h|t}-\hat q_{t+h|t}\).
 
-We evaluate the proposed multi-step conformal prediction methods using
-two simulated settings and two real-world data sets. The following
-parameter choices are used throughout:
+The next corollary combines the lower- and upper-tail calibration
+guarantees to establish coverage for the asymmetric prediction interval
+in Equation \eqref{eq-two-sided-pi}.
+
+\begin{corollary}[]\protect\hypertarget{cor-cov-two-sided}{}\label{cor-cov-two-sided}
+
+Fix \(h\in[H]\) and \(\alpha\in(0,1)\). Construct the interval in
+Equation \eqref{eq-two-sided-pi} from thresholds obtained by applying
+Equation \eqref{eq-acmcp_1} separately to the lower- and upper-tail
+scores, with targets \(\alpha^{-},\alpha^{+}>0\) satisfying
+\(\alpha^{-}+\alpha^{+}=\alpha\). Suppose each tail satisfies the
+assumptions of Corollary~\ref{cor-cov_acmcp}. Then, for every
+\(T\geq h+1\),
+\begin{equation}\phantomsection\label{eq-two-sided-finite}{
+\frac{1}{T-h}\sum_{t=h+1}^{T}\mathbbm{1}\{y_t\in\hat{\mathcal C}_{t|t-h}^{\alpha}\}
+\geq 1-\alpha-2\frac{c\cdot g(T-h)+h}{T-h},
+}\end{equation} and hence
+\(\liminf_{T\to\infty}\frac{1}{T-h}\sum_{t=h+1}^{T}\mathbbm{1}\{y_t\in\hat{\mathcal C}_{t|t-h}^{\alpha}\}\geq1-\alpha\).
+
+Furthermore, let
+\(\chi_{T,h}:=\frac{1}{T-h}\sum_{t=h+1}^{T}\mathbbm{1}\{\hat y_{t|t-h}-q_{t|t-h}^{-}>\hat y_{t|t-h}+q_{t|t-h}^{+}\}\)
+be the frequency of crossed endpoints, that is, of empty intervals. Then
+\begin{equation}\phantomsection\label{eq-two-sided-enhanced}{
+\left|\frac{1}{T-h}\sum_{t=h+1}^{T}\mathbbm{1}\{y_t\in\hat{\mathcal C}_{t|t-h}^{\alpha}\}
+-(1-\alpha)\right|\leq 2\frac{c \cdot g(T-h)+h}{T-h}+\chi_{T,h},
+}\end{equation} so the empirical coverage converges to \(1-\alpha\)
+whenever \(\chi_{T,h}\to0\).
+
+\end{corollary}
+
+\begin{proof}
+See Appendix \ref{sec-proof_cov_two_sided}.
+\end{proof}
+
+Unlike the preceding single-tail results,
+Corollary~\ref{cor-cov-two-sided} provides a lower bound on empirical
+coverage of intervals and ensures a limit inferior of at least
+\(1-\alpha\), while convergence to exactly \(1-\alpha\) follows when the
+endpoint-crossing frequency vanishes. Setting \(\hat q_{t+h|t}=0\), the
+result also covers the integral-only iteration in
+Proposition~\ref{prp-cov_rt}. Analogous two-sided guarantees for the
+constant-step quantile-tracking update shown in
+Corollary~\ref{cor-cov_qt} are given in
+Corollary~\ref{cor-cov-two-sided-qt} in Appendix
+\ref{sec-two-sided-constant-step}.
+
+These results bound empirical coverage at each forecast horizon, both in
+finite samples and in the long run, but do not ensure conditional
+coverage at individual forecast origins or simultaneous coverage across
+horizons. Nor do they ensure local coverage. Appendix
+\ref{sec-local-coverage} shows that the coverage shortfall over a window
+is bounded by twice the sum of the cumulative calibration bounds at its
+endpoints, divided by the window length. This bound vanishes when the
+window length grows faster than that sum, but may remain uninformative
+for fixed-length rolling windows. Thus, long-run calibration alone does
+not guarantee protection against local undercoverage.
+
+\section{Experiments}\label{sec-experiments}
+
+We evaluate MPID and AcMCP using two simulated settings and two
+real-world data sets. For benchmarks, we use the multi-step extensions
+of split conformal prediction (MSCP), weighted conformal prediction
+(MWCP), and adaptive conformal prediction (MACP) described in Appendix
+\ref{sec-extensions}, together with the multi-step sequential predictive
+conformal inference (SPCI) proposed by \citet{xu2023}. The following
+parameter choices are used:
 
 \begin{enumerate}
 \def\labelenumi{(\alph{enumi})}
 \tightlist
 \item
-  we focus on the target coverage level \(1-\alpha=0.9\);
+  we target coverage \(1-\alpha=0.9\), with equal tail miscoverage
+  levels \(\alpha^{-}=\alpha^{+}=0.05\);
 \item
-  for the MWCP method, we use \(b=0.99\) as per \citet{barber2023};
+  for MWCP, we use \(b=0.99\) as per \citet{barber2023};
 \item
   following \citet{angelopoulos2024}, MACP uses a step size
   \(\gamma=0.005\); MPID uses a Theta model as the scorecaster; and both
-  MPID and AcMCP use a learning rate of \(\eta=0.01\hat{B}_t\) for
+  MPID and AcMCP use a learning rate of \(\eta=0.1\hat{B}_t\) for
   quantile tracking, where
   \(\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1}, \dots, s_{t|t-h}\}\) is
-  the highest score over a tailing window of length \(\Delta\), which is
-  set equal to the calibration set size;
+  the highest score over a trailing window of length \(\Delta\), which
+  is set equal to the calibration set size;
 \item
   we adopt a nonlinear saturation function
-  \(r_t(x)=K_1 \tan \left(x \log (t) / (t C_{\text {sat }})\right)\),
+  \(r_t(x)=K_{\mathrm I} \tan \left(x \log (t) / (t C_{\text {sat }})\right)\),
   where \(\tan (x)=\operatorname{sign}(x) \cdot \infty\) for
   \(x \notin[-\pi / 2, \pi / 2]\), and constants
   \(C_{\text {sat }}, K_{\mathrm{I}}>0\) are chosen heuristically as in
   \citet{angelopoulos2024};
 \item
   we use a clipped version of MACP, replacing infinite intervals with
-  the largest score observed to date. Other methods do not produce
-  infinite intervals by construction and therefore require no clipping.
+  the largest score observed to date;
+\item
+  for SPCI, we follow the implementation of \citet{xu2023}, using a
+  conditional quantile forest with \(10\) trees and maximum depth \(2\).
+  For each horizon, we refit it over the rolling calibration window
+  using the latest \(10\) available signed errors as predictors and
+  construct intervals at fixed quantile levels \(0.05\) and \(0.95\).
+  All methods share point forecasts and out-of-sample calibration
+  errors.
 \end{enumerate}
 
-\subsection{Simulated linear autoregressive
-process}\label{simulated-linear-autoregressive-process}
+\subsection{Simulated linear autoregressive process}\label{sec-simar}
 
 We first consider a simulated stationary time series generated from a
 simple AR\((2)\) process \[
@@ -1085,10 +1065,10 @@ settings, we create training sets \(\mathcal{D}_{\text{tr}}\) and
 calibration sets \(\mathcal{D}_{\text{cal}}\), each with a length of
 \(500\). We use AR\((2)\) models to generate \(1\)- to \(3\)-step-ahead
 point forecasts (i.e.~\(H=3\)), using the \texttt{Arima()} function from
-the \texttt{forecast} R package \citep{HK08, hyndman2024}. The goal is
-to generate prediction intervals using various proposed conformal
-prediction methods and evaluate whether they can achieve the nominal
-long-run coverage for each separate forecast horizon.
+the \texttt{forecast} R package \citep{hyndman2008, hyndman2024}. The
+goal is to generate prediction intervals using various proposed
+conformal prediction methods and evaluate whether they can achieve the
+nominal long-run coverage for each separate forecast horizon.
 
 \begin{figure}
 
@@ -1099,36 +1079,36 @@ long-run coverage for each separate forecast horizon.
 }
 
 \caption{\label{fig-AR2_cov}AR(2) simulation results showing rolling
-coverage, mean and median interval width for each forecast horizon. The
-displayed curves are smoothed over a rolling window of size \(500\). The
-target coverage level is \(1-\alpha=0.9\).}
+coverage (top) and mean interval width (bottom) for each forecast
+horizon. Both metrics are computed over rolling windows of size \(500\).
+The black dashed horizontal line indicates the target coverage level
+\(1-\alpha=0.9\).}
 
 \end{figure}%
 
-Figure~\ref{fig-AR2_cov} presents the rolling coverage and interval
+Figure~\ref{fig-AR2_cov} presents the rolling coverage and mean interval
 width of each method for each forecast horizon, with metrics computed
-over a rolling window of size \(500\). The analytic (and optimal)
-intervals obtained from the AR model are also shown. We observe that
-MPID and AcMCP achieve approximately the desired \(90\%\) coverage level
-over the rolling windows, while other methods, including the AR model,
-undergo much wider swings away from the desired level, showing high
-coverage volatility over time. For each forecast horizon and method, the
-rolling mean and median interval widths follow very similar trajectories
-across rolling windows. AcMCP constructs narrower prediction intervals
-than MPID, despite both methods achieving similar coverage. Moreover, we
-see that AcMCP tends to offer coverage-adaptive prediction intervals,
-automatically adjusting their width based on past coverage performance,
-and results in wider intervals especially when competing methods
-undercover, which is to be expected. In short, AcMCP intervals offer
-greater adaptivity and more precise coverage compared to AR, MSCP, MWCP
-and MACP. Both MPID and AcMCP achieve tight coverage, but AcMCP outputs
-more informative and smaller intervals. The benefits of AcMCP are more
-noticeable when \(h\) grows, and it does not deteriorate for smaller
-\(h\). This improvement can be attributed to the inclusion of a second
-model (scorecaster) which introduces additional variance into the
-generated prediction intervals. The results can be further elucidated
-with Figure~\ref{fig-AR2_box}, which presents boxplots of rolling
-coverage and interval width for each method and each forecast horizon.
+over a rolling window of size \(500\). For each method and forecast
+horizon, rolling median interval widths follow trajectories similar to
+those of the corresponding means and are omitted to avoid redundancy.
+The analytic intervals obtained from the fitted AR model are also shown.
+We observe that MPID and AcMCP achieve approximately the desired
+\(90\%\) coverage level over the rolling windows, while other methods,
+including the AR model, undergo much wider swings away from the desired
+level, showing high coverage volatility over time. AcMCP constructs
+narrower prediction intervals than MPID, despite both methods achieving
+similar coverage. Moreover, we see that AcMCP tends to offer
+coverage-adaptive prediction intervals, automatically adjusting their
+width based on past coverage performance, and results in wider intervals
+especially when competing methods undercover, which is to be expected.
+In short, AcMCP intervals offer greater adaptivity and more precise
+coverage compared to AR, MSCP, MWCP, SPCI and MACP. Both MPID and AcMCP
+achieve tight coverage, but AcMCP outputs more informative and smaller
+intervals. The benefits of AcMCP are more noticeable when \(h\) grows,
+and it does not deteriorate for smaller \(h\). The results can be
+further elucidated with Figure~\ref{fig-AR2_box}, which presents
+boxplots of rolling coverage and interval width for each method and each
+forecast horizon.
 
 \begin{figure}
 
@@ -1140,9 +1120,9 @@ coverage and interval width for each method and each forecast horizon.
 
 \caption{\label{fig-AR2_box}AR(2) simulation results showing boxplots of
 the rolling coverage and interval width for each method across different
-forecast horizons. The red dashed lines show the target coverage level,
-while the blue dashed lines indicate the median interval width of the
-AcMCP method.}
+forecast horizons. Black dashed lines indicate the target coverage level
+in the left panels and the median interval width of AcMCP in the right
+panels.}
 
 \end{figure}%
 
@@ -1160,39 +1140,32 @@ truncated period of length 500.}
 
 \end{figure}%
 
-The inclusion of the last term \(\tilde{e}_{t+h|t}\) in AcMCP should
-only result in a slight difference compared to the version without this
-term, which we henceforth refer to as MPI. This is because, the
-inclusion of \(\tilde{e}_{t+h|t}\) aims to capture autocorrelations
-inherent in multi-step forecast errors and focuses on the mean of
-forecast errors, whereas the whole update of AcMCP operates on quantiles
-of scores. To illustrate the subtle difference in their results and
-explore their origins, we visualize their prediction intervals over a
-truncated period of length \(500\), as shown in
-Figure~\ref{fig-AR2_timeplot}. We observe that AcMCP and MPI indeed
-construct similar prediction intervals so their lower and upper bounds
-mostly overlap with each other. The main differences occur around the
-time 1320 and during the period 1470-1500, where AcMCP tends to have a
-fanning-out effect, increasing the interval width as the forecast
-horizon increases, compared to MPI. Figure~\ref{fig-AR2_timeplot} also
-presents the prediction interval bounds given by MACP. Since both MACP
-and AcMCP rely on past miscoverage information to update prediction
-intervals, we include MACP to support a direct comparison of their
-resulting prediction intervals while preserving a clear and concise
-presentation. The prediction intervals of both AcMCP and MACP can
-capture certain patterns in the actual observations, and there is no
-consistent pattern indicating dominance of one method over the other in
-terms of interval width.
+To examine the effect of the scorecasting term \(\tilde s_{t+h|t}\), we
+compare AcMCP with the version without this term, denoted by MPI.
+Figure~\ref{fig-AR2_timeplot} displays their prediction intervals over a
+selected period of \(500\) observations. We observe that AcMCP and MPI
+indeed construct similar prediction intervals so their lower and upper
+bounds mostly overlap with each other. The main differences occur around
+time 1320 and during 1470-1500, where AcMCP exhibits a localized
+fanning-out effect relative to MPI, with wider intervals most apparent
+at \(h=3\). Figure~\ref{fig-AR2_timeplot} also presents the prediction
+interval bounds given by MACP. Since both MACP and AcMCP rely on past
+miscoverage information to update prediction intervals, we include MACP
+to support a direct comparison of their resulting prediction intervals
+while preserving a clear and concise presentation. The prediction
+intervals of both AcMCP and MACP can capture certain patterns in the
+actual observations, and there is no consistent pattern indicating
+dominance of one method over the other in terms of interval width.
 
 \subsection{Simulated nonlinear autoregressive
 process}\label{simulated-nonlinear-autoregressive-process}
 
-Next consider the case of a nonlinear data generation process, defined
+Next, consider the case of a nonlinear data-generating process, defined
 as \[
 y_t = \sin(y_{t-1}) + 0.5\log(y_{t-2} + 1) + 0.1y_{t-1}x_{1,t} + 0.3x_{2,t} + \varepsilon_{t},
 \] where \(x_{1,t}\) and \(x_{2,t}\) are uniformly distributed on
 \([0,1]\), and \(\varepsilon_{t}\) is white noise with variance
-\(\sigma^2 = 0.1\). Thus, \(y_t\) nonlinearly depends on its lagged
+\(\sigma^2=0.01\). Thus, \(y_t\) nonlinearly depends on its lagged
 values \(y_{t-1}\), \(y_{t-2}\), and exogenous variables \(x_{1,t}\) and
 \(x_{2,t}\).
 
@@ -1205,9 +1178,10 @@ values \(y_{t-1}\), \(y_{t-2}\), and exogenous variables \(x_{1,t}\) and
 }
 
 \caption{\label{fig-NL_cov}Nonlinear simulation results showing rolling
-coverage, mean and median interval width for each forecast horizon. The
-displayed curves are smoothed over a rolling window of size \(100\). The
-target coverage level is \(1-\alpha=0.9\).}
+coverage (top) and mean interval width (bottom) for each forecast
+horizon. Both metrics are computed over rolling windows of size \(100\).
+The black dashed horizontal line indicates the target coverage level
+\(1-\alpha=0.9\).}
 
 \end{figure}%
 
@@ -1221,49 +1195,46 @@ target coverage level is \(1-\alpha=0.9\).}
 
 \caption{\label{fig-NL_box}Nonlinear simulation results showing boxplots
 of the rolling coverage and interval width for each method across
-different forecast horizons. The red dashed lines show the target
-coverage level, while the blue dashed lines indicate the median interval
-width of the AcMCP method.}
+different forecast horizons. Black dashed lines indicate the target
+coverage level in the left panels and the median interval width of AcMCP
+in the right panels.}
 
 \end{figure}%
 
 After an appropriate burn-in period, we generate \(N=2000\) data points.
-Under the sequential split and online learning settings, both training
-set \(\mathcal{D}_{\text{tr}}\) and calibration set
+Under the sequential split and online learning settings, both the
+training set \(\mathcal{D}_{\text{tr}}\) and the calibration set
 \(\mathcal{D}_{\text{cal}}\) have size \(500\). Given the nonlinear DGP,
 we use feed-forward neural networks with a single hidden layer and
 lagged inputs to generate \(1\)- to \(3\)-step-ahead point forecasts
 (\(H=3\)), using the \texttt{nnetar()} function from the
 \texttt{forecast} R package \citep{hyndman2024}. Note that analytic
-prediction intervals are unavailable for neural networks, thus we do not
+prediction intervals are unavailable for neural networks, so we do not
 include them when presenting the results.
 
-Figure~\ref{fig-NL_cov} shows the rolling coverage and interval width of
-each method, computed on a rolling window of size \(100\). MPID and
-AcMCP are able to maintain minor fluctuations around the target coverage
-of \(90\%\) over time, whereas MSCP, MWCP, and MACP struggle to sustain
-the target level and display pronounced fluctuations over time.
-Moreover, all methods, except for MSCP, adapt interval widths to
-distributional changes, widening intervals in response to undercoverage
-and narrowing them under overcoverage. Notably, MPID and AcMCP
-demonstrate greater adaptability, with higher variability in interval
-widths compared to competing methods in order to uphold the desired
-coverage. The outcome of the rolling mean and median interval widths
-indicates that AcMCP produces generally narrower intervals than MPID for
-\(2\)-step-ahead forecasts but wider intervals for \(3\)-step-ahead
-forecasts. Furthermore, under AcMCP, the interval width at \(h=3\)
-exceeds that at \(h=2\) in \(53.41\%\) of the test cases, compared with
-only \(38.08\%\) under MPID. This pattern suggests more plausible
-behavior for AcMCP, as forecast uncertainty typically increases with the
-forecast horizon, leading to a greater tendency for wider prediction
-intervals.
+Figure~\ref{fig-NL_cov} shows the rolling coverage and mean interval
+width of each method, computed on a rolling window of size \(100\). MPID
+and AcMCP are able to maintain minor fluctuations around the target
+coverage of \(90\%\) over time, whereas MSCP, MWCP, SPCI and MACP
+struggle to sustain the target level and display pronounced fluctuations
+over time. Notably, MPID and AcMCP demonstrate greater adaptability,
+with higher variability in interval widths compared to competing methods
+in order to uphold the desired coverage. The rolling mean interval
+widths indicate that AcMCP produces generally narrower intervals than
+MPID for \(2\)-step-ahead forecasts but wider intervals for
+\(3\)-step-ahead forecasts. Furthermore, under AcMCP, the interval width
+at \(h=3\) exceeds that at \(h=2\) in \(53.41\%\) of the test cases,
+compared with only \(38.08\%\) under MPID. This pattern suggests more
+plausible behavior for AcMCP, as forecast uncertainty typically
+increases with the forecast horizon, leading to a greater tendency for
+wider prediction intervals.
 
 We provide further insights into the performance of these conformal
 prediction methods by presenting boxplots of the rolling coverage and
 interval width for each method, as depicted in Figure~\ref{fig-NL_box}.
-We observe that coverage variability is higher for MSCP, MWCP and MACP
-than for MPID and AcMCP, while MPID and AcMCP lead to a lower effective
-interval size.
+We observe that coverage variability is higher for MSCP, MWCP, SPCI and
+MACP than for MPID and AcMCP, while MPID and AcMCP lead to a lower
+effective interval size.
 
 \subsection{Electricity demand data}\label{electricity-demand-data}
 
@@ -1292,33 +1263,31 @@ daily maximum temperatures in 2012--2014, Victoria, Australia.}
 \end{figure}%
 
 The response variable is \(\texttt{Demand}\), with two covariates:
-\(\texttt{Temperature}\), and \(\texttt{Workday}\) (an indicator
-variable for working days). Following \citet{hyndman2021}, we fit a
-dynamic regression model with a piecewise linear function of temperature
-(with a knot at \(18\) degrees) to generate \(1\)- to \(7\)-step-ahead
-point forecasts (\(H=7\)), modeling the errors with an ARIMA process to
+\(\texttt{Temperature}\) and \(\texttt{Workday}\) (an indicator variable
+for working days). Following \citet{hyndman2021}, we fit a dynamic
+regression model with a piecewise linear function of temperature (with a
+knot at \(18\) degrees) to generate \(1\)- to \(7\)-step-ahead point
+forecasts (\(H=7\)), modeling the errors with an ARIMA process to
 capture autocorrelation. We use two years of data for training and
 \(100\) observations for calibration.
 
 Figure~\ref{fig-elec_cov} and Figure~\ref{fig-elec_box} compare the
-rolling coverage and interval width across method. These computations
+rolling coverage and interval width across methods. These computations
 are based on a rolling window of size \(100\). The DR method corresponds
 to the analytic intervals obtained from the dynamic regression model.
 First, DR consistently attains coverage well above the \(90\%\) target,
 resulting in much wider intervals than other methods for \(h=1,2,3,4\).
 While this overcoverage improves reliability, the resulting intervals
-are overly conservative and may lead to inefficient operational
-decisions in electricity markets, such as excessive reserve procurement.
-Second, MSCP, MWCP, and MACP fail to sustain the target coverage and
-noticeably undercover after September 2014 for all horizons, thus
-leading to narrower intervals than others. In electricity market
-applications, such undercoverage underestimates demand uncertainty and
-increases the risk of insufficient reserve allocation. Third, MPI, MPID,
-and AcMCP offer wider intervals that largely mitigate the
-post--September 2014 undercoverage. Among these, MPID shows slightly
-poorer coverage than MPI and AcMCP at \(h=3\), despite producing to
-wider intervals. Finally, while MPI and AcMCP display similar coverage
-pattern, AcMCP is capable of constructing narrower intervals than MPI,
+are overly conservative. Second, MSCP, MWCP, and MACP fail to sustain
+the target coverage and noticeably undercover after September 2014 for
+all horizons. SPCI also produces narrower intervals than MPID and AcMCP
+but exhibits substantial undercoverage across horizons. These narrower
+intervals therefore come at the cost of substantial undercoverage.
+Third, MPI, MPID, and AcMCP offer wider intervals that largely mitigate
+the post--September 2014 undercoverage. Among these, MPID shows slightly
+poorer coverage than MPI and AcMCP at \(h=3\), despite producing wider
+intervals. Finally, while MPI and AcMCP display similar coverage
+patterns, AcMCP is capable of constructing narrower intervals than MPI,
 particularly at larger horizons. Relative to MPID, AcMCP also achieves
 greater interval width reduction, with advantages that become more
 pronounced as \(h\) increases and without sacrificing performance at
@@ -1333,9 +1302,10 @@ shorter horizons.
 }
 
 \caption{\label{fig-elec_cov}Electricity demand data results showing
-rolling coverage, mean and median interval width for each forecast
-horizon. The displayed curves are smoothed over a rolling window of size
-\(100\). The target coverage level is \(1-\alpha=0.9\).}
+rolling coverage (top) and mean interval width (bottom) for each
+forecast horizon. Both metrics are computed over rolling windows of size
+\(100\). The black dashed horizontal line indicates the target coverage
+level \(1-\alpha=0.9\).}
 
 \end{figure}%
 
@@ -1349,21 +1319,39 @@ horizon. The displayed curves are smoothed over a rolling window of size
 
 \caption{\label{fig-elec_box}Electricity demand data results showing
 boxplots of the rolling coverage and interval width for each method
-across different forecast horizons. The red dashed lines show the target
-coverage level, while the blue dashed lines indicate the median interval
-width of the AcMCP method.}
+across different forecast horizons. Black dashed lines indicate the
+target coverage level in the left panels and the median interval width
+of AcMCP in the right panels.}
 
 \end{figure}%
+
+AcMCP achieves near-nominal overall coverage and stable rolling
+coverage, with narrower intervals than competing methods that attain
+comparable coverage. These properties support its use in short-term
+generation planning: combined with supply forecasts, the intervals can
+flag days that warrant closer review of capacity margins and support
+assessments of candidate generation plans under different demand
+scenarios. However, satisfactory overall and rolling coverage does not
+imply conditional coverage under extreme temperatures, high demand, or
+other critical operating conditions. The theoretical guarantees concern
+empirical coverage at each horizon; they ensure neither coverage
+conditional on the information available for a given decision nor
+simultaneous coverage across horizons. Costly upper-tail exceedances can
+therefore occur despite satisfactory average coverage. Before using the
+intervals to set reserves, practitioners should assess the frequency and
+magnitude of upper-bound exceedances during high-demand periods, and
+weigh this exposure against available generation capacity and the cost
+of covering any shortfall.
 
 \subsection{Eating out expenditure
 data}\label{eating-out-expenditure-data}
 
 In our final example, we apply the conformal prediction methods to
-forecast the eating out expenditure (\$ million) in Victoria, Australia.
-The data includes monthly expenditure on cafes, restaurants and takeaway
-food services from April 1982 to December 2019, as shown in
-Figure~\ref{fig-cafe_data}. The data shows an overall upward trend,
-obvious annual seasonal, and evel-dependent variability.
+forecast the eating out expenditure (in millions of dollars) in
+Victoria, Australia. The data include monthly expenditure on cafes,
+restaurants and takeaway food services from April 1982 to December 2019,
+as shown in Figure~\ref{fig-cafe_data}. The data show an overall upward
+trend, clear annual seasonality, and level-dependent variability.
 
 \begin{figure}[!tb]
 
@@ -1385,7 +1373,7 @@ final point forecasts. STL-ETS applies ETS to the seasonally adjusted
 series obtained via STL decomposition. All models are automatically
 trained using the \texttt{forecast} R package \citep{hyndman2024}. We
 aim to forecast \(12\) months ahead (\(H=12\)) using \(20\) years of
-data for training and \(5\) year for calibration. Because the test set
+data for training and \(5\) years for calibration. Because the test set
 contains only \(152\) months, we report coverage and interval width
 averaged over the full test period rather than rolling windows.
 
@@ -1393,16 +1381,18 @@ As the forecast horizons considered in this application are relatively
 long, we summarize performance in Figure~\ref{fig-cafe_cov} by reporting
 the average coverage gap and average interval width across the whole
 test set for each method and each forecast horizon. The results first
-show that MSCP, MWCP and MACP provide valid prediction intervals for
-smaller forecast horizon but fail to achieve the desired coverage for
-larger forecast horizons (\(h>5\)). Second, for \(h \leq 5\), MPI and
-AcMCP can approximately achieve the desired coverage and provide
-comparable mean interval widths with other methods, except for MPID.
-Third, the coverage of MSCP, MWCP and MACP declines gradually as the
-forecast horizon increases, while MPI and AcMCP maintain coverage within
-a tighter range, albeit at the cost of interval efficiency. Lastly,
-compared to MPI, AcMCP exhibits slightly less deviation from the desired
-coverage across most forecast horizons.
+show that SPCI produces narrower intervals but substantially undercovers
+at every horizon, especially longer ones, limiting their usefulness for
+uncertainty quantification. MSCP, MWCP and MACP achieve empirical
+coverage close to the target for smaller forecast horizons but fail to
+achieve the desired coverage for larger forecast horizons (\(h>5\)).
+Second, for \(h \leq 5\), MPI and AcMCP can approximately achieve the
+desired coverage and provide mean interval widths comparable to those of
+MSCP, MWCP and MACP. Third, the coverage of MSCP, MWCP, SPCI and MACP
+declines gradually as the forecast horizon increases, while MPI and
+AcMCP maintain coverage within a tighter range, albeit at the cost of
+interval efficiency. Lastly, compared to MPI, AcMCP exhibits slightly
+less deviation from the desired coverage across most forecast horizons.
 
 \begin{figure}
 
@@ -1413,9 +1403,9 @@ coverage across most forecast horizons.
 }
 
 \caption{\label{fig-cafe_cov}Eating out expenditure data results showing
-coverage gap and interval width averaged over the entire test set for
-each forecast horizon. The black dashed line in the top panel indicates
-no difference from the \(90\%\) target level.}
+empirical coverage minus the \(90\%\) target level (left) and mean
+interval width (right), computed over the entire test set for each
+forecast horizon. The black dashed line indicates zero coverage gap.}
 
 \end{figure}%
 
@@ -1427,34 +1417,35 @@ lead to smoother interval evolution but slower correction of local
 coverage errors, while larger values improve responsiveness at the cost
 of increased variability. An analogous trade-off arises in AcMCP, where
 the learning rate \(\eta\) governs the balance between adaptivity and
-stability. This naturally raises the question of whether AcMCP's
-empirical advantages persist when the benchmark MACP is optimally tuned
-for high adaptivity.
+stability. This motivates a comparison with MACP tuned for comparable
+local coverage variability.
 
-To examine this, we conduct a post-hoc comparison in which \(\eta\) for
-AcMCP is held fixed, while \(\gamma\) for MACP is selected via grid
-search over \([0.005, 0.5]\). Specifically, \(\gamma\) is chosen to
-match the sample variance of local coverage achieved by AcMCP over
-rolling windows of the test set.
+To examine this, we conduct a post-hoc comparison in which the
+learning-rate rule and tuning constants for AcMCP are held fixed, while
+\(\gamma\) for MACP is selected via grid search over \([0.005, 0.5]\).
+Specifically, \(\gamma\) is chosen to match the sample variance of local
+coverage achieved by AcMCP over rolling windows of the test set. This is
+a post-hoc comparison based on the test set, rather than a prospective
+tuning procedure or a guarantee of optimality.
 
 Table~\ref{tbl-posthoc} summarizes, for each forecast horizon, the mean
 coverage over the full test set, the minimum and maximum local coverage
 across rolling windows, and the mean and median interval widths for MACP
 and AcMCP across the data sets considered above. In simple linear and
 nonlinear simulations, both methods attain mean coverage close to the
-nominal 90\%, with AcMCP consistently producing comparable or narrower
-intervals when coverage is comparable. More pronounced differences arise
-in real data sets and at longer horizons. For electricity demand, MACP
-displays systematic undercoverage as the horizon increases, particularly
-in terms of minimum local coverage, whereas AcMCP maintains more stable
-coverage around the target by adaptively adjusting interval widths. A
-similar pattern appears for eating out expenditure data, where MACP
-suffers substantial coverage degradation at larger horizons despite
-tuning, while AcMCP preserves near-nominal coverage, albeit with wider
-but informative intervals. Overall, these results indicate that AcMCP
-provides superior coverage control and, when coverage is comparable,
-yields prediction intervals that are shorter or at least comparable in
-length.
+nominal \(90\%\), with AcMCP consistently producing comparable or
+narrower intervals when coverage is comparable. More pronounced
+differences arise in real data sets and at longer horizons. For
+electricity demand, MACP displays systematic undercoverage as the
+horizon increases, particularly in terms of minimum local coverage,
+whereas AcMCP maintains more stable coverage around the target by
+adaptively adjusting interval widths. A similar pattern appears for
+eating out expenditure data, where MACP suffers substantial coverage
+degradation at larger horizons despite tuning, while AcMCP preserves
+near-nominal coverage, albeit with wider but informative intervals.
+Overall, these results indicate that AcMCP provides superior coverage
+control and, when coverage is comparable, yields prediction intervals
+that are shorter or at least comparable in length.
 
 \begin{table}
 
@@ -1510,54 +1501,64 @@ h=12 & 69.47                    & 91.60                     & 65.00             
 
 \section{Conclusion and discussion}\label{conclusion-and-discussion}
 
-We introduced a unified notation for conformal prediction in time
-series, with a focus on multi-step forecasting within a general online
-learning framework. We extended several accessible conformal prediction
-methods to address the challenges of multi-step forecasting scenarios.
+We propose MPID and AcMCP to construct prediction sets for multi-step
+time series forecasting. Both methods extend conformal PID control
+\citep{angelopoulos2024} to accommodate delayed feedback inherent in
+this setting, while AcMCP additionally incorporates dependence among
+forecast errors across horizons into its scorecaster. Decompositions of
+optimal forecast errors, together with explicit bounds on Taylor
+remainders, provide a structural rationale for this design and clarify
+the conditions supporting the underlying linear approximations. For both
+methods, we establish finite-sample bounds and horizon-specific long-run
+guarantees for empirical coverage under the stated calibration
+conditions, without requiring exchangeability, stationarity, or
+assumptions on how the data distribution evolves over time. These
+guarantees do not depend on the accuracy of the linear approximations.
+The coverage bounds distinguish the contribution of calibration feedback
+from that of forecast delay, whose effect vanishes asymptotically for
+each fixed horizon. Across the experiments considered, MPID and AcMCP
+adapt their interval widths to changing time series dynamics, generally
+maintaining more stable rolling coverage around the target than the
+benchmark methods. Among comparably well-calibrated methods, AcMCP often
+produces narrower intervals, demonstrating the empirical value of
+incorporating forecast error dependence into conformal calibration.
 
-Under a general nonstationary autoregressive DGP, we showed that the
-optimal \(h\)-step-ahead forecast errors can be approximated by a linear
-combination of at most its lag \((h-1)\) with respect to forecast
-horizon. Building on this foundation, we introduce AcMCP, a novel method
-that explicitly accounts for autocorrelations in multi-step forecast
-errors and achieves long-run coverage guarantees without assumptions on
-data distributional shifts. Across simulations and real data
-applications, AcMCP achieves coverage closer to the target within local
-windows while offering adaptive prediction intervals that respond
-effectively to varying conditions.
+Our analysis of forecast errors is restricted to an ex-post forecasting
+setting, in which future values of exogenous predictors are assumed to
+be known. In this setting, interval width reflects both \emph{aleatoric
+uncertainty}, arising from intrinsic randomness in the DGP, and
+\emph{epistemic uncertainty}, stemming from a lack of knowledge about
+the underlying DGP \citep{sale2025}. In many practical forecasting
+scenarios, however, predictors must themselves be forecast. Uncertainty
+in future predictor values and in the models used to forecast them can
+then propagate into response forecasts, motivating explicit treatment of
+predictor uncertainty in conformal inference.
 
-Our analysis is restricted to an ex-post forecasting setting, in which
-future values of exogenous predictors are assumed to be observed. In
-this setting, interval width reflects both \emph{aleatoric uncertainty},
-arising from intrinsic randomness in DGP, and \emph{epistemic
-uncertainty}, stemming from a lack of knowledge about the underlying DGP
-\citep{sale2025}. In many practical forecasting scenarios, however,
-predictors must themselves be forecast. In such settings, both types of
-uncertainty are amplified and interdependent: aleatoric uncertainty
-expands to include the variability induced by stochastic predictor
-forecasts, while epistemic uncertainty compounds through the propagation
-of uncertainty from the predictor models to the primary predictive
-model. Consequently, conformal inference procedures require adaptation
-to explicitly incorporate and propagate this joint uncertainty in order
-to preserve valid coverage and statistical efficiency. Additionally, our
-methodology does not incorporate an automated procedure for tuning the
-learning-rate parameter.
+Although the forecast error analysis assumes known future predictors,
+the coverage guarantees remain applicable when these predictors are
+forecast, provided that the assumptions of Corollary~\ref{cor-cov_acmcp}
+and Corollary~\ref{cor-cov-two-sided} hold. Appendix
+\ref{sec-predictor-uncertainty} compares AcMCP using known and forecast
+future predictors in a simulation. Both settings achieve near-nominal
+empirical coverage and small rolling coverage errors, but forecasting
+the predictors produces wider intervals, with larger increases at higher
+levels of predictor uncertainty and longer forecast horizons.
 
-These limitations suggest several directions for future research. One
-avenue is to further improve interval efficiency while preserving
-coverage guarantees, with the goal of producing the narrowest possible
-prediction intervals. Our focus here is on methods that admit efficient
-online implementation through simple weighting or updating schemes,
-making them well suited for practical multi-step forecasting. More
-computationally intensive methods such as Bellman conformal inference
-\citep{yang2024ts}, which solve an optimization problem at each time
-step to trade off interval length and miscoverage, are not considered
-here. Integrating such optimization-based ideas with the proposed
-framework to further tighten intervals while retaining coverage
-guarantees is an important topic for future work. Another promising
-direction is the development of refined conformal methodologies for
-ex-ante forecasting, where uncertainty in future predictors should be
-explicitly incorporated into the inference procedure.
+These considerations suggest several directions for future research. One
+is to improve interval efficiency while preserving coverage guarantees.
+Our methods prioritize efficient online implementation through simple
+updates. A complementary approach is Bellman conformal inference
+\citep{yang2024ts}, which uses a look-ahead optimization to balance
+interval length against a miscoverage penalty, but issues only a
+one-step-ahead interval. Extending this optimization principle to
+multi-step interval construction while retaining coverage guarantees is
+a promising direction. Automated learning-rate selection could further
+reduce manual tuning and improve adaptation to changing forecasting
+conditions. Other avenues include establishing conditional coverage
+guarantees under explicit restrictions on distributional change and
+developing a theoretical understanding of how uncertainty in future
+predictors and their forecasting models affects interval efficiency and
+local calibration.
 
 % \newpage
 \appendix
@@ -1573,11 +1574,12 @@ explicitly incorporated into the inference procedure.
 \section*{Acknowledgments}\label{acknowledgments}
 \addcontentsline{toc}{section}{Acknowledgments}
 
-This work was supported by the Australian Research Council Industrial
+This work was supported by the National Natural Science Foundation of
+China (No.~72601399), the Presidential Foundation of the Academy of
+Mathematics and Systems Science, Chinese Academy of Sciences, China
+(No.~E555930101), and the Australian Research Council Industrial
 Transformation Training Centre in Optimisation Technologies, Integrated
-Methodologies, and Applications (OPTIMA) under Grant No.~IC200100009;
-the Presidential Foundation of the Academy of Mathematics and Systems
-Science, Chinese Academy of Sciences, China, under Grant No.~E555930101.
+Methodologies, and Applications (OPTIMA) (No.~IC200100009).
 
 \section*{Disclosure statement}\label{disclosure-statement}
 \addcontentsline{toc}{section}{Disclosure statement}
@@ -1587,8 +1589,10 @@ The authors report there are no competing interests to declare.
 \section*{Supplementary materials}\label{supplementary-materials}
 \addcontentsline{toc}{section}{Supplementary materials}
 
-All proofs of the propositions and corollaries presented in the paper
-are provided in the Appendix.
+The Appendix provides proofs of all propositions and corollaries,
+additional multi-step conformal methods, analyses of approximation
+errors and local coverage, supplementary two-sided coverage results, and
+a simulation examining the effect of uncertainty in future predictors.
 
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
@@ -1617,182 +1621,543 @@ are provided in the Appendix.
 \section*{Appendix}\label{appendix}
 \addcontentsline{toc}{section}{Appendix}
 
+\subsection{Multi-step extensions of existing conformal
+methods}\label{sec-extensions}
+
+\subsubsection{Online multi-step split conformal
+prediction}\label{online-multi-step-split-conformal-prediction}
+
+Split conformal prediction \citep[SCP,][]{papadopoulos2002, vovk2005} is
+a holdout method for building prediction sets using a model pre-trained
+on a training set. A key advantage of SCP is its ability to guarantee
+coverage by assuming data exchangeability. In a regression setting, SCP
+randomly separates the available \(n\) data points,
+\(Z_i = (X_i, Y_i) \in \mathbb{R}^d \times \mathbb{R}\),
+\(i=1, \dots, n\), into a proper training set of size \(n_t\) and a
+calibration set of size \(n_c\). Given a regression model
+\(\hat{\mu}: \mathbb{R}^d \rightarrow \mathbb{R}\) fitted on the
+training set and a score function \(\mathcal{S}\), nonconformity scores
+\(s_i = \mathcal{S}\left(X_i, Y_i\right)\) are computed on the
+calibration set to measure the nonconformity between the calibration
+response values and the predicted values obtained from the fitted model
+\(\hat{\mu}\). Then SCP computes the prediction set for the test
+response \(Y_{n+1}\) using \[
+\hat{\mathcal{C}}_{n+1}^{\alpha}\left(X_{n+1}\right) = \left\{y\in\mathbb{R}: \mathcal{S}\left(X_{n+1}, y\right) \leq Q_{1-\alpha}\left(\sum_{i \in \mathcal{D}_{\text{cal}}}\frac{1}{n_c+1}\cdot\delta_{s_{i}}+\frac{1}{n_c+1}\cdot\delta_{+\infty}\right)\right\},
+\] where \(Q_\tau(\cdot)\) denotes the \(\tau\)-quantile of its
+argument, and \(\delta_a\) denotes the point mass at \(a\). Time series
+data are inherently nonexchangeable due to their temporal dependence and
+autocorrelation. Therefore, directly applying SCP to time series data
+would violate the method's exchangeability assumption and compromise its
+coverage guarantee.
+
+Here we introduce online \textbf{multi-step split conformal prediction}
+(MSCP) as a generalization of SCP \citep{papadopoulos2002, vovk2005} to
+recursively update all \(h\)-step-ahead prediction intervals over time.
+MSCP applies conformal inference in an online fashion, updating
+prediction intervals as new data points are received. Specifically, for
+each \(h \in [H]\), the one-sided prediction set is
+\begin{equation}\phantomsection\label{eq-mscp}{
+\hat{\mathcal{C}}_{t+h|t}^{\alpha,\mathrm{tail}} = \Bigg\{y\in\mathbb{R}: s_{t+h|t}^{y} \leq Q_{1-\alpha}\Bigg(\sum_{i=t-t_c+1}^{t}\frac{1}{t_c+1}\cdot\delta_{s_{i|i-h}}+\frac{1}{t_c+1}\cdot\delta_{+\infty}\Bigg)\Bigg\},
+}\end{equation} where \(s_{t+h|t}^{y}\) is the relevant signed
+nonconformity score defined in Section~\ref{sec-setup}. Applying
+Equation \eqref{eq-mscp} to both tails and combining the resulting
+thresholds as in Equation \eqref{eq-two-sided-pi} yields the MSCP
+interval.
+
+\subsubsection{Online multi-step weighted conformal
+prediction}\label{online-multi-step-weighted-conformal-prediction}
+
+\citet{barber2023} propose a nonexchangeable conformal prediction
+procedure (NexCP) that generalizes SCP to certain nonexchangeable
+settings by assigning higher weights to observations believed to share
+the same distribution as the test data. NexCP assumes these weights are
+fixed and data-independent. Under exchangeability, NexCP retains the
+same coverage guarantees as SCP; when exchangeability is violated, the
+coverage gap is governed by the total variation distance between swapped
+nonconformity score vectors, which can be substantial in time series
+settings.
+
+The online \textbf{multi-step weighted conformal prediction} (MWCP)
+method we propose here adapts the NexCP method to the online setting for
+time series forecasting. MWCP uses weighted quantile estimates for
+constructing prediction intervals, contrasting with the MSCP definitions
+where all nonconformity scores for calibration are implicitly assigned
+equal weight.
+
+For the subsequent empirical study, we choose fixed weights
+\(w_i = b^{t+1-i}\), \(b \in (0, 1)\) and \(i=t-t_c+1, \dots, t\), for
+nonconformity scores on the corresponding calibration set. In this
+setting, weights decay exponentially as the nonconformity scores get
+older, akin to the rationale behind the simple exponential smoothing
+method in time series forecasting \citep{hyndman2021}. Then, for each
+\(h \in [H]\), MWCP updates the \(h\)-step-ahead one-sided prediction
+set: \[
+\hat{\mathcal{C}}_{t+h|t}^{\alpha,\mathrm{tail}} = \Bigg\{y\in\mathbb{R}: s_{t+h|t}^{y} \leq Q_{1-\alpha}\Bigg(\sum_{i=t-t_c+1}^{t}\tilde{w}_i\cdot\delta_{s_{i|i-h}}+\tilde{w}_{t+1}\cdot\delta_{+\infty}\Bigg)\Bigg\},
+\] where \(\tilde{w}_i\) and \(\tilde{w}_{t+1}\) are normalized weights
+given by \[
+\tilde{w}_i = \frac{w_i}{\sum_{i=t-t_c+1}^{t}w_i+1}, \text{ for } i \in \{t-t_c+1, \dots, t\} \quad \text{and} \quad \tilde{w}_{t+1} =  \frac{1}{\sum_{i=t-t_c+1}^{t}w_i+1}.
+\] As with MSCP, the two one-sided MWCP sets are combined according to
+Equation \eqref{eq-two-sided-pi}.
+
+\subsubsection{Multi-step adaptive conformal
+prediction}\label{multi-step-adaptive-conformal-prediction}
+
+Next we extend the adaptive conformal inference (ACI) method proposed by
+\citet{gibbs2021} to address multi-step time series forecasting,
+introducing the \textbf{multi-step adaptive conformal prediction} (MACP)
+method. For a generic tail with fixed target miscoverage level
+\(\alpha\), the method adapts the nominal level \(\alpha_{t+h|t}\) used
+for quantile estimation to past tail miscoverage indicators.
+Specifically, for each \(h \in [H]\), we update \(\alpha_{t+h|t}\)
+according to \begin{equation}\phantomsection\label{eq-macp}{
+\alpha_{t+h|t} := \alpha_{t+h-1|t-1} + \gamma(\alpha - \mathrm{err}_{t|t-h}).
+}\end{equation} The corresponding one-sided set is computed from
+Equation \eqref{eq-mscp} with \(\alpha\) replaced by \(\alpha_{t+h|t}\).
+For levels at or below zero, the one-sided set is \(\mathbb R\); for
+levels at or above one, it is empty. Here, \(\gamma > 0\) is a fixed
+step size, and \(\alpha_{2h|h}\) is the initial estimate, typically set
+to \(\alpha\). The upper- and lower-tail recursions are run separately
+and then combined through Equation \eqref{eq-two-sided-pi}.
+
+Equation \eqref{eq-macp} uses the tail miscoverage indicator observed at
+time \(t\) to update the forecast for time \(t+h\). The nominal tail
+miscoverage level increases when the observation satisfies the relevant
+upper or lower bound (\(s_{t|t-h}\leq q_{t|t-h}\)) and decreases when it
+violates that bound (\(s_{t|t-h}>q_{t|t-h}\)). For a fixed calibration
+sample, decreasing this level widens the one-sided prediction set.
+Equation \eqref{eq-macp} reduces to the ACI update when \(h=1\).
+
+We do not use the update
+\(\alpha_{t+1|t-h+1} := \alpha_{t|t-h} + \gamma(\alpha - \mathrm{err}_{t|t-h})\),
+because it requires \(y_t\), which is unavailable at the forecast origin
+\(t-h+1\) when \(h>1\).
+
+Selecting the parameter \(\gamma\) is pivotal yet challenging.
+\citet{gibbs2021} relate the choice of \(\gamma\) to the rate of
+distributional change. Several strategies have been proposed to avoid
+the necessity of selecting \(\gamma\). For example, \citet{zaffran2022}
+use an adaptive aggregation of multiple ACIs with a set of candidate
+values for \(\gamma\), determining weights based on their historical
+performance. \citet{bastani2022} propose a multivalid prediction
+algorithm in which the prediction set is established by selecting a
+threshold from a sequence of candidate thresholds. Both methods rely on
+update schemes that place substantial weight on older historical data,
+which may impede rapid adaptation to abrupt changes \citep{gibbs2024}.
+Therefore, \citet{gibbs2024} propose an alternative expert selection
+scheme that adaptively tunes the step-size parameter over time and
+places greater emphasis on more recent observations by construction,
+enabling faster responses to sudden environmental shifts.
+
+The theoretical coverage properties of ACI suggest that a larger value
+for \(\gamma\) generally results in less deviation from the target
+coverage. As there is no restriction on \(\alpha_{t+h|t}\), it can drift
+below \(0\) or above \(1\); a larger \(\gamma\) may therefore lead to
+frequent empty or unbounded one-sided sets as the procedure responds to
+whether the relevant bound is violated.
+
 \subsection{\texorpdfstring{Proof of
 Proposition~\ref{prp-ar}}{Proof of Proposition~}}\label{sec-proof_ar}
 
 \begin{proof}
-Considering the time series \(\{y_t\}_{t\geq1}\) generated by a locally
-stationary autoregressive process as defined in Equation \eqref{eq-dgp}.
-Let \(\hat{y}_{t+h|t}\) be the optimal \(h\)-step-ahead point forecast
-generated by a well-trained model \(\hat{f}\), using information
-available up to time \(t\), and \(e_{t+h|t}\) be the corresponding
-optimal \(h\)-step-ahead forecast error. Denote that
-\(\bm{u}_{t+h}=\bm{x}_{(t-k+h):(t+h)}\). Then we have \begin{align*}
-\hat{y}_{t+h|t}=\begin{cases}
-      \hat{f}(y_t, \dots, y_{t-d+1}, \bm{u}_{t+1}) & \text{ if } h=1, \\
-      \hat{f}(\hat{y}_{t+h-1|t}, \dots, \hat{y}_{t+1|t}, y_t, \dots, y_{t+h-d}, \bm{u}_{t+h}) &  \text{ if } 1 < h \leq d, \\
-      \hat{f}(\hat{y}_{t+h-1|t}, \dots, \hat{y}_{t+h-d|t}, \bm{u}_{t+h}) & \text{ if } h > d.\\
-    \end{cases}
-\end{align*} For \(h=1\), we simply have \(e_{t+1|t} = \omega_{t+1}\),
-where \(\omega_t\) is a white noise series. This follows from the
-well-established property that optimal forecasts have \(1\)-step-ahead
-errors that are white noise.
+Fix a forecast origin \(t\). For \(h=1\), all lagged responses and
+required predictors are \(\mathcal F_t\)-measurable. Since
+\(\mathbb E(\varepsilon_{t+1}|\mathcal F_t)=0\), we have \[
+\hat y_{t+1|t}=f_{t+1}(y_{(t+1-d):t},\bm x_{(t+1-k):(t+1)})
+\] and hence \(e_{t+1|t}=\varepsilon_{t+1}\), with
+\(\widetilde R_{t,1}=0\).
 
-For \(1<h\leq d\), applying the first order Taylor series expansion, we
-can write \begin{align*}
+For \(h\geq2\), write
+\(\bm\Delta_{t,h}=\bm z_{t,h}-\bm m_{t,h}=(e_{t+h-1|t},\dots,e_{t+h-p_h|t})^{\prime}\).
+Applying a first-order Taylor expansion and retaining the remainder
+gives \begin{align*}
 y_{t+h}
-&= \hat{f}(y_{t+h-1}, \dots, y_{t+h-d}, \bm{u}_{t+h})+\omega_{t+h} \\
-&= \hat{f}(\hat{y}_{t+h-1|t}+e_{t+h-1|t}, \dots, \hat{y}_{t+1|t}+e_{t+1|t}, y_{t}, \dots, y_{t+h-d}, \bm{u}_{t+h})+\omega_{t+h} \\
-&\underset{\text{te}}{\approx} \hat{f}(\bm{a})+\operatorname{D}\hat{f}(\bm{a})(\bm{v}-\bm{a})+
-\omega_{t+h} \\
-&= \hat{f}(\hat{y}_{t+h-1|t}, \dots, \hat{y}_{t+1|t}, y_{t}, \dots, y_{t+h-d}, \bm{u}_{t+h}) \\
-&\mbox{}\qquad +e_{t+h-1|t}\frac{\partial \hat{f}(\bm{a})}{\partial v_1}+\dots+e_{t+2|t}\frac{\partial \hat{f}(\bm{a})}{\partial v_{h-2}}+e_{t+1|t}\frac{\partial \hat{f}(\bm{a})}{\partial v_{h-1}}+\omega_{t+h} \\
-&=\hat{y}_{t+h|t}+e_{t+h|t},
-\end{align*} where
-\(\bm{v}=(y_{t+h-1}, \dots, y_{t+h-d}, \bm{u}_{t+h})\),
-\(\bm{a} =(\hat{y}_{t+h-1|t}, \dots, \hat{y}_{t+1|t}, y_{t}, \dots, y_{t+h-d}, \bm{u}_{t+h})\),
-\(\operatorname{D}\hat{f}(\bm{a})\) denotes the matrix of partial
-derivative of \(\hat{f}(\bm{v})\) at \(\bm{v}=\bm{a}\), and
-\(\frac{\partial}{\partial v_i}\) denotes the partial derivative with
-respect to the \(i\)th component in \(\hat{f}\).
+&=F_{t,h}(\bm z_{t,h})+\varepsilon_{t+h}\\
+&=F_{t,h}(\bm m_{t,h})
++\sum_{i=1}^{p_h}\partial_iF_{t,h}(\bm m_{t,h})e_{t+h-i|t}
++R_{t,h}+\varepsilon_{t+h},
+\end{align*} where \(R_{t,h}\) is the Taylor remainder beyond first
+order.
 
-Similarly, for \(h > d\), we can write \begin{align*}
-y_{t+h}
-&= \hat{f}(y_{t+h-1}, \dots, y_{t+h-d}, \bm{u}_{t+h})+\omega_{t+h} \\
-&= \hat{f}(\hat{y}_{t+h-1|t}+e_{t+h-1|t}, \dots, \hat{y}_{t+h-d|t}+e_{t+h-d|t}, \bm{u}_{t+h})+\omega_{t+h} \\
-&\underset{\text{te}}{\approx} \hat{f}(\bm{a})+\operatorname{D}\hat{f}(\bm{a})(\bm{v}-\bm{a})+
-\omega_{t+h} \\
-&= \hat{f}(\hat{y}_{t+h-1|t}, \dots, \hat{y}_{t+h-d|t}, \bm{u}_{t+h}) \\
-&\mbox{}\qquad +e_{t+h-1|t}\frac{\partial \hat{f}(\bm{a})}{\partial v_1}+e_{t+h-d|t}\frac{\partial \hat{f}(\bm{a})}{\partial v_{d}}+\omega_{t+h} \\
-&= \hat{y}_{t+h|t}+e_{t+h|t},
-\end{align*} Therefore, the forecast errors of optimal \(h\)-step-ahead
-forecasts follow an approximate AR(\(p\)) process, where
-\(p=\min\{d, h-1\}\). This implies that the optimal \(h\)-step-ahead
-forecast errors are at most serially correlated to lag \((h-1)\).
+The expansion point and derivative coefficients are
+\(\mathcal F_t\)-measurable. Since
+\(\mathbb E(e_{t+h-i|t}|\mathcal F_t)=0\) for \(1\leq i\leq p_h\) and,
+by the tower property, \(\mathbb E(\varepsilon_{t+h}|\mathcal F_t)=0\),
+taking conditional expectations under the stated integrability
+assumptions gives \[
+\hat y_{t+h|t}=F_{t,h}(\bm m_{t,h})+\mathbb E(R_{t,h}|\mathcal F_t).
+\] Subtracting this identity from the expansion yields \[
+e_{t+h|t}=\varepsilon_{t+h}+\sum_{i=1}^{p_h}\phi_{t,h,i}e_{t+h-i|t}+\widetilde R_{t,h},
+\] where \(\widetilde R_{t,h}=R_{t,h}-\mathbb E(R_{t,h}|\mathcal F_t)\)
+and \(\mathbb E(\widetilde R_{t,h}|\mathcal F_t)=0\). Together with the
+case \(h=1\), interpreting an empty sum as zero, this proves Equation
+\eqref{eq-ar}. If \(f_{t+h}\) is linear in its lagged responses,
+allowing an intercept, then \(R_{t,h}=\widetilde R_{t,h}=0\).
+
+To establish Equation \eqref{eq-remainder-bound}, use the integral
+representation \[
+R_{t,h}=\int_0^1(1-u)\bm\Delta_{t,h}^{\prime}
+\nabla^2 F_{t,h}(\bm m_{t,h}+u\bm\Delta_{t,h})\bm\Delta_{t,h}\,du,
+\] where \(\nabla^2F_{t,h}\) is the Hessian with respect to the
+unobserved response coordinates. The Hessian bound implies
+\(|R_{t,h}|\leq(M_{t,h}/2)\|\bm\Delta_{t,h}\|_2^2\). Conditional
+Jensen's inequality and the triangle inequality give \[
+\mathbb E\!\left[|\widetilde R_{t,h}|\,|\,\mathcal F_t\right]
+\leq2\mathbb E\!\left[|R_{t,h}|\,|\,\mathcal F_t\right]
+\leq M_{t,h}\mathbb E\!\left[\|\bm\Delta_{t,h}\|_2^2\,|\,\mathcal F_t\right].
+\] Since \(\|\bm\Delta_{t,h}\|_2^2=\sum_{i=1}^{p_h}e_{t+h-i|t}^2\), this
+proves Equation \eqref{eq-remainder-bound}.
 \end{proof}
 
 \subsection{\texorpdfstring{Proof of
 Proposition~\ref{prp-ma}}{Proof of Proposition~}}\label{sec-proof_ma}
 
 \begin{proof}
-Here, we give the proof of Proposition~\ref{prp-ma} based on
-Proposition~\ref{prp-ar}.
+Fix a forecast origin \(t\). By Proposition~\ref{prp-ar}, \begin{align*}
+e_{t+1|t}&=\varepsilon_{t+1},\\
+e_{t+j|t}&=\varepsilon_{t+j}+\sum_{i=1}^{p_j}\phi_{t,j,i}e_{t+j-i|t}+\widetilde R_{t,j},\qquad 2\leq j\leq h.
+\end{align*}
 
-Based on Proposition~\ref{prp-ar} and its proof, we have \begin{align*}
-e_{t+1|t} &= \omega_{t+1} \\
-e_{t+2|t} &= \omega_{t+2} + \phi_{1}^{(2)}e_{t+1|t} \\
-e_{t+3|t} &= \omega_{t+3} + \phi_{1}^{(3)}e_{t+2|t} + \phi_{2}^{(3)}e_{t+1|t} \\
-\vdots \\
-e_{t+h|t} & = \omega_{t+h} + \phi_{1}^{(h)}e_{t+h-1|t} + \dots + \phi_{p}^{(h)}e_{t+h-p|t}, \text{ with } p = \min\{d, h-1\},
-\end{align*} where \(\omega_t\) is a white noise series,
-\(\phi_i^{(j)}\) denotes the coefficient for the lag \(i\) term in the
-AR model of order \(\min\{d, j-1\}\) for the forecast error
-\(e_{t+j|t}\) and here the AR model is applied at the forecast horizon
-\(j\), rather than at the time index \(t\).
+Recursively substituting the earlier-horizon relations gives \[
+e_{t+h|t}=\varepsilon_{t+h}+\sum_{i=1}^{h-1}\theta_{t,h,i}\varepsilon_{t+h-i}+U_{t,h}.
+\] The coefficients \(\theta_{t,h,i}\) are finite sums of products of
+the \(\phi\) coefficients and are therefore \(\mathcal F_t\)-measurable.
+Collecting the remainder terms yields
+\begin{equation}\phantomsection\label{eq-propagated-remainder}{
+U_{t,1}=0,\qquad
+U_{t,j}=\widetilde R_{t,j}+\sum_{i=1}^{p_j}\phi_{t,j,i}U_{t,j-i},\qquad 2\leq j\leq h.
+}\end{equation} This proves Equation \eqref{eq-ma} without discarding
+any Taylor remainder.
 
-Substituting all equations above into the following equation, we can
-obtain \[
-e_{t+h|t} = \omega_{t+h} + \sum_{i=1}^{h-1}\theta_{i}\omega_{t+h-i}, \text{ for each } h\in[H],
-\] where \(\theta_{i}\) is a complex combination of \(\phi\) terms from
-the previous \(h-1\) equations. So we conclude that the \(h\)-step-ahead
-forecast error sequence \(\{e_{t+h|t}\}\) follows an approximate
-MA\((h-1)\) process.
+Under the additional assumptions of Proposition~\ref{prp-ma}, Equation
+\eqref{eq-remainder-bound} gives
+\(\mathbb E(|\widetilde R_{t,j}|\,|\,\mathcal F_t)\leq MV\) for
+\(2\leq j\leq h\). The triangle inequality and
+\(\mathcal F_t\)-measurability of the coefficients imply \[
+\mathbb E(|U_{t,j}|\,|\,\mathcal F_t)
+\leq MV+\sum_{i=1}^{p_j}|\phi_{t,j,i}|
+\mathbb E(|U_{t,j-i}|\,|\,\mathcal F_t).
+\] Let \(G_1=0\) and \(G_j=\sum_{k=0}^{j-2}L^k\) for \(j\geq2\). The
+bound \(\mathbb E(|U_{t,1}|\,|\,\mathcal F_t)\leq MVG_1\) holds since
+\(U_{t,1}=0\). If it holds for all horizons below \(j\), then
+\begin{align*}
+\mathbb E(|U_{t,j}|\,|\,\mathcal F_t)
+&\leq MV\left(1+\sum_{i=1}^{p_j}|\phi_{t,j,i}|G_{j-i}\right)\\
+&\leq MV(1+LG_{j-1})=MVG_j,
+\end{align*} where \(G_{j-i}\leq G_{j-1}\) because \(L\geq0\). Strong
+induction therefore establishes the bound for all \(1\leq j\leq h\), and
+taking \(j=h\) proves Equation \eqref{eq-propagated-bound}.
 \end{proof}
+
+\subsection{\texorpdfstring{Approximation error analysis for
+Propositions \ref{prp-ar} and
+\ref{prp-ma}}{Approximation error analysis for Propositions  and }}\label{sec-approximation-errors}
+
+Omitting the remainders in Propositions \ref{prp-ar} and \ref{prp-ma}
+yields linear approximations with errors \(\widetilde R_{t,h}\) and
+\(U_{t,h}\). Equation \eqref{eq-remainder-bound} controls the first
+through curvature and shorter-horizon conditional mean squared errors;
+Equation \eqref{eq-propagated-bound} additionally accounts for
+propagation through \(G_h\), defined in Appendix \ref{sec-proof_ma}. For
+fixed \(L\geq0\), this factor is bounded by \((1-L)^{-1}\) when \(L<1\),
+equals \(h-1\) when \(L=1\), and grows geometrically with \(h\) when
+\(L>1\).
+
+For the small-perturbation analysis, fix \(t,h,d\) with \(h\geq2\) and
+consider a family of processes indexed by \(\delta>0\), each satisfying
+the assumptions for Equation \eqref{eq-ar} in Proposition~\ref{prp-ar}.
+Suppose that the following bounds hold almost surely for finite
+deterministic constants \(M,K,\sigma\geq0\) independent of \(\delta\):
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  The Hessian bounds in Proposition~\ref{prp-ar} hold with
+  \(M_{t,j}\leq M\) for \(2\leq j\leq h\).
+\item
+  The gradients along the expansion segments satisfy \[
+  \sup_{u\in[0,1]}\left\|\nabla F_{t,j}\bigl(\bm m_{t,j}+u(\bm z_{t,j}-\bm m_{t,j})\bigr)\right\|_2\leq K,
+  \qquad 2\leq j\leq h.
+  \]
+\item
+  The innovation conditional variances satisfy
+  \(\mathbb E(\varepsilon_{t+j}^2|\mathcal F_{t+j-1})\leq\sigma^2\delta^2\)
+  for \(1\leq j\leq h\).
+\end{enumerate}
+
+\noindent Dependence on \(\delta\) is suppressed in the notation.
+
+By Cauchy--Schwarz, \(\sum_{i=1}^{p_j}|\phi_{t,j,i}|\leq\sqrt d K\), so
+\(L=\sqrt d K\) is admissible.
+
+Write \(V_j=\mathbb E(e_{t+j|t}^2|\mathcal F_t)\) for \(1\leq j\leq h\).
+Conditional mean optimality gives, for \(j\geq2\), \[
+V_j\leq\mathbb E\!\left((y_{t+j}-F_{t,j}(\bm m_{t,j}))^2\,|\,\mathcal F_t\right).
+\] Since \(F_{t,j}(\bm z_{t,j})-F_{t,j}(\bm m_{t,j})\) is
+\(\mathcal F_{t+j-1}\)-measurable, its cross term with
+\(\varepsilon_{t+j}\) has conditional expectation zero. The gradient
+bound gives
+\(|F_{t,j}(\bm z_{t,j})-F_{t,j}(\bm m_{t,j})|\leq K\|\bm\Delta_{t,j}\|_2\),
+using the increment defined in Appendix \ref{sec-proof_ar}. Together
+with the innovation variance bound, this yields \[
+V_1\leq\sigma^2\delta^2,\qquad
+V_j\leq\sigma^2\delta^2+K^2\sum_{i=1}^{p_j}V_{j-i},\qquad 2\leq j\leq h.
+\] Induction gives \(V_j\leq A_j\delta^2\), where \(A_1=\sigma^2\) and
+\(A_j=\sigma^2+K^2\sum_{i=1}^{p_j}A_{j-i}\). Taking
+\(C=\max_{2\leq j\leq h}\sum_{i=1}^{p_j}A_{j-i}\), independent of
+\(\delta\), and substituting \(V=C\delta^2\) into the remainder bounds
+yields, almost surely, \[
+\mathbb E(|\widetilde R_{t,j}|\,|\,\mathcal F_t)\leq MC\delta^2,\qquad 2\leq j\leq h,
+\qquad
+\mathbb E(|U_{t,h}|\,|\,\mathcal F_t)\leq MCG_h\delta^2.
+\] Taking expectations shows that, under the stated conditions, both
+remainders have mean absolute size \(O(\delta^2)\) and are negligible
+relative to \(\delta\). Specifically,
+\(\mathbb E|\widetilde R_{t,j}/\delta|\to0\) for \(2\leq j\leq h\) and
+\(\mathbb E|U_{t,h}/\delta|\to0\) as \(\delta\downarrow0\).
+
+These results quantify linear approximation errors as the innovation
+scale decreases at fixed forecast horizons, rather than as the
+training-sample size increases. At a given perturbation scale, large
+curvature or propagation factors may make the bounds uninformative.
 
 \subsection{\texorpdfstring{Proof of
 Proposition~\ref{prp-cov_rt}}{Proof of Proposition~}}\label{sec-proof_cov_rt}
 
 \begin{proof}
-Let \(E_T=\sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha)\). The
-inequality given by Equation \eqref{eq-cov_rt} can be expressed as
-\(|E_T| \leq c \cdot g(T-h) + h\). We will prove one side of the
-absolute inequality, specifically \(E_T \leq c \cdot g(T-h) + h\), with
-the other side following analogously. We proceed with the proof using
-induction.
+Let \(E_T=\sum_{i=h+1}^{T}(\mathrm{err}_{i|i-h}-\alpha)\). The
+inequality in Equation \eqref{eq-cov_rt} is equivalent to
+\(|E_T|\leq cg(T-h)+h\). We first prove the upper bound by strong
+induction, with the lower bound following analogously.
 
-For \(T=h+1, \dots, 2h\),
-\(E_T = \sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha) \leq (T-h)-(T-h)\alpha \leq T-h \leq h \leq cg(T-h) + h\)
-as \(c>0\), \(h\geq 1\), \(g\) is nonnegative, and
-\(\mathrm{err}_{t|t-h} \leq 1\). Thus, Equation \eqref{eq-cov_rt} holds
-for \(T=h+1, \dots, 2h\).
+For \(T=h+1,\dots,2h\), \(|E_T|\leq T-h\leq h\leq cg(T-h)+h\), since
+\(g\) is nonnegative and \(0\leq\mathrm{err}_{i|i-h}\leq1\). Thus both
+bounds hold over the initial range.
 
-Now, assuming Equation \eqref{eq-cov_rt} is true up to \(T\). We
-partition the argument into \(h+1\) cases: \[
-\begin{cases}
-cg(T-h)+h-1 < E_T \leq cg(T-h)+h, & \quad \text { case (1) } \\
-cg(T-h)+h-2 < E_T \leq cg(T-h)+h-1, & \quad \text { case (2) } \\
-\qquad \vdots \\
-cg(T-h) < E_T \leq cg(T-h)+1, & \quad \text { case (h) } \\
-E_T \leq cg(T-h). & \quad \text { case (h+1) }
-\end{cases}
-\] In case (1), we observe that \(E_T > cg(T-h)+h-1 > cg(T-h)\),
-implying \(q_{T+h|T} = r_t(E_{T}) \geq b\) according to Equation
-\eqref{eq-saturation_h}. Thus, \(s_{T+h|T} \leq q_{T+h|T}\) and
-\(\mathrm{err}_{T+h|T} = 0\). Furthermore, we have
-\(E_{T-1} = E_T - (\mathrm{err}_{T|T-h} - \alpha) > cg(T-h)+h-2 > cg(T-h-1)\)
-as \(g\) is nondecreasing. This implies
-\(q_{T+h-1|T-1} = r_t(E_{T-1}) \geq b\), hence
-\(s_{T+h-1|T-1} \leq q_{T+h-1|T-1}\) and
-\(\mathrm{err}_{T+h-1|T-1} = 0\). Similarly,
-\(E_{T-2} = E_{T-1} - (\mathrm{err}_{T-1|T-h-1} - \alpha) > cg(T-h)+h-3 > cg(T-h-2)\),
-thus \(\mathrm{err}_{T+h-2|T-2} = 0\). This process iterates, leading to
-\(\mathrm{err}_{T+h|T} = \mathrm{err}_{T+h-1|T-1} = \dots = \mathrm{err}_{T+1|T-h+1} = 0\).
-Consequently, \[
-E_{T+h} = E_T+\sum_{t=T+1}^{T+h}(\mathrm{err}_{t|t-h}-\alpha) \leq cg(T-h)+h-h\alpha \leq cg(T)+h,
-\] which is the desired result at \(T+h\).
+Now let \(T\geq2h+1\) and assume the upper bound holds at all earlier
+indices. The threshold evaluated at time \(T\) is \[
+q_{T|T-h}=r_{T-h}(E_{T-h}).
+\] We partition the argument into two cases. If
+\(E_{T-h}\geq cg(T-2h)\), Equation \eqref{eq-saturation_h} gives
+\(q_{T|T-h}\geq b\), so \(\mathrm{err}_{T|T-h}=0\). By the induction
+hypothesis and monotonicity of \(g\), \[
+E_T=E_{T-1}-\alpha\leq cg(T-1-h)+h\leq cg(T-h)+h.
+\] Otherwise, using \(\mathrm{err}_{i|i-h}-\alpha\leq1-\alpha\) over the
+last \(h\) observations gives \[
+E_T=E_{T-h}+\sum_{i=T-h+1}^{T}(\mathrm{err}_{i|i-h}-\alpha)
+<cg(T-2h)+h(1-\alpha)\leq cg(T-h)+h.
+\] This completes the induction for the upper bound. For the lower
+bound, the same induction applies: if \(E_{T-h}\leq-cg(T-2h)\),
+saturation and \(s_{T|T-h}>-b\) imply \(\mathrm{err}_{T|T-h}=1\), so \[
+E_T=E_{T-1}+1-\alpha\geq-cg(T-1-h)-h\geq-cg(T-h)-h.
+\] Otherwise, \(\mathrm{err}_{i|i-h}-\alpha\geq-\alpha\) yields \[
+E_T>-cg(T-2h)-h\alpha\geq-cg(T-h)-h.
+\] The argument also applies when \(b=\infty\) because every score is
+finite. Dividing by \(T-h\) proves Equation \eqref{eq-cov_rt}.
 
-In case (2), we observe that \(E_T > cg(T-h)+h-2 > cg(T-h)\), thus
-\(s_{T+h|T} \leq q_{T+h|T}\) and \(\mathrm{err}_{T+h|T} = 0\). Moving
-forward, we have
-\(\mathrm{err}_{T+h|T} = \mathrm{err}_{T+h-1|T-1} = \dots = \mathrm{err}_{T+2|T-h+2} = 0\).
-Along with \(\mathrm{err}_{T+1|T-h+1} \leq 1\), this means that \[
-E_{T+h} = E_T+\sum_{t=T+1}^{T+h}(\mathrm{err}_{t|t-h}-\alpha) \leq cg(T-h)+h-1+1-h\alpha \leq cg(T)+h,
-\] which again gives the desired result at \(T+h\).
-
-Similarly, in cases (3)-(h), we can always get the desired result at
-\(T+h\).
-
-In case (h+1), noticing \(E_T \leq cg(T-h)\), and simply using
-\(\mathrm{err}_{T+h-i|T-i} \leq 1\) for \(i=0, \dots, h-1\), we have \[
-E_{T+h} = E_T+\sum_{t=T+1}^{T+h}(\mathrm{err}_{t|t-h}-\alpha) \leq cg(T-h)+h-h\alpha \leq cg(T)+h.
-\] Therefore, we can deduce the desired outcome at any \(T \geq h+1\).
-This completes the proof for the first part of
-Proposition~\ref{prp-cov_rt}.
-
-Regarding the second part, \(g(t-h)/(t-h) \rightarrow 0\) as
-\(t \rightarrow \infty\) due to the sublinearity of the admissible
-function \(g\). Hence, the second part holds trivially.
+Regarding the long-run conclusion, \(g(T-h)/(T-h)\to0\) by sublinearity,
+and \(h/(T-h)\to0\) for fixed \(h\). Hence the empirical tail
+miscoverage rate converges to \(\alpha\).
 \end{proof}
 
 \subsection{\texorpdfstring{Proof of
 Corollary~\ref{cor-cov_qt}}{Proof of Corollary~}}\label{sec-proof_cov_qt}
 
 \begin{proof}
-We set \(q_{2h|h}=0\) without losing generality, the iteration
-\(q_{t+h|t}=q_{t+h-1|t-1}+\eta (\mathrm{err}_{t|t-h}-\alpha)\)
-simplifies to
-\(q_{t+h|t}=\eta \sum_{i=h+1}^{t}(\mathrm{err}_{i|i-h}-\alpha)\). Let
-\(r_t(x) = \eta x\) and the admissible function \(g(t-h) = b\), Equation
-\eqref{eq-saturation_h} holds for \(c=\frac{1}{\eta}\). Then
-Proposition~\ref{prp-cov_rt} applies and we can easily derive the
-desired result.
+Unraveling the recursion gives \[
+q_{t+h|t}=q_{2h|h}+\eta\sum_{i=h+1}^{t}(\mathrm{err}_{i|i-h}-\alpha).
+\] Thus, take \(r_t(x)=q_{2h|h}+\eta x\), \(g\equiv1\), and
+\(c=(b+|q_{2h|h}|)/\eta\). If \(x\geq c\), then \(r_t(x)\geq b\), and if
+\(x\leq-c\), then \(r_t(x)\leq-b\), so Equation \eqref{eq-saturation_h}
+holds. Applying Proposition~\ref{prp-cov_rt} gives the stated bound and
+long-run calibration.
 \end{proof}
 
 \subsection{\texorpdfstring{Proof of
 Corollary~\ref{cor-cov_acmcp}}{Proof of Corollary~}}\label{sec-proof_cov_acmcp}
 
 \begin{proof}
-Let \(q_{t+h|t}^{*}=q_{t+h|t}-\hat{q}_{t+h|t}\), then Equation
-\eqref{eq-acmcp_1} transforms into an update process
-\(q_{t+h|t}^{*}=r_t\left(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\right)\),
-which is an update with respect to \(q_{t+h|t}^{*}\). Under this new
-framework, the nonconformity score becomes
-\(s_{t+h|t}^{*}=s_{t+h|t}-\hat{q}_{t+h|t}\), with values ranging in
-\([-b,b]\), given the assumption that both \(s_{t+h|t}\) and
-\(\hat{q}_{t+h|t}\) fall within \([-\frac{b}{2},\frac{b}{2}]\). Thus,
-Proposition~\ref{prp-cov_rt} can be directly applied to establish the
-long-run coverage achieved by the AcMCP method.
+Let \(s_{t+h|t}^{*}=s_{t+h|t}-\hat q_{t+h|t}\) and
+\(q_{t+h|t}^{*}=q_{t+h|t}-\hat q_{t+h|t}\). Since the scores and
+baseline values are finite, these transformations are well-defined even
+when the thresholds are infinite, and \(s_{t+h|t}^{*}\in(-b,b)\) by
+assumption. Subtracting the same finite baseline preserves the tail
+miscoverage indicator:
+\(\mathrm{err}_{t+h|t}=\mathbbm{1}\{s_{t+h|t}^{*}>q_{t+h|t}^{*}\}\).
+Equation \eqref{eq-acmcp_1} therefore becomes \[
+q_{t+h|t}^{*}=r_t\left(\sum_{i=h+1}^{t}\bigl(\mathbbm{1}\{s_{i|i-h}^{*}>q_{i|i-h}^{*}\}-\alpha\bigr)\right).
+\] The transformed recursion satisfies the assumptions of
+Proposition~\ref{prp-cov_rt} with the same \(b\), \(c\), and \(g\).
+Applying that proposition gives the stated finite-sample bound and
+long-run calibration for the unchanged indicators.
 \end{proof}
+
+\subsection{\texorpdfstring{Proof of
+Corollary~\ref{cor-cov-two-sided}}{Proof of Corollary~}}\label{sec-proof_cov_two_sided}
+
+\begin{proof}
+Common saturation constants can be chosen by taking the maximum of the
+two constants and the pointwise maximum of the two admissible functions.
+Apply Corollary~\ref{cor-cov_acmcp} separately to the lower- and
+upper-tail recursions, replacing its generic target \(\alpha\) by
+\(\alpha^{-}\) and \(\alpha^{+}\), respectively. With \(n=T-h\), this
+gives \[
+\left|\frac{1}{n}\sum_{t=h+1}^{T}\mathrm{err}_{t|t-h}^{a}-\alpha^{a}\right|\leq \frac{c\cdot g(n)+h}{n},
+\qquad a\in\{-,+\}.
+\] The interval fails to cover \(y_t\) if and only if at least one tail
+constraint fails, including when the interval is empty. Thus, \[
+\mathbbm{1}\{y_t\notin\hat{\mathcal C}_{t|t-h}^{\alpha}\}
+=\mathrm{err}_{t|t-h}^{-}+\mathrm{err}_{t|t-h}^{+}-\mathrm{err}_{t|t-h}^{-}\mathrm{err}_{t|t-h}^{+}.
+\] Dropping the nonnegative overlap term, summing, and using
+\(\alpha^{-}+\alpha^{+}=\alpha\) yields \[
+\frac{1}{n}\sum_{t=h+1}^{T}\mathbbm{1}\{y_t\notin\hat{\mathcal C}_{t|t-h}^{\alpha}\}
+\leq \alpha+2\frac{c\cdot g(n)+h}{n},
+\] which is equivalent to Equation \eqref{eq-two-sided-finite}. Because
+\(g\) is sublinear and \(h\) is fixed,
+\(\bigl(c\cdot g(n)+h\bigr)/n\to0\), giving the long-run coverage lower
+bound.
+
+For the absolute deviation bound, simultaneous violations of both tail
+bounds imply \[
+q_{t|t-h}^{+}<y_t-\hat y_{t|t-h}< -q_{t|t-h}^{-},
+\] so \(\hat y_{t|t-h}-q_{t|t-h}^{-}>\hat y_{t|t-h}+q_{t|t-h}^{+}\), a
+crossing of the displayed endpoints. This comparison remains
+well-defined for infinite thresholds. Thus the average of the products
+of the two tail indicators is at most \(\chi_{T,h}\). The union identity
+and the triangle inequality give \[
+\begin{aligned}
+\left|\frac1n\sum_{t=h+1}^{T}\mathbbm{1}\{y_t\in\hat{\mathcal C}_{t|t-h}^{\alpha}\}-(1-\alpha)\right|
+&\leq\sum_{a\in\{-,+\}}\left|\frac1n\sum_{t=h+1}^{T}\mathrm{err}_{t|t-h}^{a}-\alpha^a\right|
++\frac1n\sum_{t=h+1}^{T}\mathrm{err}_{t|t-h}^{-}\mathrm{err}_{t|t-h}^{+}\\
+&\leq2\frac{c\cdot g(n)+h}{n}+\chi_{T,h}.
+\end{aligned}
+\] This proves Equation \eqref{eq-two-sided-enhanced} and exact long-run
+calibration when \(\chi_{T,h}\to0\).
+
+For the iteration in Proposition~\ref{prp-cov_rt}, the same proof
+applies with zero baselines.
+\end{proof}
+
+\subsection{Two-sided coverage for constant-step quantile
+tracking}\label{sec-two-sided-constant-step}
+
+\begin{corollary}[]\protect\hypertarget{cor-cov-two-sided-qt}{}\label{cor-cov-two-sided-qt}
+
+Fix \(h\in[H]\) and targets \(\alpha^{-},\alpha^{+}>0\) with
+\(\alpha^{-}+\alpha^{+}=\alpha\in(0,1)\). Apply the iteration in
+Corollary~\ref{cor-cov_qt} separately to the two signed tail scores and
+construct the interval in Equation \eqref{eq-two-sided-pi}. Suppose each
+tail \(a\in\{-,+\}\) satisfies the assumptions of
+Corollary~\ref{cor-cov_qt} with finite score bound \(b^a\), step size
+\(\eta^a>0\), and finite initial threshold \(q^a_{2h|h}\). Then, for
+every \(T\geq h+1\),
+\begin{equation}\phantomsection\label{eq-two-sided-constant-step}{
+\frac{1}{T-h}\sum_{t=h+1}^{T}\mathbbm{1}\{y_t\in\hat{\mathcal C}_{t|t-h}^{\alpha}\}
+\geq 1-\alpha-\sum_{a\in\{-,+\}}\frac{b^a+|q^a_{2h|h}|+\eta^a h}{\eta^a(T-h)}.
+}\end{equation} The absolute deviation of the empirical coverage from
+\(1-\alpha\) is bounded by the sum on the right plus the
+endpoint-crossing frequency \(\chi_{T,h}\) defined in
+Corollary~\ref{cor-cov-two-sided}. Consequently, the limit inferior of
+the empirical coverage is at least \(1-\alpha\), and the coverage
+converges to \(1-\alpha\) if \(\chi_{T,h}\to0\).
+
+\end{corollary}
+
+\begin{proof}
+With \(n=T-h\), Corollary~\ref{cor-cov_qt} gives \[
+\left|\frac1n\sum_{t=h+1}^{T}\mathrm{err}_{t|t-h}^{a}-\alpha^a\right|
+\leq\frac{b^a+|q^a_{2h|h}|+\eta^a h}{\eta^a n},\qquad a\in\{-,+\}.
+\] Applying the union identity and endpoint-crossing argument in
+Appendix \ref{sec-proof_cov_two_sided} gives Equation
+\eqref{eq-two-sided-constant-step} and the absolute deviation bound. For
+fixed \(h\), the two tail bounds tend to zero, giving the stated
+long-run conclusions.
+\end{proof}
+
+\subsection{Local coverage bounds}\label{sec-local-coverage}
+
+Fix \(h\in[H]\) and a window \(\{a+1,\ldots,a+m\}\), where \(a\geq h\)
+and \(m\geq1\) are integers. Under the assumptions of
+Corollary~\ref{cor-cov_acmcp}, set \(D_h=0\) and \(D_u=c\cdot g(u-h)+h\)
+for \(u\geq h+1\). Differencing the cumulative deviations at \(a+m\) and
+\(a\) and applying the triangle inequality yields
+\begin{equation}\phantomsection\label{eq-window-tail}{
+\left|\frac1m\sum_{t=a+1}^{a+m}(\mathrm{err}_{t|t-h}-\alpha)\right|
+\leq\frac{D_{a+m}+D_a}{m}.
+}\end{equation} Under the assumptions of
+Corollary~\ref{cor-cov-two-sided}, with common \(c\) and \(g\) for both
+tails and \(\alpha=\alpha^{-}+\alpha^{+}\), the union bound gives
+\begin{equation}\phantomsection\label{eq-window-coverage}{
+\frac1m\sum_{t=a+1}^{a+m}\mathbbm{1}\{y_t\in\hat{\mathcal C}_{t|t-h}^{\alpha}\}
+\geq1-\alpha-2\frac{D_{a+m}+D_a}{m}.
+}\end{equation} If \((D_{a+m}+D_a)/m\to0\) along a sequence of windows,
+empirical window coverage has limit inferior at least \(1-\alpha\) and
+converges to \(1-\alpha\) if the within-window endpoint-crossing
+frequency also vanishes, by Appendix \ref{sec-proof_cov_two_sided}.
+These bounds may be conservative and uninformative for fixed-length
+windows.
+
+\subsection{Sensitivity to uncertainty in future
+predictors}\label{sec-predictor-uncertainty}
+
+We assess the effect of unknown future predictors using \[
+x_t=0.7x_{t-1}+u_t,\qquad
+y_t=0.8y_{t-1}-0.5y_{t-2}+x_t+\varepsilon_t,
+\] where \(u_t\overset{\mathrm{iid}}{\sim}N(0,\tau^2)\) and
+\(\varepsilon_t\overset{\mathrm{iid}}{\sim}N(0,1)\) are mutually
+independent, with \(\tau\in\{0.25,1\}\). Each of 100 replications
+retains 5000 observations after a 500-observation burn-in. At each
+forecast origin, an ARX(2) model with an intercept is estimated by least
+squares over a rolling window of 500 observations. We compare forecasts
+using observed future predictors (Known) with forecasts using
+\(\hat x_{t+j|t}=0.7^j x_t\) (Forecast). The autoregressive coefficient
+of \(x_t\) is treated as known to isolate future predictor uncertainty
+from its estimation error.
+
+Both settings use the same simulated paths and the AcMCP settings in
+Section~\ref{sec-simar}, but are calibrated separately. We evaluate
+horizons \(h=1,2,3\) at a target coverage of \(90\%\). Local coverage
+MAE measures the average absolute deviation of 500-observation rolling
+coverage from \(90\%\).
+
+Table~\ref{tbl-predictor} shows that both settings maintain coverage
+close to \(90\%\), with local coverage MAE below \(0.3\) percentage
+points. Interval widths in the Known setting are nearly unchanged across
+the two values of \(\tau\), whereas forecasting future predictors leads
+to wider intervals, with larger increases at higher \(\tau\) and longer
+horizons. At \(h=3\), the increase is about \(8\%\) for \(\tau=0.25\)
+and \(97\%\) for \(\tau=1\). Thus, in this simulation, AcMCP
+accommodates predictor uncertainty primarily through wider intervals
+while maintaining empirical coverage.
+
+\begin{table}
+
+\caption{\label{tbl-predictor}AcMCP with observed (Known) and forecast (Forecast) future predictors. Entries are means over 100 paired simulation replications, with Monte Carlo standard errors in parentheses. pp denotes percentage points.}
+
+\centering{
+
+\resizebox{\linewidth}{!}{
+\begin{tabular}{lrrrrrr}
+\toprule
+ & \multicolumn{2}{c}{Coverage (\%)} & \multicolumn{2}{c}{Mean interval width} & \multicolumn{2}{c}{Local coverage MAE (pp)} \\
+\cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5} \cmidrule(l{3pt}r{3pt}){6-7}
+ & \multicolumn{1}{c}{Known} & \multicolumn{1}{c}{Forecast} & \multicolumn{1}{c}{Known} & \multicolumn{1}{c}{Forecast} & \multicolumn{1}{c}{Known} & \multicolumn{1}{c}{Forecast} \\
+\midrule
+ & \multicolumn{6}{c}{$\tau=0.25$} \\[0.3em]
+$h=1$ & 89.99 (0.003) & 89.99 (0.004) & 3.55 (0.005) & 3.65 (0.005) & 0.20 (0.001) & 0.19 (0.001) \\
+$h=2$ & 89.99 (0.004) & 89.99 (0.004) & 4.72 (0.008) & 5.00 (0.010) & 0.24 (0.002) & 0.24 (0.002) \\
+$h=3$ & 89.99 (0.004) & 89.99 (0.005) & 4.85 (0.009) & 5.26 (0.011) & 0.27 (0.002) & 0.27 (0.002) \\
+\cmidrule(l{3pt}r{3pt}){2-7}
+ & \multicolumn{6}{c}{$\tau=1$} \\[0.3em]
+$h=1$ & 89.99 (0.003) & 89.99 (0.003) & 3.56 (0.005) & 4.99 (0.007) & 0.20 (0.001) & 0.19 (0.001) \\
+$h=2$ & 89.99 (0.004) & 89.99 (0.004) & 4.72 (0.009) & 8.10 (0.016) & 0.24 (0.002) & 0.24 (0.001) \\
+$h=3$ & 89.98 (0.005) & 89.99 (0.005) & 4.85 (0.009) & 9.57 (0.021) & 0.27 (0.002) & 0.29 (0.002) \\
+\bottomrule
+\end{tabular}}
+
+}
+
+\end{table}%
 
 
 
