@@ -3,7 +3,7 @@ library(patchwork)
 library(forecast)
 library(conformalForecast)
 source("code/clip_acp.R")
-reticulate::use_virtualenv("r-spci", required = TRUE)
+reticulate::use_virtualenv("./.venv", required = TRUE)
 source("code/spci.R")
 
 #------------------------------------
@@ -44,7 +44,7 @@ fc_ar2 <- function(x, h, level) {
 }
 fc <- cvforecast(data_AR2, forecastfun = fc_ar2, h = horizon, level = level,
                  forward = forward, window = fit_window)
-# saveRDS(fc, file = "result/AR2_fc.rds")
+saveRDS(fc, file = "result/AR2_fc.rds")
 # fc <- readRDS("result/AR2_fc.rds")
 
 # MSCP
@@ -247,7 +247,7 @@ P_AR2_cov2 <- (cov_plot / wid_me_plot) +
   theme(legend.position = "bottom",
         legend.margin = margin(4, 0, 0, 0),
         legend.box.spacing = grid::unit(0, "pt"))
-saveRDS(P_AR2_cov2, file = "result/P_AR2_cov2.rds")
+saveRDS(P_AR2_cov2, file = "result/P_AR2_cov.rds")
 
 #--------------------------
 # Boxplots: rolling coverage and width

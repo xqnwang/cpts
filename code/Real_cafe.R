@@ -1,11 +1,12 @@
 library(conformalForecast)
+source("code/clip_acp.R")
 library(forecast)
 library(tsibble)
 library(dplyr)
 library(ggplot2)
 library(stringr)
 library(patchwork)
-reticulate::use_virtualenv("r-spci", required = TRUE)
+reticulate::use_virtualenv("./.venv", required = TRUE)
 source("code/spci.R")
 
 # Cafes, restaurants and takeaway food services in Victoria, Australia
@@ -57,7 +58,7 @@ comb_model <- function(x, h, level) {
 }
 fc <- cvforecast(cafe, forecastfun = comb_model, h = horizon, level = NULL,
                  forward = forward, window = fit_window)
-# saveRDS(fc, file = "result/cafe_fc.rds")
+saveRDS(fc, file = "result/cafe_fc.rds")
 # fc <- readRDS("result/cafe_fc.rds")
 
 # MSCP
@@ -81,6 +82,8 @@ gamma <- 0.005
 macp <- acp(fc, alpha = 1 - 0.01 * level,
             symmetric = symmetric, gamma = gamma,
             ncal = cal_window, rolling = rolling)
+## imputing infinite intervals with the largest score seen so far
+macp <- clip_acp(macp)
 
 # MPID
 Tg <- 200; delta <- 0.01

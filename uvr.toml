@@ -1,0 +1,33 @@
+[project]
+name = "cpts"
+r_version = "4.4.3"
+
+# Direct dependencies from the existing analysis environment.
+# uvr.lock also records all transitive dependencies.
+[dependencies]
+conformalForecast = "==0.1.0"
+dplyr = "==1.1.4"
+forecast = "==8.24.0"
+ggplot2 = "==4.0.0"
+ggpubr = "==0.6.2"
+here = "==1.0.2"
+knitr = "==1.50"
+lubridate = "==1.9.4"
+patchwork = "==1.3.2"
+readabs = "==0.4.19"
+reticulate = "==1.45.0"
+rmarkdown = "==2.30"
+scales = "==1.4.0"
+# uvr 0.4.8 cannot validate an exact four-component version constraint.
+# uvr.lock pins shape to 1.4.6.1.
+shape = "*"
+stringr = "==1.5.2"
+tibble = "==3.3.0"
+tidyr = "==1.3.1"
+tikzDevice = "==0.12.6"
+tsibble = "==1.1.6"
+tsibbledata = "==0.4.1"
+
+[constraint-dependencies]
+# Newer Deriv releases require R >= 4.5; retain the existing R 4.4 baseline.
+Deriv = "==4.2.0"

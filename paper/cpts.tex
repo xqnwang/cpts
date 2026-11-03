@@ -170,6 +170,20 @@
   {0pt}{0.3\baselineskip}{0.1\baselineskip}
 \titlespacing*{\subsection}
   {0pt}{0.3\baselineskip}{0.1\baselineskip}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -206,9 +220,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{corollary}{Corollary}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -288,8 +302,8 @@ Notably, these guarantees do not rely on the accuracy of the linear
 approximations. Simulations and real-data applications show that AcMCP
 adapts to time-varying dynamics and maintains rolling coverage close to
 the nominal level. By exploiting the dependence among multi-step errors,
-it often yields narrower intervals than comparably well-calibrated
-methods, particularly at longer horizons.
+it often yields narrower intervals than its counterpart without this
+dependence, with similar coverage, particularly at longer horizons.
 \end{abstract}
 
 \noindent%
@@ -431,8 +445,10 @@ forecast-error approximations; the contribution of the scorecaster to
 interval efficiency is assessed empirically. Simulations and
 applications to electricity demand and eating-out expenditure show that
 AcMCP adapts to distributional changes and often produces narrower
-intervals than competing methods with comparable coverage, particularly
-at longer horizons.
+intervals than MPID with similar coverage, particularly at longer
+horizons. A post-hoc comparison shows that this advantage does not
+extend uniformly to an adaptive benchmark whose step size is tuned on
+the test set.
 
 We developed the \texttt{conformalForecast} package for R to implement
 the proposed multi-step conformal prediction methods. The package is
@@ -1422,30 +1438,47 @@ local coverage variability.
 
 To examine this, we conduct a post-hoc comparison in which the
 learning-rate rule and tuning constants for AcMCP are held fixed, while
-\(\gamma\) for MACP is selected via grid search over \([0.005, 0.5]\).
-Specifically, \(\gamma\) is chosen to match the sample variance of local
-coverage achieved by AcMCP over rolling windows of the test set. This is
-a post-hoc comparison based on the test set, rather than a prospective
-tuning procedure or a guarantee of optimality.
+\(\gamma\) for MACP is selected by grid search over \([0.005, 0.5]\) in
+steps of \(0.015\). Specifically, we choose the smallest \(\gamma\) for
+which the sample variance of one-step-ahead local coverage over rolling
+windows of the test set does not exceed that of AcMCP, and use it at all
+horizons. This is a post-hoc comparison based on the test set, which
+favors MACP, rather than a prospective tuning procedure or a guarantee
+of optimality. The selected step sizes, \(\gamma=0.065\), \(0.035\),
+\(0.05\) and \(0.035\) for the four data sets, are much larger than the
+default \(\gamma=0.005\). The working miscoverage level of MACP
+therefore often falls low enough to produce infinite bounds, which are
+clipped as described in Section~\ref{sec-experiments}; depending on the
+data set and horizon, between \(2\%\) and \(50\%\) of the tuned MACP
+intervals are clipped.
 
 Table~\ref{tbl-posthoc} summarizes, for each forecast horizon, the mean
 coverage over the full test set, the minimum and maximum local coverage
 across rolling windows, and the mean and median interval widths for MACP
-and AcMCP across the data sets considered above. In simple linear and
-nonlinear simulations, both methods attain mean coverage close to the
-nominal \(90\%\), with AcMCP consistently producing comparable or
-narrower intervals when coverage is comparable. More pronounced
-differences arise in real data sets and at longer horizons. For
-electricity demand, MACP displays systematic undercoverage as the
-horizon increases, particularly in terms of minimum local coverage,
-whereas AcMCP maintains more stable coverage around the target by
-adaptively adjusting interval widths. A similar pattern appears for
-eating out expenditure data, where MACP suffers substantial coverage
-degradation at larger horizons despite tuning, while AcMCP preserves
-near-nominal coverage, albeit with wider but informative intervals.
-Overall, these results indicate that AcMCP provides superior coverage
-control and, when coverage is comparable, yields prediction intervals
-that are shorter or at least comparable in length.
+and AcMCP across the data sets considered above. In the AR(2)
+simulation, both methods attain mean coverage close to the nominal
+\(90\%\) with almost identical ranges of local coverage, and AcMCP
+produces narrower intervals at every horizon. In the nonlinear
+simulation, the two methods have essentially the same coverage, and MACP
+intervals are equal to or slightly narrower than those of AcMCP. For
+electricity demand, tuned MACP undercovers at \(h=2\), \(3\) and \(7\),
+with minimum local coverage as low as \(81\%\), whereas AcMCP stays
+closer to the target, apart from overcoverage at \(h=5\). AcMCP has
+smaller mean interval widths for \(h\leq5\) and slightly larger ones for
+\(h=6,7\), while MACP has smaller median widths at most horizons; its
+mean widths are inflated by occasional very wide clipped intervals. For
+eating out expenditure, MACP slightly overcovers for \(h\leq5\), with
+interval widths comparable to those of AcMCP. At longer horizons, MACP
+coverage declines to \(83\)--\(86\%\) for \(h\geq9\), whereas AcMCP
+coverage remains between \(86.5\%\) and \(91.6\%\) at all horizons.
+However, AcMCP intervals are considerably wider for \(h\geq6\),
+including at \(h=6\) and \(h=8\), where the two methods have similar
+coverage, and at \(h=7\) MACP attains higher coverage with narrower
+intervals. Overall, tuning the step size substantially narrows the gap
+between MACP and AcMCP. AcMCP, which is not tuned on the test set,
+retains more uniform coverage across horizons, but its intervals are not
+uniformly shorter: at longer horizons in the real data sets, they can be
+wider than those of a tuned MACP with similar coverage.
 
 \begin{table}
 
@@ -1461,37 +1494,37 @@ that are shorter or at least comparable in length.
      & \multicolumn{1}{c}{MACP} & \multicolumn{1}{c}{AcMCP} & \multicolumn{1}{c}{MACP} & \multicolumn{1}{c}{AcMCP} & \multicolumn{1}{c}{MACP} & \multicolumn{1}{c}{AcMCP} & \multicolumn{1}{c}{MACP} & \multicolumn{1}{c}{AcMCP} & \multicolumn{1}{c}{MACP} & \multicolumn{1}{c}{AcMCP} \\
 \midrule
      & \multicolumn{10}{c}{AR(2) simulation data}                                                                                                                                                                                                                                       \\[0.3em]
-h=1  & 89.95                    & 90.00                     & 89.20                    & 89.40                     & 90.80                    & 90.80                     & 4.04                     & 3.55                      & 3.62                     & 3.54                      \\
-h=2  & 89.89                    & 89.94                     & 89.00                    & 89.00                     & 91.00                    & 91.00                     & 5.08                     & 4.68                      & 4.85                     & 4.66                      \\
-h=3  & 89.94                    & 90.02                     & 88.80                    & 88.80                     & 91.00                    & 91.20                     & 5.16                     & 4.68                      & 5.00                     & 4.84                      \\
+h=1  & 89.95 & 90.00 & 89.20 & 89.40 & 90.80 & 90.80 & 3.77 & 3.55 & 3.62 & 3.54 \\
+h=2  & 89.89 & 89.94 & 89.00 & 89.00 & 91.00 & 91.00 & 5.02 & 4.68 & 4.85 & 4.66 \\
+h=3  & 89.94 & 90.02 & 88.80 & 88.80 & 91.00 & 91.20 & 5.15 & 4.86 & 5.01 & 4.84 \\
 \cmidrule(l{3pt}r{3pt}){2-11}
      & \multicolumn{10}{c}{Nonlinear simulation data}                                                                                                                                                                                                                                   \\[0.3em]
-h=1  & 90.00                    & 90.00                     & 87.00                    & 86.00                     & 94.00                    & 93.00                     & 0.35                     & 0.36                      & 0.33                     & 0.36                      \\
-h=2  & 89.98                    & 90.18                     & 86.00                    & 87.00                     & 94.00                    & 93.00                     & 0.37                     & 0.37                      & 0.33                     & 0.36                      \\
-h=3  & 89.86                    & 90.06                     & 87.00                    & 87.00                     & 94.00                    & 94.00                     & 0.35                     & 0.38                      & 0.33                     & 0.38                      \\
+h=1  & 90.00 & 90.00 & 87.00 & 86.00 & 94.00 & 93.00 & 0.34 & 0.36 & 0.33 & 0.36 \\
+h=2  & 89.98 & 90.18 & 86.00 & 87.00 & 94.00 & 93.00 & 0.37 & 0.37 & 0.33 & 0.36 \\
+h=3  & 89.86 & 90.06 & 87.00 & 87.00 & 94.00 & 94.00 & 0.35 & 0.38 & 0.33 & 0.38 \\
 \cmidrule(l{3pt}r{3pt}){2-11}
      & \multicolumn{10}{c}{Electricity demand data}                                                                                                                                                                                                                                     \\[0.3em]
-h=1  & 89.92                    & 89.15                     & 86.00                    & 85.00                     & 91.00                    & 92.00                     & 25.02                    & 24.44                     & 22.52                    & 24.24                     \\
-h=2  & 88.67                    & 90.23                     & 83.00                    & 86.00                     & 91.00                    & 94.00                     & 30.56                    & 30.72                     & 29.03                    & 28.87                     \\
-h=3  & 88.58                    & 90.94                     & 81.00                    & 86.00                     & 92.00                    & 93.00                     & 34.81                    & 34.35                     & 31.64                    & 33.57                     \\
-h=4  & 89.29                    & 90.87                     & 84.00                    & 88.00                     & 93.00                    & 94.00                     & 41.93                    & 40.74                     & 34.90                    & 39.48                     \\
-h=5  & 89.60                    & 94.80                     & 86.00                    & 91.00                     & 93.00                    & 99.00                     & 41.17                    & 55.62                     & 34.72                    & 45.43                     \\
-h=6  & 90.32                    & 90.73                     & 85.00                    & 88.00                     & 92.00                    & 97.00                     & 36.34                    & 46.65                     & 35.08                    & 41.56                     \\
-h=7  & 87.80                    & 89.84                     & 84.00                    & 87.00                     & 90.00                    & 95.00                     & 36.55                    & 47.45                     & 35.02                    & 47.98                     \\
+h=1  & 89.92 & 89.15 & 86.00 & 85.00 & 91.00 & 92.00 & 25.04 & 24.44 & 22.52 & 24.24 \\
+h=2  & 88.67 & 90.23 & 83.00 & 86.00 & 91.00 & 94.00 & 35.34 & 30.72 & 29.26 & 28.87 \\
+h=3  & 88.58 & 90.94 & 81.00 & 86.00 & 92.00 & 93.00 & 45.40 & 34.35 & 33.06 & 33.57 \\
+h=4  & 89.29 & 90.87 & 84.00 & 88.00 & 93.00 & 94.00 & 56.14 & 40.74 & 36.37 & 39.48 \\
+h=5  & 89.60 & 94.80 & 86.00 & 91.00 & 93.00 & 99.00 & 63.69 & 55.62 & 39.00 & 45.43 \\
+h=6  & 90.32 & 90.73 & 85.00 & 88.00 & 92.00 & 97.00 & 44.66 & 46.65 & 36.07 & 41.56 \\
+h=7  & 87.80 & 89.84 & 84.00 & 87.00 & 90.00 & 95.00 & 45.41 & 47.45 & 35.36 & 47.98 \\
 \cmidrule(l{3pt}r{3pt}){2-11}
      & \multicolumn{10}{c}{Eating out expenditure data}                                                                                                                                                                                                                                 \\[0.3em]
-h=1  & 85.62                    & 88.89                     & 80.00                    & 83.33                     & 90.00                    & 93.33                     & 76.70                    & 65.51                     & 64.21                    & 63.08                     \\
-h=2  & 84.77                    & 90.01                     & 78.33                    & 83.33                     & 93.33                    & 96.67                     & 97.93                    & 91.50                     & 84.26                    & 89.10                     \\
-h=3  & 80.54                    & 89.26                     & 68.33                    & 83.33                     & 95.00                    & 95.00                     & 104.10                   & 112.42                    & 101.46                   & 107.83                    \\
-h=4  & 59.18                    & 89.12                     & 15.00                    & 81.67                     & 91.67                    & 98.33                     & 89.74                    & 116.80                    & 77.68                    & 111.16                    \\
-h=5  & 46.90                    & 91.03                     & 13.33                    & 81.67                     & 65.00                    & 96.67                     & 59.72                    & 126.12                    & 68.74                    & 120.97                    \\
-h=6  & 36.36                    & 90.91                     & 8.33                     & 85.00                     & 41.67                    & 96.67                     & 29.26                    & 178.17                    & 62.05                    & 178.60                    \\
-h=7  & 53.90                    & 86.52                     & 31.67                    & 73.33                     & 61.67                    & 98.33                     & 63.10                    & 186.58                    & 81.44                    & 198.27                    \\
-h=8  & 47.48                    & 88.29                     & 23.33                    & 83.33                     & 58.33                    & 98.33                     & 55.30                    & 192.07                    & 78.62                    & 192.59                    \\
-h=9  & 32.12                    & 89.78                     & 1.67                     & 86.67                     & 48.33                    & 100.00                    & 20.29                    & 194.40                    & 47.47                    & 168.96                    \\
-h=10 & 71.85                    & 89.63                     & 53.33                    & 85.00                     & 90.00                    & 93.34                    & 116.88                   & 195.83                    & 121.56                   & 193.68                    \\
-h=11 & 69.92                    & 88.72                     & 41.67                    & 85.00                     & 98.33                    & 96.67                     & 102.20                   & 233.80                    & 99.26                    & 220.92                    \\
-h=12 & 69.47                    & 91.60                     & 65.00                    & 83.33                     & 83.33                    & 98.33                     & 127.19                   & 336.02                    & 128.28                   & 297.48                    \\
+h=1  & 92.16 & 88.89 & 88.33 & 83.33 & 96.67 & 93.33 & 66.98 & 65.51 & 65.74 & 63.08 \\
+h=2  & 92.05 & 90.07 & 85.00 & 83.33 & 96.67 & 96.67 & 86.62 & 91.50 & 79.47 & 89.10 \\
+h=3  & 90.60 & 89.26 & 85.00 & 83.33 & 96.67 & 95.00 & 106.78 & 112.42 & 97.48 & 107.83 \\
+h=4  & 91.16 & 89.12 & 85.00 & 81.67 & 98.33 & 98.33 & 136.55 & 116.80 & 119.72 & 111.16 \\
+h=5  & 92.41 & 91.03 & 85.00 & 81.67 & 98.33 & 96.67 & 128.60 & 126.12 & 113.11 & 120.97 \\
+h=6  & 90.21 & 90.91 & 85.00 & 85.00 & 98.33 & 96.67 & 133.03 & 178.17 & 124.75 & 178.60 \\
+h=7  & 85.82 & 86.52 & 78.33 & 73.33 & 98.33 & 98.33 & 137.70 & 186.58 & 133.60 & 198.27 \\
+h=8  & 87.77 & 88.49 & 71.67 & 83.33 & 100.00 & 98.33 & 141.50 & 192.07 & 139.28 & 192.59 \\
+h=9  & 86.13 & 89.78 & 68.33 & 86.67 & 100.00 & 100.00 & 144.84 & 194.40 & 161.81 & 168.96 \\
+h=10 & 85.19 & 89.63 & 71.67 & 85.00 & 98.33 & 93.33 & 149.89 & 195.83 & 166.76 & 193.68 \\
+h=11 & 84.21 & 88.72 & 68.33 & 85.00 & 100.00 & 96.67 & 150.11 & 233.80 & 148.86 & 220.92 \\
+h=12 & 83.97 & 91.60 & 68.33 & 83.33 & 100.00 & 98.33 & 156.37 & 336.02 & 147.85 & 297.48 \\
 \bottomrule
 \end{tabular}}
 
@@ -1519,9 +1552,13 @@ from that of forecast delay, whose effect vanishes asymptotically for
 each fixed horizon. Across the experiments considered, MPID and AcMCP
 adapt their interval widths to changing time series dynamics, generally
 maintaining more stable rolling coverage around the target than the
-benchmark methods. Among comparably well-calibrated methods, AcMCP often
-produces narrower intervals, demonstrating the empirical value of
-incorporating forecast error dependence into conformal calibration.
+benchmark methods. AcMCP often produces narrower intervals than MPID
+with similar coverage, indicating the empirical value of incorporating
+forecast error dependence into conformal calibration. This advantage is
+not uniform, however: when the step size of MACP is tuned post hoc on
+the test set, MACP produces intervals comparable to those of AcMCP and,
+at longer horizons in the real data sets, sometimes narrower ones with
+similar coverage.
 
 Our analysis of forecast errors is restricted to an ex-post forecasting
 setting, in which future values of exogenous predictors are assumed to

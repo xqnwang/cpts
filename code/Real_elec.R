@@ -8,7 +8,7 @@ library(tidyr)
 library(lubridate)
 library(ggplot2)
 library(patchwork)
-reticulate::use_virtualenv("r-spci", required = TRUE)
+reticulate::use_virtualenv("./.venv", required = TRUE)
 source("code/spci.R")
 
 vic_elec_daily <- vic_elec |>
@@ -84,7 +84,7 @@ dyreg_model <- function(x, h, level, xreg, newxreg) {
 }
 fc <- cvforecast(y, forecastfun = dyreg_model, h = horizon, level = level,
                  forward = forward, xreg = exog_data, window = fit_window)
-# saveRDS(fc, file = "result/elec_fc.rds")
+saveRDS(fc, file = "result/elec_fc.rds")
 # fc <- readRDS("result/elec_fc.rds")
 
 # MSCP

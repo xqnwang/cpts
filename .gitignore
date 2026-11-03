@@ -7,6 +7,12 @@ refs/*
 *_cp.rds
 *_workspace.RData
 
+# Local environments and Python caches
+.uvr/
+.venv/
+__pycache__/
+*.py[cod]
+
 # History files
 .Rhistory
 .Rapp.history

@@ -1,0 +1,16 @@
+[project]
+name = "cpts"
+version = "0.1.0"
+description = "Python dependencies for SPCI, called from R via reticulate"
+requires-python = ">=3.9,<3.10"
+dependencies = [
+    "joblib==1.5.3",
+    "numpy==2.0.2",
+    "scikit-learn==1.6.1",
+    "scipy==1.13.1",
+    "sklearn-quantile==0.1.1",
+    "threadpoolctl==3.7.0",
+]
+
+[tool.uv]
+package = false
