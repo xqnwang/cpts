@@ -1,38 +1,12 @@
 library(conformalForecast)
 source("code/clip_acp.R")
 library(forecast)
-library(tsibbledata)
-library(tsibble)
 library(dplyr)
-library(tidyr)
-library(lubridate)
-library(ggplot2)
-
-vic_elec_daily <- vic_elec |>
-  index_by(Date = date(Time)) |>
-  summarise(
-    Demand = sum(Demand) / 1e3,
-    Temperature = max(Temperature),
-    Holiday = any(Holiday)
-  ) |>
-  mutate(
-    DOW = wday(Date, label = TRUE),
-    Workday = !Holiday & !(DOW %in% c("Sat", "Sun")),
-    Cooling = pmax(Temperature, 18)
-  ) |>
-  select(-c(DOW, Holiday))
 
 #------------------------------------
 # General setup
-## base forecasting
 horizon <- 7
 level <- 90
-forward <- TRUE
-fit_window <- vic_elec_daily |> filter(year(Date) < 2014) |> nrow()
-## data
-elec <- ts(vic_elec_daily, start = c(1,1), frequency = 7)[,-1]
-y <- elec[,1] |> head(-horizon)
-exog_data <- elec[,-1]
 ## conformal prediction
 symmetric <- FALSE
 cal_window <- 100
@@ -58,6 +32,7 @@ cov_acmcp_h1 <- conformalForecast::coverage(acmcp, window = calc_window, level =
 var_cov_acmcp <- var(1 - cov_acmcp_h1, na.rm = TRUE)
 
 ## MACP
+macp <- NULL
 for (gamma in seq(0.005, 0.5, by = 0.015)) {
   macp_i <- acp(fc, symmetric = symmetric, gamma = gamma,
                 ncal = cal_window, rolling = rolling, quantiletype = type)
@@ -70,6 +45,7 @@ for (gamma in seq(0.005, 0.5, by = 0.015)) {
   }
 }
 
+if (is.null(macp)) stop("No gamma satisfies the post-hoc matching criterion.")
 
 #------------------------------------
 # Result analysis
@@ -77,7 +53,6 @@ library(tibble)
 
 candidates <- c("macp", "acmcp")
 methods <- c("MACP", "AcMCP")
-cols <- c("MACP" = "green", "AcMCP" = "red")
 
 cov_list <- sapply(candidates, function(i) {
   conformalForecast::coverage(get(i), window = calc_window, level = level)
@@ -88,58 +63,6 @@ wid_list <- sapply(candidates, function(i) {
 score_list <- sapply(candidates, function(i) {
   accuracy(get(i), byhorizon = TRUE)
 }, simplify = FALSE,USE.NAMES = TRUE)
-
-## Coverage
-for (i in 1:length(candidates)) {
-  out_pivot <- cov_list[[i]]$rollmean |>
-    as_tibble() |>
-    mutate(index = vic_elec_daily$Date[length(y)-n():1+1]) |>
-    as_tsibble(index = index) |>
-    pivot_longer(seq_len(horizon), names_to = "horizon", values_to = "coverage") |>
-    mutate(method = methods[i]) |>
-    as_tibble()
-  assign(paste0(methods[i], "_cov"), out_pivot)
-}
-cov <- bind_rows(mget(paste0(methods, "_cov")))
-
-## Width
-for (i in 1:length(candidates)) {
-  out_pivot <- wid_list[[i]]$width |>
-    as_tibble() |>
-    mutate(index = vic_elec_daily$Date[length(y)-n():1+1]) |>
-    as_tsibble(index = index) |>
-    pivot_longer(seq_len(horizon), names_to = "horizon", values_to = "width") |>
-    mutate(method = methods[i]) |>
-    as_tibble()
-  assign(paste0(methods[i], "_wid"), out_pivot)
-}
-wid <- bind_rows(mget(paste0(methods, "_wid")))
-
-## Mean width
-for (i in 1:length(candidates)) {
-  out_pivot <- wid_list[[i]]$rollmean |>
-    as_tibble() |>
-    mutate(index = vic_elec_daily$Date[length(y)-n():1+1]) |>
-    as_tsibble(index = index) |>
-    pivot_longer(seq_len(horizon), names_to = "horizon", values_to = "width") |>
-    mutate(method = methods[i]) |>
-    as_tibble()
-  assign(paste0(methods[i], "_wid_me"), out_pivot)
-}
-wid_me <- bind_rows(mget(paste0(methods, "_wid_me")))
-
-## Median width
-for (i in 1:length(candidates)) {
-  out_pivot <- wid_list[[i]]$rollmedian |>
-    as_tibble() |>
-    mutate(index = vic_elec_daily$Date[length(y)-n():1+1]) |>
-    as_tsibble(index = index) |>
-    pivot_longer(seq_len(horizon), names_to = "horizon", values_to = "width") |>
-    mutate(method = methods[i]) |>
-    as_tibble()
-  assign(paste0(methods[i], "_wid_md"), out_pivot)
-}
-wid_md <- bind_rows(mget(paste0(methods, "_wid_md")))
 
 ## Overall measurements
 complete.obs <- function(x) {
@@ -183,45 +106,3 @@ elec_info <- do.call(bind_rows, info) |>
     covmax = covmax - 0.01*level
   ) |>
   arrange(horizon, method)
-
-#--------------------------
-# Plots: Coverage and width as panels
-df <- bind_rows(
-  cov |>
-    filter(index >= ymd("2014-07-19")) |>
-    mutate(
-      method = factor(method, levels = methods),
-      yvar = coverage,
-      panel = "Local coverage level"
-    ),
-  wid_me |>
-    filter(index >= ymd("2014-07-19")) |>
-    mutate(
-      method = factor(method, levels = methods),
-      yvar = width,
-      panel = "Mean interval width"
-    ),
-  wid_md |>
-    filter(index >= ymd("2014-07-19")) |>
-    mutate(
-      method = factor(method, levels = methods),
-      yvar = width,
-      panel = "Median interval width"
-    )
-) |>
-  as_tsibble(index = index, key = c(horizon, method, panel))
-
-P_elec_param <- df |>
-  ggplot(aes(x = index, y = yvar, group = method, colour = method)) +
-  geom_line(size = 0.6, alpha = 0.9) +
-  scale_colour_manual(values = cols) +
-  facet_grid(rows = vars(panel),cols = vars(horizon), scales = "free_y") +
-  labs(
-    x = "Time (Year 2014)",
-    y = "",
-  ) +
-  theme_bw() +
-  theme(legend.position="bottom")
-
-save.image(file = "result/elec_param_workspace.RData")
-# load("result/elec_param_workspace.RData")

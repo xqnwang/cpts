@@ -1,26 +1,11 @@
 library(conformalForecast)
 source("code/clip_acp.R")
 library(forecast)
-library(tsibble)
 library(dplyr)
-library(ggplot2)
-library(stringr)
-
-cafe_vic <- readabs::read_abs_series("A3349417W", release_date = "2024-04-01") |>
-  mutate(
-    Month = yearmonth(date),
-    Turnover = value
-  ) |>
-  filter(yearmonth(Month) <= yearmonth("2019 Dec")) |>
-  as_tsibble(index = Month)
-cafe <- ts(cafe_vic |> pull(Turnover), start = c(1982, 4), frequency = 12)
 
 #------------------------------------
 # General setup
-## base forecasting
 horizon <- 12; level <- 90
-forward <- FALSE
-fit_window <- 20*12
 ## conformal prediction
 symmetric <- FALSE
 cal_window <- 5*12; rolling <- TRUE
@@ -45,6 +30,7 @@ cov_acmcp_h1 <- conformalForecast::coverage(acmcp, window = calc_window, level =
 var_cov_acmcp <- var(1 - cov_acmcp_h1, na.rm = TRUE)
 
 ## MACP
+macp <- NULL
 for (gamma in seq(0.005, 0.5, by = 0.015)) {
   macp_i <- acp(fc, alpha = 1 - 0.01 * level,
                 symmetric = symmetric, gamma = gamma,
@@ -58,14 +44,14 @@ for (gamma in seq(0.005, 0.5, by = 0.015)) {
   }
 }
 
+if (is.null(macp)) stop("No gamma satisfies the post-hoc matching criterion.")
+
 #------------------------------------
 # Result analysis
 library(tibble)
-y <- cafe
 
 candidates <- c("macp", "acmcp")
 methods <- c("MACP", "AcMCP")
-cols <- c("MACP" = "green", "AcMCP" = "red")
 
 cov_list <- sapply(candidates, function(i) {
   conformalForecast::coverage(get(i), window = calc_window, level = level)
@@ -76,58 +62,6 @@ wid_list <- sapply(candidates, function(i) {
 score_list <- sapply(candidates, function(i) {
   accuracy(get(i), byhorizon = TRUE)
 }, simplify = FALSE, USE.NAMES = TRUE)
-
-## Coverage
-for (i in 1:length(candidates)) {
-  out_pivot <- cov_list[[i]]$rollmean |>
-    as_tsibble() |>
-    mutate(horizon = key, coverage = value) |>
-    update_tsibble(key = horizon) |>
-    select(-c(key, value)) |>
-    mutate(method = methods[i]) |>
-    as_tibble()
-  assign(paste0(methods[i], "_cov"), out_pivot)
-}
-cov <- bind_rows(mget(paste0(methods, "_cov")))
-
-## Width
-for (i in 1:length(candidates)) {
-  out_pivot <- wid_list[[i]]$width |>
-    as_tsibble() |>
-    mutate(horizon = key, width = value) |>
-    update_tsibble(key = horizon) |>
-    select(-c(key, value)) |>
-    mutate(method = methods[i]) |>
-    as_tibble()
-  assign(paste0(methods[i], "_wid"), out_pivot)
-}
-wid <- bind_rows(mget(paste0(methods, "_wid")))
-
-## Mean width
-for (i in 1:length(candidates)) {
-  out_pivot <- wid_list[[i]]$rollmean |>
-    as_tsibble() |>
-    mutate(horizon = key, width = value) |>
-    update_tsibble(key = horizon) |>
-    select(-c(key, value)) |>
-    mutate(method = methods[i]) |>
-    as_tibble()
-  assign(paste0(methods[i], "_wid_me"), out_pivot)
-}
-wid_me <- bind_rows(mget(paste0(methods, "_wid_me")))
-
-## Median width
-for (i in 1:length(candidates)) {
-  out_pivot <- wid_list[[i]]$rollmedian |>
-    as_tsibble() |>
-    mutate(horizon = key, width = value) |>
-    update_tsibble(key = horizon) |>
-    select(-c(key, value)) |>
-    mutate(method = methods[i]) |>
-    as_tibble()
-  assign(paste0(methods[i], "_wid_md"), out_pivot)
-}
-wid_md <- bind_rows(mget(paste0(methods, "_wid_md")))
 
 ## Overall measurements
 complete.obs <- function(x) {
@@ -171,50 +105,3 @@ cafe_info <- do.call(bind_rows, info) |>
     covmax = covmax - 0.01*level
   ) |>
   arrange(horizon, method)
-
-P_cafe_covdiff <- cafe_info |>
-  mutate(horizon = str_sub(horizon, start = 3, end = -1) |> as.numeric()) |>
-  ggplot(aes(x = horizon, y = covmean, colour = method)) +
-  geom_line(linewidth = 0.8) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  scale_colour_manual(values = cols) +
-  labs(
-    x = "Forecast horizon",
-    y = "Coverage gap",
-    colour = "Methods"
-  ) +
-  scale_x_continuous(breaks = seq_len(horizon)) +
-  theme_bw() +
-  theme(
-    legend.position = "bottom",
-    panel.grid.minor = element_blank()
-  ) +
-  guides(colour = guide_legend(nrow = 1, keyheight = 0.5))
-# + guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
-
-P_cafe_width <- cafe_info |>
-  mutate(horizon = str_sub(horizon, start = 3, end = -1) |> as.numeric()) |>
-  ggplot(aes(x = horizon, y = widmean, colour = method)) +
-  geom_line(linewidth = 0.8) +
-  scale_colour_manual(values = cols) +
-  labs(
-    x = "Forecast horizon",
-    y = "Mean interval width",
-    colour = "Methods"
-  ) +
-  scale_x_continuous(breaks = seq_len(horizon)) +
-  theme_bw() +
-  theme(
-    legend.position = "bottom",
-    panel.grid.minor = element_blank()
-  ) +
-  guides(colour = guide_legend(nrow = 1, keyheight = 0.5))
-# + guides(colour = guide_legend(nrow = 2, keyheight = 0.5))
-
-
-P_cafe_param <- ggpubr::ggarrange(P_cafe_covdiff, P_cafe_width,
-                                ncol = 2, nrow = 1,
-                                common.legend = TRUE, legend = "bottom")
-
-save.image(file = "result/cafe_param_workspace.RData")
-# load("result/cafe_param_workspace.RData")

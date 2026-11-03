@@ -337,5 +337,3 @@ P_AR2_timeplot <- tp_data |>
   theme(legend.position = "bottom", strip.placement = "outside",
         strip.text.y.left = element_text(angle = 0))
 saveRDS(P_AR2_timeplot, file = "result/P_AR2_timeplot.rds")
-
-

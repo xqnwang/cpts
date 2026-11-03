@@ -16,7 +16,7 @@ uvr sync --frozen --no-companion
 
 These commands restore the packages pinned in `uv.lock` and `uvr.lock` into `.venv/` and `.uvr/library/`.
 
-Run all experiments from the repository root in the following order. The main scripts save forecasts to `result/*_fc.rds`, which the parameter sensitivity scripts reuse.
+Run all experiments from the repository root in the following order. The main scripts save forecasts to `result/*_fc.rds`, which the post-hoc scripts reuse.
 
 ```sh
 # Main simulations and applications
@@ -25,15 +25,14 @@ uvr run code/Sim_NL.R
 uvr run code/Real_elec.R
 uvr run code/Real_cafe.R
 
-# Parameter sensitivity analyses
-uvr run code/Sim_AR2_param.R
-uvr run code/Sim_NL_param.R
-uvr run code/Sim_elec_param.R
-uvr run code/Sim_cafe_param.R
+# Post-hoc comparisons
+uvr run code/Posthoc.R
 
 # Known versus forecast future predictors
 uvr run code/Sim_predictor.R
 ```
+
+The post-hoc runner reuses the saved forecasts and writes `result/posthoc_results.rds` without downloading data, plotting, or saving R workspaces.
 
 The helper files `clip_acp.R` and `spci.R` are sourced by the experiment scripts and do not need to be run separately.
 
