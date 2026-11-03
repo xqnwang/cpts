@@ -1,4 +1,4 @@
-manifest_fingerprint = "sha256:315383e55dff1dd4afc205ead6de547d39a76aaf3ebc462ae1e509fe21ed9a30"
+manifest_fingerprint = "sha256:3b18439dd6f2d828e24e6e6b4ebf74eb471fcffb82ad3ce686a95dee2f6268b6"
 
 [r]
 version = "4.4.3"
@@ -347,16 +347,15 @@ checksum = "md5:2b2d367a454e47b574db3839fd550e36"
 
 [[package]]
 name = "conformalForecast"
-version = "0.1.0"
-source = "cran"
-raw_version = "0.1.0"
-url = "https://cran.r-project.org/src/contrib/Archive/conformalForecast/conformalForecast_0.1.0.tar.gz"
-checksum = "md5:a7590817741d72351aad71cac33432b2"
+version = "0.2.0-4.9000"
+source = "github"
+url = "https://api.github.com/repos/xqnwang/conformalForecast/tarball/e834ab8bbfd1efe6577b183af11a4b3e2a6ffc97"
+checksum = "git:e834ab8bbfd1efe6577b183af11a4b3e2a6ffc97"
 requires = [
-    "forecast",
     "ggdist",
     "rlang",
     "zoo",
+    "forecast",
 ]
 
 [[package]]

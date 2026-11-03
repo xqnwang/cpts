@@ -5,7 +5,7 @@ r_version = "4.4.3"
 # Direct dependencies from the existing analysis environment.
 # uvr.lock also records all transitive dependencies.
 [dependencies]
-conformalForecast = "==0.1.0"
+conformalForecast = { git = "xqnwang/conformalForecast", rev = "e834ab8bbfd1efe6577b183af11a4b3e2a6ffc97" }
 dplyr = "==1.1.4"
 forecast = "==8.24.0"
 ggplot2 = "==4.0.0"

@@ -16,7 +16,7 @@ fit_window <- 500
 symmetric <- FALSE
 cal_window <- 500
 rolling <- TRUE
-type <- 8
+type <- 1
 ## analysis
 calc_window <- 100
 
@@ -41,7 +41,7 @@ var_cov_acmcp <- var(1 - cov_acmcp_h1, na.rm = TRUE)
 for (gamma in seq(0.005, 0.5, by = 0.015)) {
   macp_i <- acp(fc, alpha = 1 - 0.01 * level,
                 symmetric = symmetric, gamma = gamma,
-                ncal = cal_window, rolling = rolling)
+                ncal = cal_window, rolling = rolling, quantiletype = type)
   macp_i <- clip_acp(macp_i)
   cov_i <- conformalForecast::coverage(macp_i, window = calc_window, level = level)$rollmean[, "h=1"]
   var_cov_macp <- (1- cov_i) |> var(na.rm = TRUE)

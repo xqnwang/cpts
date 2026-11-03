@@ -72,7 +72,7 @@ exog_data <- elec[,-1]
 symmetric <- FALSE
 cal_window <- 100
 rolling <- TRUE
-type <- 8
+type <- 1
 ## analysis
 calc_window <- 100
 
@@ -94,7 +94,7 @@ mscp <- scp(fc, symmetric = symmetric, ncal = cal_window, rolling = rolling,
 # MWCP
 expweight <- function(n) 0.99^{n+1-(1:n)}
 mwcp <- scp(fc, symmetric = symmetric, ncal = cal_window, rolling = rolling,
-            weightfun = expweight, kess = TRUE, quantiletype = type)
+            weightfun = expweight, kess = FALSE, quantiletype = type)
 
 # SPCI
 spci <- spci(fc, ncal = cal_window, rolling = rolling, w = 10,
@@ -103,7 +103,7 @@ spci <- spci(fc, ncal = cal_window, rolling = rolling, w = 10,
 # MACP
 gamma <- 0.005
 macp <- acp(fc, symmetric = symmetric, gamma = gamma,
-            ncal = cal_window, rolling = rolling)
+            ncal = cal_window, rolling = rolling, quantiletype = type)
 ## imputing infinite intervals with the largest score seen so far
 macp <- clip_acp(macp)
 

@@ -42,7 +42,7 @@ fit_window <- 20*12
 ## conformal prediction
 symmetric <- FALSE
 cal_window <- 5*12; rolling <- TRUE
-type <- 8
+type <- 1
 ## analysis
 calc_window <- 5*12
 
@@ -70,7 +70,7 @@ mscp <- scp(fc, alpha = 1 - 0.01 * level,
 expweight <- function(n) 0.99^{n+1-(1:n)}
 mwcp <- scp(fc, alpha = 1 - 0.01 * level,
             symmetric = symmetric, ncal = cal_window, rolling = rolling,
-            weightfun = expweight, kess = TRUE, quantiletype = type)
+            weightfun = expweight, kess = FALSE, quantiletype = type)
 
 # SPCI
 spci <- spci(fc, alpha = 1 - 0.01 * level,
@@ -81,7 +81,7 @@ spci <- spci(fc, alpha = 1 - 0.01 * level,
 gamma <- 0.005
 macp <- acp(fc, alpha = 1 - 0.01 * level,
             symmetric = symmetric, gamma = gamma,
-            ncal = cal_window, rolling = rolling)
+            ncal = cal_window, rolling = rolling, quantiletype = type)
 ## imputing infinite intervals with the largest score seen so far
 macp <- clip_acp(macp)
 
