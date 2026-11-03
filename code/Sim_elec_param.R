@@ -1,4 +1,5 @@
 library(conformalForecast)
+source("code/clip_acp.R")
 library(forecast)
 library(tsibbledata)
 library(tsibble)
@@ -60,20 +61,7 @@ var_cov_acmcp <- var(1 - cov_acmcp_h1, na.rm = TRUE)
 for (gamma in seq(0.005, 0.5, by = 0.015)) {
   macp_i <- acp(fc, symmetric = symmetric, gamma = gamma,
                 ncal = cal_window, rolling = rolling)
-  if (any(is.infinite(macp_i$UPPER[[paste0(level, "%")]]))) {
-    upper_target <- macp_i$UPPER[[paste0(level, "%")]]
-    for (j in 1:horizon) {
-      prev_max <- NA_real_
-      for (i in 1:NROW(upper_target)) {
-        if (is.finite(upper_target[i,j])) {
-          prev_max <- max(prev_max, upper_target[i, j], na.rm = TRUE)
-        } else if (is.infinite(upper_target[i,j])) {
-          upper_target[i,j] <- prev_max
-        }
-      }
-    }
-    macp_i$UPPER[[paste0(level, "%")]] <- upper_target
-  }
+  macp_i <- clip_acp(macp_i)
   cov_i <- conformalForecast::coverage(macp_i, window = calc_window, level = level)$rollmean[, "h=1"]
   var_cov_macp <- (1- cov_i) |> var(na.rm = TRUE)
   if (var_cov_macp <= var_cov_acmcp) {
