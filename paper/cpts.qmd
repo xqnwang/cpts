@@ -53,7 +53,6 @@ execute:
 ```{r}
 #| label: packages
 #| include: false
-library(kableExtra)
 library(ggplot2)
 ```
 

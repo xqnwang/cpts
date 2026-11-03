@@ -1,5 +1,4 @@
 library(ggplot2)
-library(patchwork)
 library(forecast)
 library(conformalForecast)
 
@@ -33,7 +32,7 @@ lr <- 0.1
 acmcp <- acmcp(fc, ncal = cal_window, rolling = rolling,
                integrate = TRUE, scorecast = TRUE,
                lr = lr, KI = KI, Csat = Csat)
-cov_acmcp_h1 <- coverage(acmcp, window = calc_window, level = level)$rollmean[, "h=1"]
+cov_acmcp_h1 <- conformalForecast::coverage(acmcp, window = calc_window, level = level)$rollmean[, "h=1"]
 var_cov_acmcp <- var(1 - cov_acmcp_h1, na.rm = TRUE)
 
 ## MACP
@@ -54,7 +53,7 @@ for (gamma in seq(0.005, 0.5, by = 0.015)) {
     }
     macp_i$UPPER[[paste0(level, "%")]] <- upper_target
   }
-  cov_i <- coverage(macp_i, window = calc_window, level = level)$rollmean[, "h=1"]
+  cov_i <- conformalForecast::coverage(macp_i, window = calc_window, level = level)$rollmean[, "h=1"]
   var_cov_macp <- (1- cov_i) |> var(na.rm = TRUE)
   if (var_cov_macp <= var_cov_acmcp) {
     macp <- macp_i
@@ -65,7 +64,6 @@ for (gamma in seq(0.005, 0.5, by = 0.015)) {
 #------------------------------------
 # Result analysis
 library(dplyr)
-library(tidyr)
 library(tibble)
 library(tsibble)
 
@@ -74,7 +72,7 @@ methods <- c("MACP", "AcMCP")
 cols <- c("MACP" = "green", "AcMCP" = "red")
 
 cov_list <- sapply(candidates, function(i) {
-  coverage(get(i), window = calc_window, level = level)
+  conformalForecast::coverage(get(i), window = calc_window, level = level)
 }, simplify = FALSE,USE.NAMES = TRUE)
 wid_list <- sapply(candidates, function(i) {
   width(get(i), window = calc_window, level = level, includemedian = TRUE)

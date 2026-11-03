@@ -127,7 +127,6 @@ saveRDS(mget(c("mscp", "mwcp", "spci", "macp", "mpi", "mpid", "acmcp")),
 #------------------------------------
 # Result analysis
 library(dplyr)
-library(tidyr)
 library(tibble)
 library(tsibble)
 
@@ -135,7 +134,7 @@ candidates <- c("mscp", "mwcp", "spci", "macp", "mpi", "mpid", "acmcp")
 methods <- c("MSCP", "MWCP", "SPCI", "MACP", "MPI", "MPID", "AcMCP")
 
 cov_list <- sapply(candidates, function(i) {
-  coverage(get(i), window = calc_window, level = level)
+  conformalForecast::coverage(get(i), window = calc_window, level = level)
 }, simplify = FALSE,USE.NAMES = TRUE)
 wid_list <- sapply(candidates, function(i) {
   width(get(i), window = calc_window, level = level, includemedian = TRUE)

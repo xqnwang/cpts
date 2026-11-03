@@ -1,11 +1,7 @@
 library(conformalForecast)
 library(forecast)
-library(tsibbledata)
 library(tsibble)
 library(dplyr)
-library(tidyr)
-library(lubridate)
-library(fable)
 library(ggplot2)
 library(stringr)
 library(patchwork)
@@ -22,8 +18,8 @@ cafe_vic <- readabs::read_abs_series("A3349417W", release_date = "2024-04-01") |
   as_tsibble(index = Month)
 cafe <- ts(cafe_vic |> pull(Turnover), start = c(1982, 4), frequency = 12)
 
-P_cafe_data <- cafe_vic |>
-  autoplot(Turnover) +
+P_cafe_data <- ggplot(cafe_vic, aes(x = Month, y = Turnover)) +
+  geom_line() +
   labs(
     x = "Year-Month",
     y = "Turnover",
@@ -118,10 +114,7 @@ saveRDS(mget(c("mscp", "mwcp", "spci", "macp", "mpi", "mpid", "acmcp")),
 
 #------------------------------------
 # Result analysis
-library(dplyr)
-library(tidyr)
 library(tibble)
-library(tsibble)
 y <- cafe
 
 candidates <- c("mscp", "mwcp", "spci", "macp", "mpi", "mpid", "acmcp")
@@ -156,7 +149,7 @@ theme_cov <- theme_bw(base_size = 10) +
   )
 
 cov_list <- sapply(candidates, function(i) {
-  coverage(get(i), window = calc_window, level = level)
+  conformalForecast::coverage(get(i), window = calc_window, level = level)
 }, simplify = FALSE, USE.NAMES = TRUE)
 wid_list <- sapply(candidates, function(i) {
   width(get(i), window = calc_window, level = level, includemedian = TRUE)

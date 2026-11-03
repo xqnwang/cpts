@@ -5,7 +5,6 @@ library(tsibble)
 library(dplyr)
 library(tidyr)
 library(lubridate)
-library(fable)
 library(ggplot2)
 library(patchwork)
 reticulate::use_virtualenv("r-spci", required = TRUE)
@@ -150,10 +149,7 @@ saveRDS(mget(c("mscp", "mwcp", "spci", "macp", "mpi", "mpid", "acmcp")),
 
 #------------------------------------
 # Result analysis
-library(dplyr)
-library(tidyr)
 library(tibble)
-library(tsibble)
 
 candidates <- c("fc", "mscp", "mwcp", "spci", "macp", "mpi", "mpid", "acmcp")
 methods <- c("DR", "MSCP", "MWCP", "SPCI", "MACP", "MPI", "MPID", "AcMCP")
@@ -187,7 +183,7 @@ theme_cov <- theme_bw(base_size = 10) +
   )
 
 cov_list <- sapply(candidates, function(i) {
-  coverage(get(i), window = calc_window, level = level)
+  conformalForecast::coverage(get(i), window = calc_window, level = level)
 }, simplify = FALSE,USE.NAMES = TRUE)
 wid_list <- sapply(candidates, function(i) {
   width(get(i), window = calc_window, level = level, includemedian = TRUE)
