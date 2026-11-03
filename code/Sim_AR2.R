@@ -2,6 +2,7 @@ library(ggplot2)
 library(patchwork)
 library(forecast)
 library(conformalForecast)
+source("code/clip_acp.R")
 reticulate::use_virtualenv("r-spci", required = TRUE)
 source("code/spci.R")
 
@@ -64,20 +65,7 @@ gamma <- 0.005
 macp <- acp(fc, symmetric = symmetric, gamma = gamma,
             ncal = cal_window, rolling = rolling)
 ## imputing infinite intervals with the largest score seen so far
-if (any(is.infinite(macp$UPPER[[paste0(level, "%")]]))) {
-  upper_target <- macp$UPPER[[paste0(level, "%")]]
-  for (j in 1:horizon) {
-    prev_max <- NA_real_
-    for (i in 1:NROW(upper_target)) {
-      if (is.finite(upper_target[i,j])) {
-        prev_max <- max(prev_max, upper_target[i, j], na.rm = TRUE)
-      } else if (is.infinite(upper_target[i,j])) {
-        upper_target[i,j] <- prev_max
-      }
-    }
-  }
-  macp$UPPER[[paste0(level, "%")]] <- upper_target
-}
+macp <- clip_acp(macp)
 
 # MPID
 Tg <- 5000
