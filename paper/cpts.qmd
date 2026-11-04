@@ -196,7 +196,7 @@ with a finite initial state $q^{\mathrm P}_{2h|h}$, typically zero. The estimate
 $$
 q_{t+h|t}=\underbrace{q^{\mathrm P}_{t+h|t}}_{\mathrm P}+\underbrace{r_t\Bigg(\sum_{i=h+1}^t(\mathrm{err}_{i|i-h}-\alpha)\Bigg)}_{\mathrm I}+\underbrace{\hat{s}_{t+h|t}}_{\mathrm D},
 $$ {#eq-mpid}
-where $\eta > 0$ is a constant learning rate, and $r_t$ is a saturation function that adheres to
+where $\eta > 0$ is a learning rate, which may vary over time provided it is computed from information available at time $t$, and $r_t$ is a saturation function that adheres to
 $$
 x \geq c \cdot g(t-h) \Longrightarrow r_t(x) \geq b, \quad \text {and} \quad x \leq-c \cdot g(t-h) \Longrightarrow r_t(x) \leq -b,
 $$ {#eq-saturation_h}
@@ -385,7 +385,7 @@ We evaluate MPID and AcMCP using two simulated settings and two real-world data 
 
 (a) we target coverage $1-\alpha=0.9$, with equal tail miscoverage levels $\alpha^{-}=\alpha^{+}=0.05$;
 (b) for MWCP, we use $b=0.99$ as per @barber2023;
-(c) following @angelopoulos2024, MACP uses a step size $\gamma=0.005$; MPID uses a Theta model as the scorecaster; and both MPID and AcMCP use a learning rate of $\eta=0.1\hat{B}_t$ for quantile tracking, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1}, \dots, s_{t|t-h}\}$ is the highest score over a trailing window of length $\Delta$, which is set equal to the calibration set size;
+(c) following @angelopoulos2024, MACP uses a step size $\gamma=0.005$; MPID uses a Theta model as the scorecaster; and both MPID and AcMCP use a learning rate of $\eta=0.1\hat{B}_t$ for quantile tracking, where $\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1}, \dots, s_{t|t-h}\}$ is the highest score over a trailing window of length $\Delta$, which is set equal to the calibration set size. Because this learning rate varies over time, @cor-cov_qt, which assumes a constant step, does not apply; however, $\hat{B}_t$ depends only on past scores, so the P state remains a function of the past and the guarantees of Corollaries [-@cor-cov_acmcp] and [-@cor-cov-two-sided] continue to hold;
 (d) we adopt a nonlinear saturation function $r_t(x)=K_{\mathrm I} \tan \left(x \log (t) / (t C_{\text {sat }})\right)$, where $\tan (x)=\operatorname{sign}(x) \cdot \infty$ for $x \notin[-\pi / 2, \pi / 2]$, and constants $C_{\text {sat }}, K_{\mathrm{I}}>0$ are chosen heuristically as in @angelopoulos2024;
 (e) we use a clipped version of MACP, replacing an infinite upper (lower) bound by the point forecast plus (minus) the largest upper-tail (lower-tail) score observed by the forecast origin;
 (f) for SPCI, we follow the implementation of @xu2023, using a conditional quantile forest with $10$ trees and maximum depth $2$. For each horizon, we refit it over the rolling calibration window using the latest $10$ available signed errors as predictors and construct intervals at fixed quantile levels $0.05$ and $0.95$. All methods share point forecasts and out-of-sample calibration errors.
