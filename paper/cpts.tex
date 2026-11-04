@@ -206,9 +206,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{corollary}{Corollary}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -271,25 +271,25 @@ University \vspace{0.2em}\\
 We study the construction of distribution-free prediction intervals for
 multi-step time series forecasting. In this setting, forecast errors at
 different horizons are serially dependent, and feedback is delayed,
-since the realized error of an \(h\)-step-ahead forecast becomes
-available only after \(h\) periods. We propose autocorrelated multi-step
-conformal prediction (AcMCP), an online procedure that accommodates
-delayed feedback and explicitly incorporates the dependence among
-multi-step forecast errors into conformal calibration. To characterize
-this dependence, we derive first-order representations of the optimal
+since the error of an \(h\)-step-ahead forecast becomes available only
+after \(h\) periods. We propose autocorrelated multi-step conformal
+prediction (AcMCP), an online procedure that accommodates delayed
+feedback and explicitly incorporates the dependence among multi-step
+forecast errors into conformal calibration. To characterize this
+dependence, we derive first-order representations of the optimal
 forecast errors under a general nonstationary autoregressive
-data-generating process, together with explicit bounds on the remainder
-terms. AcMCP guarantees long-run coverage of at least the nominal level
-at every horizon, without requiring exchangeability or any assumption on
-how the data distribution evolves over time. We also establish a
-finite-sample bound on the empirical coverage shortfall, which depends
-explicitly on the forecast horizon and the evaluation sample size.
-Notably, these guarantees do not rely on the accuracy of the linear
-approximations. Simulations and real-data applications show that AcMCP
-adapts to time-varying dynamics and maintains rolling coverage close to
-the nominal level. By exploiting the dependence among multi-step errors,
-it often yields narrower intervals than its counterpart without this
-dependence, with similar coverage, particularly at longer horizons.
+data-generating process, with explicit bounds on remainder terms. AcMCP
+guarantees long-run coverage of at least the nominal level at every
+horizon, without requiring exchangeability or any assumption on how the
+data distribution evolves over time. We also establish a finite-sample
+bound on the empirical coverage shortfall, which depends on the forecast
+horizon and the evaluation sample size. Notably, these guarantees do not
+rely on the accuracy of the linear approximations. Simulations and
+real-data applications show that AcMCP adapts to time-varying dynamics
+and maintains rolling coverage close to the nominal level. By exploiting
+the dependence among multi-step errors, it often yields narrower
+intervals than its counterpart without this dependence, with similar
+coverage, particularly at longer horizons.
 \end{abstract}
 
 \noindent%
@@ -1580,6 +1580,16 @@ The Appendix provides proofs of all propositions and corollaries,
 additional multi-step conformal methods, analyses of approximation
 errors and local coverage, supplementary two-sided coverage results, and
 a simulation examining the effect of uncertainty in future predictors.
+
+\section*{Declaration of generative AI
+use}\label{declaration-of-generative-ai-use}
+\addcontentsline{toc}{section}{Declaration of generative AI use}
+
+During the preparation of this work the authors used OpenAI Codex (GPT-6
+Astra, OpenAI) and Claude (Opus 5.5, Anthropic) to correct typographical
+errors and improve the language. After using these tools, the authors
+reviewed and edited the content as needed and take full responsibility
+for the content of the publication.
 
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
