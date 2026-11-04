@@ -1,6 +1,6 @@
 # Online conformal inference for multi-step time series forecasting
 
-Source for the paper and the code that produces its simulations, applications, and figures. The proposed methods are implemented in the [`conformalForecast`](https://github.com/xqnwang/conformalForecast/) R package; this repository uses version **[0.2.0.9000](https://github.com/xqnwang/conformalForecast/tree/e834ab8bbfd1efe6577b183af11a4b3e2a6ffc97)**.
+Source for the paper and the code that produces its simulations, applications, and figures. The proposed methods are implemented in the [`conformalForecast`](https://github.com/xqnwang/conformalForecast/) R package; this repository uses version **[0.2.1](https://github.com/xqnwang/conformalForecast/tree/680681902320a3cfc75bb774418cf8b2ec1c1cb0)**.
 
 The R scripts are in [`code/`](code), saved results and plots in [`result/`](result), and manuscript source in [`paper/cpts.qmd`](paper/cpts.qmd).
 

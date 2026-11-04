@@ -1,4 +1,4 @@
-manifest_fingerprint = "sha256:86014222e21b627a5f4d4798a3ec6de885ee04b9e9ed4b49f1379a5e627c5b7a"
+manifest_fingerprint = "sha256:80cc754dcd93c3c84b461467f7c6b1510cc2c29b18ceeedad11ca6c687671c7a"
 
 [r]
 version = "4.4.3"
@@ -347,10 +347,10 @@ checksum = "md5:2b2d367a454e47b574db3839fd550e36"
 
 [[package]]
 name = "conformalForecast"
-version = "0.2.0-4.9000"
+version = "0.2.1"
 source = "github"
-url = "https://api.github.com/repos/xqnwang/conformalForecast/tarball/e834ab8bbfd1efe6577b183af11a4b3e2a6ffc97"
-checksum = "git:e834ab8bbfd1efe6577b183af11a4b3e2a6ffc97"
+url = "https://api.github.com/repos/xqnwang/conformalForecast/tarball/680681902320a3cfc75bb774418cf8b2ec1c1cb0"
+checksum = "git:680681902320a3cfc75bb774418cf8b2ec1c1cb0"
 requires = [
     "ggdist",
     "rlang",
