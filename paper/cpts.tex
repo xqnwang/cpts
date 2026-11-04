@@ -66,6 +66,7 @@
 
 
 \usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
 \usepackage{calc} % for calculating minipage widths
 % Correct order of tables after \paragraph or \subparagraph
 \usepackage{etoolbox}
@@ -94,15 +95,12 @@
 
 
 \ifLuaTeX
-\usepackage[bidi=basic]{babel}
+\usepackage[bidi=basic,shorthands=off]{babel}
 \else
-\usepackage[bidi=default]{babel}
+\usepackage[bidi=default,shorthands=off]{babel}
 \fi
-% get rid of language-specific shorthands (see #6817):
-\let\LanguageShortHands\languageshorthands
-\def\languageshorthands#1{}
 \ifLuaTeX
-  \usepackage[english]{selnolig} % disable illegal ligatures
+  \usepackage{selnolig} % disable illegal ligatures
 \fi
 
 
@@ -206,9 +204,9 @@
 \newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
 \usepackage{amsthm}
 \theoremstyle{plain}
-\newtheorem{proposition}{Proposition}[section]
-\theoremstyle{plain}
 \newtheorem{corollary}{Corollary}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
 \theoremstyle{remark}
 \AtBeginDocument{\renewcommand*{\proofname}{Proof}}
 \newtheorem*{remark}{Remark}
@@ -225,13 +223,17 @@
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
 \hypersetup{
   pdftitle={Online conformal inference for multi-step time series forecasting},
   pdfauthor={Xiaoqian Wang; Rob J Hyndman},
   pdflang={en-US},
-  pdfkeywords={Conformal prediction, Coverage
-guarantee, Distribution-free inference, Exchangeability, Weighted
-quantile estimate},
+  pdfkeywords={\xmpquote{Conformal prediction}, \xmpquote{Coverage
+guarantee}, \xmpquote{Distribution-free
+inference}, \xmpquote{Exchangeability}, \xmpquote{Delayed feedback}},
   colorlinks=true,
   linkcolor={blue},
   filecolor={Maroon},
@@ -294,8 +296,8 @@ dependence, with similar coverage, particularly at longer horizons.
 
 \noindent%
 {\it Keywords:} Conformal prediction, Coverage
-guarantee, Distribution-free inference, Exchangeability, Weighted
-quantile estimate
+guarantee, Distribution-free inference, Exchangeability, Delayed
+feedback
 \vfill
 
 \newpage
@@ -462,7 +464,7 @@ based on information available up to and including time \(t\)
 available (\emph{ex-post} forecasts). Given a user-specified
 \emph{miscoverage level} \(\alpha\in(0,1)\), we seek intervals with
 horizon-specific long-run coverage,
-\begin{equation}\phantomsection\label{eq-longrun}{
+\begin{equation}\protect\phantomsection\label{eq-longrun}{
 \liminf_{T\to\infty}\frac{1}{T-h}\sum_{t=h+1}^{T}\mathbbm{1}\left\{y_t\in\hat{\mathcal{C}}^{\alpha}_{t|t-h}\right\}\geq 1-\alpha,\qquad h\in[H].
 }\end{equation} This criterion concerns coverage averaged over time at
 each forecast horizon, rather than coverage conditional on the available
@@ -487,7 +489,7 @@ tail levels \(\alpha^{-},\alpha^{+}>0\) satisfying
 \(s_{t+h|t}^{+}=e_{t+h|t}\), respectively, and produce thresholds
 \(q_{t+h|t}^{-}\) and \(q_{t+h|t}^{+}\). These thresholds define the
 prediction interval
-\begin{equation}\phantomsection\label{eq-two-sided-pi}{
+\begin{equation}\protect\phantomsection\label{eq-two-sided-pi}{
 \hat{\mathcal{C}}_{t+h|t}^{\alpha}
 :=\left[\hat y_{t+h|t}-q_{t+h|t}^{-},\ \hat y_{t+h|t}+q_{t+h|t}^{+}\right].
 }\end{equation} For each tail \(a\in\{-,+\}\), the \emph{miscoverage
@@ -602,16 +604,17 @@ We introduce the \textbf{multi-step conformal PID control} method
 originally developed for one-step-ahead forecasting, to the multi-step
 setting within the online learning framework of Section~\ref{sec-setup}.
 For each forecast horizon \(h\in[H]\), define the P-control state
-\begin{equation}\phantomsection\label{eq-p-state}{
+\begin{equation}\protect\phantomsection\label{eq-p-state}{
 q^{\mathrm P}_{t+h|t}=q^{\mathrm P}_{t+h-1|t-1}+\eta(\mathrm{err}_{t|t-h}-\alpha),
 }\end{equation} with a finite initial state \(q^{\mathrm P}_{2h|h}\),
 typically zero. The estimated \(1-\alpha\) quantile of the
 \(h\)-step-ahead score at time \(t\) is updated as
-\begin{equation}\phantomsection\label{eq-mpid}{
+\begin{equation}\protect\phantomsection\label{eq-mpid}{
 q_{t+h|t}=\underbrace{q^{\mathrm P}_{t+h|t}}_{\mathrm P}+\underbrace{r_t\Bigg(\sum_{i=h+1}^t(\mathrm{err}_{i|i-h}-\alpha)\Bigg)}_{\mathrm I}+\underbrace{\hat{s}_{t+h|t}}_{\mathrm D},
-}\end{equation} where \(\eta > 0\) is a constant learning rate, and
-\(r_t\) is a saturation function that adheres to
-\begin{equation}\phantomsection\label{eq-saturation_h}{
+}\end{equation} where \(\eta > 0\) is a learning rate, which may vary
+over time provided it is computed from information available at time
+\(t\), and \(r_t\) is a saturation function that adheres to
+\begin{equation}\protect\phantomsection\label{eq-saturation_h}{
 x \geq c \cdot g(t-h) \Longrightarrow r_t(x) \geq b, \quad \text {and} \quad x \leq-c \cdot g(t-h) \Longrightarrow r_t(x) \leq -b,
 }\end{equation} for constants \(b, c > 0\) and an admissible function
 \(g\) that is nonnegative, nondecreasing and sublinear, i.e.,
@@ -659,24 +662,13 @@ conformal prediction with weighted quantiles \citep{barber2023}, and ACI
 \section{Autocorrelated multi-step conformal
 prediction}\label{sec-acmcp}
 
-The scorecaster in MPID is a model trained on the score sequence to
-forecast the future score. The rationale behind it is to identify any
-leftover signal in the score distribution not captured by the base
-forecasting model. While this is appropriate in the context of huge data
-sets and potentially weak learners, it is unlikely to be a useful
-strategy for time series models. We expect to use a forecasting model
-that leaves only white noise in the residuals (equivalent to the
-one-step nonconformity scores). Moreover, the inclusion of a scorecaster
-often only introduces variance to the quantile estimate, resulting in
-inefficient (wider) prediction intervals.
-
-On the other hand, in any non-trivial context, multi-step forecasts are
-correlated with each other. Specifically, the \(h\)-step-ahead forecast
-errors \(e_{t+h|t}\) are correlated with the forecast errors from the
-previous \(h-1\) steps, as errors propagate through the recursive
-forecasting procedure over the forecast horizon. However, no conformal
-prediction methods have taken this potential dependence into account in
-their methodological construction.
+MPID calibrates each horizon separately, and its scorecaster forecasts
+the scores of a single horizon. In any non-trivial context, however,
+multi-step forecast errors are correlated: the \(h\)-step-ahead error
+\(e_{t+h|t}\) is correlated with the errors at the previous \(h-1\)
+steps from the same origin, because errors propagate through the
+recursive forecasting procedure. No existing conformal method exploits
+this dependence.
 
 This section studies the structure of multi-step forecast errors, uses
 it to design the AcMCP scorecaster, and establishes coverage guarantees
@@ -687,7 +679,7 @@ errors.
 
 We assume that a time series \(\{y_t\}_{t \geq 1}\) follows a general
 nonstationary autoregressive process:
-\begin{equation}\phantomsection\label{eq-dgp}{
+\begin{equation}\protect\phantomsection\label{eq-dgp}{
 y_t = f_{t}(y_{(t-d):(t-1)}, \bm{x}_{(t-k):t}) + \varepsilon_t,
 }\end{equation} where \(f_{t}\) depends on \(d\) lagged values of
 \(y_t\) and on the current and \(k\) preceding values of the exogenous
@@ -718,7 +710,7 @@ that \(\mathbb E(y_s^2)<\infty\) and
 \(\mathbb E(\varepsilon_s|\mathcal F_{s-1})=0\) for all \(s\geq1\), and
 that the first-order Taylor terms and remainder below are integrable.
 Then, for each \(h\in[H]\),
-\begin{equation}\phantomsection\label{eq-ar}{
+\begin{equation}\protect\phantomsection\label{eq-ar}{
 e_{t+h|t}
 =\varepsilon_{t+h}+\sum_{i=1}^{p_h}\phi_{t,h,i}e_{t+h-i|t}+\widetilde R_{t,h},
 }\end{equation} where \(\phi_{t,h,i}=\partial_iF_{t,h}(\bm m_{t,h})\)
@@ -733,7 +725,8 @@ Moreover, for \(h\geq2\), if there is a finite deterministic
 \sup_{u\in[0,1]}
 \left\|\nabla^2F_{t,h}\!\left(\bm m_{t,h}+u(\bm z_{t,h}-\bm m_{t,h})\right)\right\|_{\mathrm{op}}
 \leq M_{t,h}\quad\text{almost surely},
-\] then \begin{equation}\phantomsection\label{eq-remainder-bound}{
+\] then
+\begin{equation}\protect\phantomsection\label{eq-remainder-bound}{
 \mathbb E(|\widetilde R_{t,h}|\,|\,\mathcal F_t)
 \leq M_{t,h}\sum_{i=1}^{p_h}\mathbb E(e_{t+h-i|t}^2|\mathcal F_t).
 }\end{equation}
@@ -756,7 +749,7 @@ an innovation representation with an explicit remainder.
 forecast errors]\protect\hypertarget{prp-ma}{}\label{prp-ma}
 
 Under the assumptions of Proposition~\ref{prp-ar}, for each \(h\in[H]\),
-\begin{equation}\phantomsection\label{eq-ma}{
+\begin{equation}\protect\phantomsection\label{eq-ma}{
 e_{t+h|t}=\varepsilon_{t+h}+
 \sum_{i=1}^{h-1}\theta_{t,h,i}\varepsilon_{t+h-i}+U_{t,h},
 }\end{equation} where the coefficients \(\theta_{t,h,i}\) are
@@ -771,7 +764,8 @@ constants \(M,L,V\geq0\) and all \(2\leq j\leq h\), \[
 M_{t,j}\leq M,\qquad
 \sum_{i=1}^{p_j}|\phi_{t,j,i}|\leq L,
 \qquad \sum_{i=1}^{p_j}\mathbb E(e_{t+j-i|t}^2|\mathcal F_t)\leq V\quad\text{almost surely}.
-\] Then \begin{equation}\phantomsection\label{eq-propagated-bound}{
+\] Then
+\begin{equation}\protect\phantomsection\label{eq-propagated-bound}{
 \mathbb E\!\left(|U_{t,h}|\,|\,\mathcal F_t\right)
 \leq MV\sum_{k=0}^{h-2}L^k\quad\text{almost surely}.
 }\end{equation}
@@ -810,23 +804,17 @@ multi-step conformal prediction} (AcMCP). Whereas multi-step extensions
 of existing conformal methods in Section~\ref{sec-mpid} treat horizons
 separately, AcMCP exploits the dependence among multi-step forecast
 errors. For each \(h\in[H]\), the \(h\)-step-ahead threshold is updated
-online as \begin{equation}\phantomsection\label{eq-acmcp}{
+online as \begin{equation}\protect\phantomsection\label{eq-acmcp}{
 q_{t+h|t}=q^{\mathrm P}_{t+h|t}+r_t\Bigg(\sum_{i=h+1}^t(\mathrm{err}_{i|i-h}-\alpha)\Bigg)+\tilde{s}_{t+h|t},
 }\end{equation} where the lower- and upper-tail thresholds are updated
 separately at levels \(\alpha^{-}\) and \(\alpha^{+}\) and combined into
-a prediction interval via Equation \eqref{eq-two-sided-pi}. AcMCP
-extends the PID method of \citet{angelopoulos2024} in two respects.
+a prediction interval via Equation \eqref{eq-two-sided-pi}. AcMCP thus
+differs from MPID only in its scorecaster, which accounts for error
+dependence.
 
-First, we are no longer confined to predicting just one step ahead.
-Instead, we can produce multi-step forecasts with accompanying
-theoretical coverage guarantees, constructing distribution-free
-prediction intervals for \(y_{t+1},\dots,y_{t+H}\) from information
-available at time \(t\)
-
-Second, AcMCP's scorecaster accounts for error dependence. Let
-\(\tilde e_{t+h|t}\) denote the forecast of \(e_{t+h|t}\), obtained by
-equally combining two simple models: (i) an MA\((h-1)\) model fitted to
-the \(h\)-step-ahead errors available up to and including time \(t\),
+Let \(\tilde e_{t+h|t}\) denote the forecast of \(e_{t+h|t}\), obtained
+by equally combining two simple models: (i) an MA\((h-1)\) model fitted
+to the \(h\)-step-ahead errors available up to and including time \(t\),
 namely \(e_{1+h|1},\dots,e_{t|t-h}\), which captures serial dependence
 within a horizon; and (ii) a linear regression of each \(h\)-step-ahead
 error on the shorter-horizon errors from the same forecast origin, which
@@ -861,7 +849,7 @@ and let \(r_t\) satisfy Equation \eqref{eq-saturation_h} and an
 admissible function \(g\). Then the iteration
 \(q_{t+h|t}=r_t\left(\sum_{i=h+1}^t(\mathrm{err}_{i|i-h}-\alpha)\right)\)
 satisfies, for every \(T\geq h+1\),
-\begin{equation}\phantomsection\label{eq-cov_rt}{
+\begin{equation}\protect\phantomsection\label{eq-cov_rt}{
 \left|\frac{1}{T-h}\sum_{t=h+1}^{T}(\mathrm{err}_{t|t-h}-\alpha)\right| \leq \frac{c \cdot g(T-h) + h}{T-h},
 }\end{equation} with \(c\) the constant in Equation
 \eqref{eq-saturation_h}. Consequently,
@@ -913,7 +901,8 @@ known, and the update runs unchanged as long as the scores are finite.
 
 More importantly, Proposition~\ref{prp-cov_rt} also establishes
 one-sided calibration for AcMCP. We first write Equation
-\eqref{eq-acmcp} as \begin{equation}\phantomsection\label{eq-acmcp_1}{
+\eqref{eq-acmcp} as
+\begin{equation}\protect\phantomsection\label{eq-acmcp_1}{
 q_{t+h|t}=\hat{q}_{t+h|t}+r_t\left(\sum_{i=h+1}^t (\mathrm{err}_{i|i-h}-\alpha)\right),
 }\end{equation} where \(\hat{q}_{t+h|t}\) may be any function of the
 past observations \(\{(\bm{x}_i,y_i)\}_{1\leq i\leq t}\) and the earlier
@@ -965,7 +954,7 @@ scores, with targets \(\alpha^{-},\alpha^{+}>0\) satisfying
 \(\alpha^{-}+\alpha^{+}=\alpha\). Suppose each tail satisfies the
 assumptions of Corollary~\ref{cor-cov_acmcp}. Then, for every
 \(T\geq h+1\),
-\begin{equation}\phantomsection\label{eq-two-sided-finite}{
+\begin{equation}\protect\phantomsection\label{eq-two-sided-finite}{
 \frac{1}{T-h}\sum_{t=h+1}^{T}\mathbbm{1}\{y_t\in\hat{\mathcal C}_{t|t-h}^{\alpha}\}
 \geq 1-\alpha-2\frac{c\cdot g(T-h)+h}{T-h},
 }\end{equation} and hence
@@ -974,7 +963,7 @@ assumptions of Corollary~\ref{cor-cov_acmcp}. Then, for every
 Furthermore, let
 \(\chi_{T,h}:=\frac{1}{T-h}\sum_{t=h+1}^{T}\mathbbm{1}\{\hat y_{t|t-h}-q_{t|t-h}^{-}>\hat y_{t|t-h}+q_{t|t-h}^{+}\}\)
 be the frequency of crossed endpoints, that is, of empty intervals. Then
-\begin{equation}\phantomsection\label{eq-two-sided-enhanced}{
+\begin{equation}\protect\phantomsection\label{eq-two-sided-enhanced}{
 \left|\frac{1}{T-h}\sum_{t=h+1}^{T}\mathbbm{1}\{y_t\in\hat{\mathcal C}_{t|t-h}^{\alpha}\}
 -(1-\alpha)\right|\leq 2\frac{c \cdot g(T-h)+h}{T-h}+\chi_{T,h},
 }\end{equation} so the empirical coverage converges to \(1-\alpha\)
@@ -1001,13 +990,19 @@ Corollary~\ref{cor-cov-two-sided-qt} in Appendix
 These results bound empirical coverage at each forecast horizon, both in
 finite samples and in the long run, but do not ensure conditional
 coverage at individual forecast origins or simultaneous coverage across
-horizons. Nor do they ensure local coverage. Appendix
-\ref{sec-local-coverage} shows that the coverage shortfall over a window
-is bounded by twice the sum of the cumulative calibration bounds at its
-endpoints, divided by the window length. This bound vanishes when the
-window length grows faster than that sum, but may remain uninformative
-for fixed-length rolling windows. Thus, long-run calibration alone does
-not guarantee protection against local undercoverage.
+horizons. No method can provide such conditional guarantees without
+distributional assumptions: even for i.i.d. data, a procedure with
+distribution-free conditional coverage must produce intervals of
+infinite expected length whenever the conditioning variables are
+continuously distributed \citep{lei2014, barber2021limits}, and our
+setting includes i.i.d. data as a special case. Nor do they ensure local
+coverage. Appendix \ref{sec-local-coverage} shows that the coverage
+shortfall over a window is bounded by twice the sum of the cumulative
+calibration bounds at its endpoints, divided by the window length. This
+bound vanishes when the window length grows faster than that sum, but
+may remain uninformative for fixed-length rolling windows. Thus,
+long-run calibration alone does not guarantee protection against local
+undercoverage.
 
 \section{Experiments}\label{sec-experiments}
 
@@ -1034,7 +1029,12 @@ parameter choices are used:
   quantile tracking, where
   \(\hat{B}_t=\max\{s_{t-\Delta+1|t-\Delta-h+1}, \dots, s_{t|t-h}\}\) is
   the highest score over a trailing window of length \(\Delta\), which
-  is set equal to the calibration set size;
+  is set equal to the calibration set size. Because this learning rate
+  varies over time, Corollary~\ref{cor-cov_qt}, which assumes a constant
+  step, does not apply; however, \(\hat{B}_t\) depends only on past
+  scores, so the P state remains a function of the past and the
+  guarantees of Corollaries \ref{cor-cov_acmcp} and
+  \ref{cor-cov-two-sided} continue to hold;
 \item
   we adopt a nonlinear saturation function
   \(r_t(x)=K_{\mathrm I} \tan \left(x \log (t) / (t C_{\text {sat }})\right)\),
@@ -1090,28 +1090,16 @@ The black dashed horizontal line indicates the target coverage level
 \end{figure}%
 
 Figure~\ref{fig-AR2_cov} presents the rolling coverage and mean interval
-width of each method for each forecast horizon, with metrics computed
-over a rolling window of size \(500\). For each method and forecast
-horizon, rolling median interval widths follow trajectories similar to
-those of the corresponding means and are omitted to avoid redundancy.
-The analytic intervals obtained from the fitted AR model are also shown.
-We observe that MPID and AcMCP achieve approximately the desired
-\(90\%\) coverage level over the rolling windows, while other methods,
-including the AR model, undergo much wider swings away from the desired
-level, showing high coverage volatility over time. AcMCP constructs
-narrower prediction intervals than MPID, despite both methods achieving
-similar coverage. Moreover, we see that AcMCP tends to offer
-coverage-adaptive prediction intervals, automatically adjusting their
-width based on past coverage performance, and results in wider intervals
-especially when competing methods undercover, which is to be expected.
-In short, AcMCP intervals offer greater adaptivity and more stable
-rolling coverage compared to AR, MSCP, MWCP, SPCI and MACP. Both MPID
-and AcMCP achieve tight coverage, but AcMCP produces smaller mean
-interval widths. The benefits of AcMCP are more noticeable when \(h\)
-grows, and it does not deteriorate for smaller \(h\). The results can be
-further elucidated with Figure~\ref{fig-AR2_box}, which presents
-boxplots of rolling coverage and interval width for each method and each
-forecast horizon.
+width of each method for each forecast horizon, computed over rolling
+windows of size \(500\); rolling median widths behave similarly and are
+omitted. The analytic intervals from the fitted AR model are also shown.
+MPID and AcMCP stay close to the \(90\%\) target across windows, whereas
+the other methods, including the AR model, swing much further from it.
+AcMCP adapts its interval widths to past coverage, widening them when
+competing methods undercover. It attains coverage similar to MPID with
+narrower intervals, an advantage that grows with \(h\) without
+deteriorating at smaller \(h\). Figure~\ref{fig-AR2_box} presents the
+corresponding boxplots of rolling coverage and interval width.
 
 \begin{figure}
 
@@ -1146,19 +1134,13 @@ truncated period of length 500.}
 To examine the effect of the scorecasting term \(\tilde s_{t+h|t}\), we
 compare AcMCP with the version without this term, denoted by MPI.
 Figure~\ref{fig-AR2_timeplot} displays their prediction intervals over a
-selected period of \(500\) observations. We observe that AcMCP and MPI
-indeed construct similar prediction intervals so their lower and upper
-bounds mostly overlap with each other. The main differences occur around
-time 1320 and during 1470-1500, where AcMCP exhibits a localized
-fanning-out effect relative to MPI, with wider intervals most apparent
-at \(h=3\). Figure~\ref{fig-AR2_timeplot} also presents the prediction
-interval bounds given by MACP. Since both MACP and AcMCP rely on past
-miscoverage information to update prediction intervals, we include MACP
-to support a direct comparison of their resulting prediction intervals
-while preserving a clear and concise presentation. The prediction
-intervals of both AcMCP and MACP can capture certain patterns in the
-actual observations, and there is no consistent pattern indicating
-dominance of one method over the other in terms of interval width.
+selected period of \(500\) observations. The two sets of bounds mostly
+overlap; the main differences occur around time 1320 and during
+1470--1500, where AcMCP fans out locally relative to MPI, most visibly
+at \(h=3\). The figure also shows MACP, which likewise updates its
+intervals using past miscoverage. AcMCP and MACP both capture some
+patterns in the observations, and neither consistently yields narrower
+intervals.
 
 \subsection{Simulated nonlinear autoregressive
 process}\label{simulated-nonlinear-autoregressive-process}
@@ -1216,28 +1198,18 @@ prediction intervals are unavailable for neural networks, so we do not
 include them when presenting the results.
 
 Figure~\ref{fig-NL_cov} shows the rolling coverage and mean interval
-width of each method, computed on a rolling window of size \(100\). MPID
-and AcMCP are able to maintain minor fluctuations around the target
-coverage of \(90\%\) over time, whereas MSCP, MWCP, SPCI and MACP
-struggle to sustain the target level and display pronounced fluctuations
-over time. Notably, MPID and AcMCP demonstrate greater adaptability,
-with higher variability in interval widths compared to competing methods
-in order to uphold the desired coverage. The rolling mean interval
-widths indicate that AcMCP produces generally narrower intervals than
-MPID for \(2\)-step-ahead forecasts but wider intervals for
-\(3\)-step-ahead forecasts. Furthermore, under AcMCP, the interval width
+width of each method over rolling windows of size \(100\). MPID and
+AcMCP fluctuate only slightly around the \(90\%\) target, whereas MSCP,
+MWCP, SPCI and MACP show pronounced fluctuations. To maintain coverage,
+MPID and AcMCP vary their interval widths more than the competing
+methods. AcMCP generally produces narrower intervals than MPID at
+\(h=2\) but wider intervals at \(h=3\). Under AcMCP, the interval width
 at \(h=3\) exceeds that at \(h=2\) in \(53.41\%\) of the test cases,
-compared with only \(38.08\%\) under MPID. This pattern suggests more
-plausible behavior for AcMCP, as forecast uncertainty typically
-increases with the forecast horizon, leading to a greater tendency for
-wider prediction intervals.
-
-We provide further insights into the performance of these conformal
-prediction methods by presenting boxplots of the rolling coverage and
-interval width for each method, as depicted in Figure~\ref{fig-NL_box}.
-MPID and AcMCP exhibit less variability in rolling coverage than MSCP,
-MWCP, SPCI and MACP, but larger median interval widths and greater
-variability in interval width.
+compared with \(38.08\%\) under MPID, which is more consistent with
+forecast uncertainty increasing with the horizon. The boxplots in
+Figure~\ref{fig-NL_box} confirm that MPID and AcMCP have less variable
+rolling coverage than MSCP, MWCP, SPCI and MACP, but larger and more
+variable interval widths.
 
 \subsection{Electricity demand data}\label{electricity-demand-data}
 
@@ -1274,27 +1246,21 @@ forecasts (\(H=7\)), modeling the errors with an ARIMA process to
 capture autocorrelation. We use two years of data for training and
 \(100\) observations for calibration.
 
-Figure~\ref{fig-elec_cov} and Figure~\ref{fig-elec_box} compare the
-rolling coverage and interval width across methods. These computations
-are based on a rolling window of size \(100\). The DR method corresponds
-to the analytic intervals obtained from the dynamic regression model.
-First, DR consistently attains coverage well above the \(90\%\) target,
-resulting in much wider intervals than other methods for \(h=1,2,3,4\).
-While this overcoverage improves reliability, the resulting intervals
-are overly conservative. Second, MSCP, MWCP, and MACP show substantial
-fluctuations in rolling coverage, with undercoverage in many windows
-after September 2014 across the forecast horizons. SPCI also produces
-narrower intervals than MPID and AcMCP but exhibits substantial
-undercoverage across horizons. These narrower intervals therefore come
-at the cost of substantial undercoverage. Third, MPI, MPID, and AcMCP
-offer wider intervals that largely mitigate the post--September 2014
-undercoverage. Among these, MPID shows slightly poorer coverage than MPI
-and AcMCP at \(h=3\), despite producing wider intervals. Finally, while
-MPI and AcMCP display similar coverage patterns, AcMCP is capable of
-constructing narrower intervals than MPI, particularly at larger
-horizons. Relative to MPID, AcMCP has smaller mean interval widths at
-every horizon, with reductions of \(18.94\%\) at \(h=3\) and \(22.29\%\)
-at \(h=7\).
+Figure~\ref{fig-elec_cov} and Figure~\ref{fig-elec_box} compare rolling
+coverage and interval width across methods over rolling windows of size
+\(100\); DR denotes the analytic intervals from the dynamic regression
+model. DR consistently overcovers, giving much wider intervals than the
+other methods for \(h\leq4\). MSCP, MWCP and MACP fluctuate
+substantially in rolling coverage and undercover in many windows after
+September 2014 at all horizons. SPCI produces narrower intervals than
+MPID and AcMCP, but at the cost of substantial undercoverage across
+horizons. MPI, MPID and AcMCP give wider intervals that largely avoid
+the post-September 2014 undercoverage; among these, MPID has slightly
+poorer coverage than MPI and AcMCP at \(h=3\) despite wider intervals.
+AcMCP has coverage similar to MPI but narrower intervals, particularly
+at longer horizons, and smaller mean interval widths than MPID at every
+horizon, with reductions of \(18.94\%\) at \(h=3\) and \(22.29\%\) at
+\(h=7\).
 
 \begin{figure}[!hbtp]
 
@@ -1382,21 +1348,18 @@ targets at longer horizons. We therefore summarize coverage and interval
 width over the available evaluation periods rather than showing rolling
 windows.
 
-As the forecast horizons considered in this application are relatively
-long, we summarize performance in Figure~\ref{fig-cafe_cov} by reporting
-the average coverage gap and average interval width across the whole
-test set for each method and each forecast horizon. The results first
-show that SPCI produces narrower intervals but substantially undercovers
-at every horizon, especially longer ones, limiting their usefulness for
-uncertainty quantification. MSCP, MWCP and MACP are conservative at
-short horizons, particularly MWCP and MACP, but all three undercover for
-\(h\geq8\). Second, for \(h \leq 5\), MPI and AcMCP can approximately
-achieve the desired coverage and provide mean interval widths comparable
-to those of MSCP, MWCP and MACP. Third, the coverage of MSCP, MWCP, SPCI
-and MACP declines gradually as the forecast horizon increases, while MPI
-and AcMCP maintain coverage within a tighter range, albeit at the cost
-of interval efficiency. AcMCP also has smaller mean interval widths than
-MPID at all twelve horizons.
+Because the horizons in this application are relatively long,
+Figure~\ref{fig-cafe_cov} reports the coverage gap and mean interval
+width over the whole test set for each method and horizon. SPCI produces
+narrower intervals but undercovers at every horizon, especially longer
+ones. MSCP, MWCP and MACP are conservative at short horizons,
+particularly MWCP and MACP, but all three undercover for \(h\geq8\);
+overall, the coverage of MSCP, MWCP, SPCI and MACP declines as the
+horizon increases. MPI and AcMCP approximately achieve the target
+coverage for \(h\leq5\) with mean widths comparable to those of MSCP,
+MWCP and MACP, and keep coverage within a tighter range across horizons,
+albeit at the cost of interval efficiency. AcMCP has smaller mean
+interval widths than MPID at all twelve horizons.
 
 \begin{figure}
 
@@ -1685,7 +1648,7 @@ recursively update all \(h\)-step-ahead prediction intervals over time.
 MSCP applies conformal inference in an online fashion, updating
 prediction intervals as new data points are received. Specifically, for
 each \(h \in [H]\), the one-sided prediction set is
-\begin{equation}\phantomsection\label{eq-mscp}{
+\begin{equation}\protect\phantomsection\label{eq-mscp}{
 \hat{\mathcal{C}}_{t+h|t}^{\alpha,\mathrm{tail}} = \Bigg\{y\in\mathbb{R}: s_{t+h|t}^{y} \leq Q_{1-\alpha}\Bigg(\sum_{i=t-t_c+1}^{t}\frac{1}{t_c+1}\cdot\delta_{s_{i|i-h}}+\frac{1}{t_c+1}\cdot\delta_{+\infty}\Bigg)\Bigg\},
 }\end{equation} where \(s_{t+h|t}^{y}\) is the relevant signed
 nonconformity score defined in Section~\ref{sec-setup}. Applying
@@ -1738,7 +1701,7 @@ method. For a generic tail with fixed target miscoverage level
 \(\alpha\), the method adapts the nominal level \(\alpha_{t+h|t}\) used
 for quantile estimation to past tail miscoverage indicators.
 Specifically, for each \(h \in [H]\), we update \(\alpha_{t+h|t}\)
-according to \begin{equation}\phantomsection\label{eq-macp}{
+according to \begin{equation}\protect\phantomsection\label{eq-macp}{
 \alpha_{t+h|t} := \alpha_{t+h-1|t-1} + \gamma(\alpha - \mathrm{err}_{t|t-h}).
 }\end{equation} The corresponding one-sided set is computed from
 Equation \eqref{eq-mscp} with \(\alpha\) replaced by \(\alpha_{t+h|t}\).
@@ -1851,7 +1814,7 @@ e_{t+h|t}=\varepsilon_{t+h}+\sum_{i=1}^{h-1}\theta_{t,h,i}\varepsilon_{t+h-i}+U_
 \] The coefficients \(\theta_{t,h,i}\) are finite sums of products of
 the \(\phi\) coefficients and are therefore \(\mathcal F_t\)-measurable.
 Collecting the remainder terms yields
-\begin{equation}\phantomsection\label{eq-propagated-remainder}{
+\begin{equation}\protect\phantomsection\label{eq-propagated-remainder}{
 U_{t,1}=0,\qquad
 U_{t,j}=\widetilde R_{t,j}+\sum_{i=1}^{p_j}\phi_{t,j,i}U_{t,j-i},\qquad 2\leq j\leq h.
 }\end{equation} This proves Equation \eqref{eq-ma} without discarding
@@ -2080,7 +2043,7 @@ tail \(a\in\{-,+\}\) satisfies the assumptions of
 Corollary~\ref{cor-cov_qt} with finite score bound \(b^a\), step size
 \(\eta^a>0\), and finite initial threshold \(q^a_{2h|h}\). Then, for
 every \(T\geq h+1\),
-\begin{equation}\phantomsection\label{eq-two-sided-constant-step}{
+\begin{equation}\protect\phantomsection\label{eq-two-sided-constant-step}{
 \frac{1}{T-h}\sum_{t=h+1}^{T}\mathbbm{1}\{y_t\in\hat{\mathcal C}_{t|t-h}^{\alpha}\}
 \geq 1-\alpha-\sum_{a\in\{-,+\}}\frac{b^a+|q^a_{2h|h}|+\eta^a h}{\eta^a(T-h)}.
 }\end{equation} The absolute deviation of the empirical coverage from
@@ -2110,13 +2073,13 @@ and \(m\geq1\) are integers. Under the assumptions of
 Corollary~\ref{cor-cov_acmcp}, set \(D_h=0\) and \(D_u=c\cdot g(u-h)+h\)
 for \(u\geq h+1\). Differencing the cumulative deviations at \(a+m\) and
 \(a\) and applying the triangle inequality yields
-\begin{equation}\phantomsection\label{eq-window-tail}{
+\begin{equation}\protect\phantomsection\label{eq-window-tail}{
 \left|\frac1m\sum_{t=a+1}^{a+m}(\mathrm{err}_{t|t-h}-\alpha)\right|
 \leq\frac{D_{a+m}+D_a}{m}.
 }\end{equation} Under the assumptions of
 Corollary~\ref{cor-cov-two-sided}, with common \(c\) and \(g\) for both
 tails and \(\alpha=\alpha^{-}+\alpha^{+}\), the union bound gives
-\begin{equation}\phantomsection\label{eq-window-coverage}{
+\begin{equation}\protect\phantomsection\label{eq-window-coverage}{
 \frac1m\sum_{t=a+1}^{a+m}\mathbbm{1}\{y_t\in\hat{\mathcal C}_{t|t-h}^{\alpha}\}
 \geq1-\alpha-2\frac{D_{a+m}+D_a}{m}.
 }\end{equation} If \((D_{a+m}+D_a)/m\to0\) along a sequence of windows,
