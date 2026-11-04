@@ -27,6 +27,7 @@ tidyr = "==1.3.1"
 tikzDevice = "==0.12.6"
 tsibble = "==1.1.6"
 tsibbledata = "==0.4.1"
+kableExtra = "*"
 
 [constraint-dependencies]
 # Newer Deriv releases require R >= 4.5; retain the existing R 4.4 baseline.

@@ -1,4 +1,4 @@
-manifest_fingerprint = "sha256:3b18439dd6f2d828e24e6e6b4ebf74eb471fcffb82ad3ce686a95dee2f6268b6"
+manifest_fingerprint = "sha256:86014222e21b627a5f4d4798a3ec6de885ee04b9e9ed4b49f1379a5e627c5b7a"
 
 [r]
 version = "4.4.3"
@@ -899,6 +899,27 @@ url = "https://cran.r-project.org/src/contrib/jsonlite_2.0.0.tar.gz"
 checksum = "md5:3e54e6fbc0c9063936e3d01e91419c14"
 
 [[package]]
+name = "kableExtra"
+version = "1.4.1"
+source = "cran"
+raw_version = "1.4.1"
+url = "https://cran.r-project.org/src/contrib/kableExtra_1.4.1.tar.gz"
+checksum = "md5:f1274731936bb190b9cdef4445a2be1a"
+requires = [
+    "knitr",
+    "magrittr",
+    "stringr",
+    "xml2",
+    "rmarkdown",
+    "scales",
+    "viridisLite",
+    "htmltools",
+    "rstudioapi",
+    "digest",
+    "svglite",
+]
+
+[[package]]
 name = "knitr"
 version = "1.50.0"
 source = "cran"
@@ -1442,6 +1463,14 @@ requires = [
 ]
 
 [[package]]
+name = "rstudioapi"
+version = "0.19.0"
+source = "cran"
+raw_version = "0.19.0"
+url = "https://cran.r-project.org/src/contrib/rstudioapi_0.19.0.tar.gz"
+checksum = "md5:4cbb808adec83c594391db9be1f7ebf4"
+
+[[package]]
 name = "rvest"
 version = "1.0.5"
 source = "cran"
@@ -1545,12 +1574,60 @@ checksum = "md5:3c59ccd42546b7d04d2e9804998ea7e8"
 requires = ["Matrix"]
 
 [[package]]
+name = "svglite"
+version = "2.2.2"
+source = "cran"
+raw_version = "2.2.2"
+url = "https://cran.r-project.org/src/contrib/svglite_2.2.2.tar.gz"
+checksum = "md5:c4e710e70a85b84907fbb80d94c30c16"
+requires = [
+    "base64enc",
+    "cli",
+    "lifecycle",
+    "rlang",
+    "systemfonts",
+    "textshaping",
+    "cpp11",
+    "systemfonts",
+    "textshaping",
+]
+
+[[package]]
 name = "sys"
 version = "3.4.3"
 source = "cran"
 raw_version = "3.4.3"
 url = "https://cran.r-project.org/src/contrib/sys_3.4.3.tar.gz"
 checksum = "md5:ffb4244c6d4cacdd4ac8ef187699707c"
+
+[[package]]
+name = "systemfonts"
+version = "1.3.2"
+source = "cran"
+raw_version = "1.3.2"
+url = "https://cran.r-project.org/src/contrib/systemfonts_1.3.2.tar.gz"
+checksum = "md5:57b95280ca9bba2bb18477eb512ac971"
+requires = [
+    "base64enc",
+    "jsonlite",
+    "lifecycle",
+    "cpp11",
+]
+
+[[package]]
+name = "textshaping"
+version = "1.0.5"
+source = "cran"
+raw_version = "1.0.5"
+url = "https://cran.r-project.org/src/contrib/textshaping_1.0.5.tar.gz"
+checksum = "md5:93771d8cfc50a7ed021df061ce71e07f"
+requires = [
+    "lifecycle",
+    "stringi",
+    "systemfonts",
+    "cpp11",
+    "systemfonts",
+]
 
 [[package]]
 name = "tibble"
