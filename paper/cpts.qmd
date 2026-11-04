@@ -54,6 +54,7 @@ execute:
 #| label: packages
 #| include: false
 library(ggplot2)
+library(tsibble) # provides the x scale for yearmonth
 ```
 
 ## Introduction {#sec-intro}
